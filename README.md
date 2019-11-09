@@ -14,7 +14,7 @@ The current code line is tested on `MacOs / Rust 1.39` and build with `cargo`. O
 ## Play...
 
 ```
-[omallassi@omallassi-mac adr-tools]$./target/debug/adr -h
+[omallassi@omallassi-mac adrust]$./target/debug/adr -h
 
 adr 0.1.0
 A CLI to help you manage your ADR in git
