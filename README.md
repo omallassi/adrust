@@ -1,5 +1,17 @@
 # adr-tools
-Yes, this is a POC, yes this is dirty, yes, it is not configurable (you know path are hard-coded etc...), Yes, this is written in Rust, No it is not yet integrated with git but I will (actually I did for apis-catalog...) but: 
+
+The idea is to provide a cli to managed ADR. One more? yes you are right. In fact that was also an excuse to play with `Rust`. 
+
+Here are the main features: 
+* Manage ADR lifecycle (create, obsoletes...)
+* Integrate with Git
+* Why not integrate with Microsoft Teams
+* Manage Tags and why not search
+
+## Installation 
+The current code line is tested on `MacOs / Rust 1.39` and build with `cargo`. Once all this pre-requisites installes, cloning the repo, `cargo test`and `cargo build` should be enough
+
+## Play...
 
 ```
 [omallassi@omallassi-mac adr-tools]$./target/debug/adr -h
@@ -24,23 +36,13 @@ SUBCOMMANDS:
     superseded-by    update the Status to Decide
 ```
 
-you can then run, for instance 
+In more details, 
+| Tables        | Are           | 
+| ------------- |-------------| 
+| `adr list`      | will list all the ADR
+| `adr config list`     | will list the configuration. Configuration is stored in [config_dir](https://docs.rs/directories/2.0.2/directories/struct.ProjectDirs.html#method.config_dir) | 
+| `adr config set --name prop --value val`      | will set the configuration property | 
+| `adr new --name my-decision`      | will create a new decision  | 
+| `adr decided --name my-decision.md`      | will transition an ADR to decided | 
+| `adr superseded-by --name my-decision.md --by my-new-decision.md`      | will supersed an ADR `by` the specified one | 
 
-`adr list` - will list all the ADR
-
-`adr config list` - will list the configuration. Configuration is stored in [config_dir](https://docs.rs/directories/2.0.2/directories/struct.ProjectDirs.html#method.config_dir)
-
-`adr config set --name prop --value val` - will set the configuration property. 
-
-`adr new --name my-decision` - will create a new decision 
-
-`adr decided --name my-decision.md` - will transition an ADR to decided
-
-`adr superseded-by --name my-decision.md --by my-new-decision.md` - will supersed an ADR `by` the specified one
-
-## ToDo's
-so much
-- [ ] Integration with Git
-- [ ] Seq Number in the ADR
-- [ ] publish on Teams - https://docs.microsoft.com/fr-fr/graph/api/channel-post-messages?view=graph-rest-beta&tabs=http
-- ...
