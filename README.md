@@ -37,12 +37,12 @@ SUBCOMMANDS:
 ```
 
 In more details, 
-| Tables        | Are           | 
-| ------------- | ------------- | 
-| `adr list`      | will list all the ADR
-| `adr config list`     | will list the configuration. Configuration is stored in [config_dir](https://docs.rs/directories/2.0.2/directories/struct.ProjectDirs.html#method.config_dir) | 
-| `adr config set --name prop --value val`      | will set the configuration property | 
-| `adr new --name my-decision`      | will create a new decision  | 
-| `adr decided --name my-decision.md`      | will transition an ADR to decided | 
-| `adr superseded-by --name my-decision.md --by my-new-decision.md`      | will supersed an ADR `by` the specified one | 
 
+| Command        | Description           |
+| ------------- | ------------- |
+| `adr list`      | will list all the ADR |
+| `adr config list`     | will list the configuration. Configuration is stored in [config_dir](https://docs.rs/directories/2.0.2/directories/struct.ProjectDirs.html#method.config_dir) |
+| `adr config set --name prop --value val`      | will set the configuration property |
+| `adr new --name my-decision`      | will create a new decision  |
+| `adr decided --name my-decision.md`      | will transition an ADR to decided |
+| `adr superseded-by --name my-decision.md --by my-new-decision.md`      | will supersed an ADR `by` the specified one |
