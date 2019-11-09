@@ -1,0 +1,18 @@
+[package]
+name = "adr"
+version = "0.1.0"
+authors = ["MALLASSI Olivier <Olivier.MALLASSI@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+clap = "2.31.2"
+slog = "2.5.2"
+slog-term = "2.4.2"
+slog-async = "2.3.0"
+lazy_static = "1.4.0"
+prettytable-rs = "^0.8"
+walkdir = "2.2.9"
+dirs = "2.0.2"
+
+adr_core = {path = "../adr_tools_local_impl"}
+adr_config = {path = "../adr_config_local_impl"}

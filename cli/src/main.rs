@@ -1,0 +1,224 @@
+extern crate slog;
+extern crate slog_term;
+use slog::*;
+
+use std::io::{self};
+use std::path::Path;
+
+#[macro_use] extern crate prettytable;
+use prettytable::{Table};
+use prettytable::format;
+
+#[macro_use]
+extern crate lazy_static;
+
+extern crate clap;
+use clap::{Arg, App, SubCommand, AppSettings};
+
+extern crate dirs;
+
+extern crate adr_core;
+extern crate adr_config;
+use adr_config::config::AdrToolConfig;
+
+lazy_static! {
+    static ref LOGGER : slog::Logger = { 
+        let decorator = slog_term::TermDecorator::new().build();
+        let drain = slog_term::FullFormat::new(decorator).build().fuse();
+        let drain = slog_async::Async::new(drain).build().fuse();
+
+        let log = slog::Logger::root(drain, o!());
+
+        log
+    };
+}
+
+pub fn list_all_adr() -> io::Result<()> {
+    let cfg: AdrToolConfig = adr_config::config::get_config();
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+    table.set_titles(row![b -> "Title", b -> "File"]);
+    for entry in adr_core::adr_repo::list_all_adr(&cfg.adr_src_dir)? {
+        table.add_row(row![entry, entry]);
+    }
+    
+    // Print the table to stdout
+    table.printstd();
+
+    Ok(())
+}
+
+fn set_config(name: &str, value: &str) -> Result<()> {
+    if "adr_root_dir" == name {
+        let mut cfg: AdrToolConfig = adr_config::config::get_config();
+        let val = String::from(value);
+        cfg.adr_root_dir = val;
+
+        let mut val = String::from(value);
+        val.push_str("/src");
+        cfg.adr_src_dir = val;
+
+        let mut val = String::from(value);
+        val.push_str("/templates");
+        cfg.adr_template_dir = val;
+
+        adr_config::config::store(cfg);
+    }
+
+    Ok(())
+}
+
+/**
+ * default config will be stored in directories::ProjectDir::config_dir() (a.k.a ls -la $HOME/Library/Preferences/)
+ */
+fn list_all_config() -> Result<()> {
+    info!(LOGGER, "list all configuration elements", );
+    let cfg: AdrToolConfig = adr_config::config::get_config();
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+    table.set_titles(row![b -> "Property", b -> "Value", b -> "Modifiable"]);
+    //TODO - looks like it could be managed via a Macro...
+    table.add_row(row!["adr_root_dir", cfg.adr_root_dir, "Y"]);
+    table.add_row(row!["adr_src_dir", cfg.adr_src_dir, "N"]);
+    table.add_row(row!["adr_template_dir", cfg.adr_template_dir, "N"]);
+
+    // Print the table to stdout
+    table.printstd();
+
+    Ok(())
+}
+
+fn main() {
+    let cfg: AdrToolConfig = adr_config::config::get_config();
+    //
+    let _options = App::new("adr")
+        .version("0.1.0")
+        .about("A CLI to help you manage your ADR in git")
+        .subcommand(SubCommand::with_name("new")
+            .about("will create a new Decision Record")
+            .version("0.1.0")
+            .arg(Arg::with_name("name")
+                .short("n")
+                .long("name")
+                .takes_value(true)
+                .required(true)
+                .help("Give the name of your Decision Record"))
+            )
+        .subcommand(SubCommand::with_name("decided")
+            .about("update the Status to Decide")
+            .version("0.1.0")
+            .arg(Arg::with_name("name")
+                .short("n")
+                .long("name")
+                .takes_value(true)    
+                .required(true)
+                .help("Give the name of your Decision Record"))
+            )
+        .subcommand(SubCommand::with_name("list")
+            .about("Lists all Decision Records")
+            .version("0.1.0")
+        )
+        .subcommand(
+            App::new("config")
+                .about("Manage Configuration Items")
+                .setting(AppSettings::SubcommandRequiredElseHelp)
+                .subcommand(
+                    SubCommand::with_name("set")
+                        .about("Update Configuration Item with specified value")
+                        .arg(Arg::with_name("name")
+                            .short("n")
+                            .long("name")
+                            .required(true)
+                            .takes_value(true)
+                            .help("the name of the property"),)
+                        .arg(Arg::with_name("value")                
+                            .short("v")
+                            .long("value")
+                            .required(true)
+                            .takes_value(true)
+                            .help("the value of the property"),),
+                )
+                .subcommand(SubCommand::with_name("list").about("List All the Configuration Items")),
+        )
+        .subcommand(SubCommand::with_name("superseded-by")
+            .about("update the Status to Decide")
+            .version("0.1.0")
+            .arg(Arg::with_name("name")
+                .short("n")
+                .long("name")
+                .takes_value(true)
+                .required(true)
+                .help("Give the name of your Decision Record"))
+            .arg(Arg::with_name("by")
+                .short("b")
+                .long("by")
+                .takes_value(true)
+                .required(true)
+                .help("Give the name of your Decision Record"))
+            )
+        .subcommand(SubCommand::with_name("completed-by")
+            .about("Complete a decision with another decision")
+            .version("0.1.0")
+            .arg(Arg::with_name("name")
+                .short("n")
+                .long("name")
+                .takes_value(true)
+                .required(true)
+                .help("Give the name of the DR which is completed by"))
+            .arg(Arg::with_name("by")
+                .short("b")
+                .long("by")
+                .takes_value(true)
+                .required(true)
+                .help("Give the name of the DR which completes"))
+            )
+        .get_matches();
+
+ 
+    if let Some(_options) = _options.subcommand_matches("completed-by") {
+        
+    }  
+
+    //
+    match _options.subcommand() {
+        ("new", Some(matches)) => {
+            if matches.is_present("name") {
+                adr_core::adr_repo::create_adr(matches.value_of("name").unwrap(), Path::new(&cfg.adr_template_dir), Path::new(&cfg.adr_src_dir)).unwrap();
+            }
+        }
+        ("list", Some(_matches)) => {
+            list_all_adr().unwrap();
+        }
+        ("decided", Some(_matches)) => {
+            if _matches.is_present("name") {
+                adr_core::adr_repo::update_to_decided(_matches.value_of("name").unwrap()).unwrap();
+            }
+        }
+        ("superseded-by", Some(_matches)) => {
+            if _matches.is_present("name") && _matches.is_present("by") {
+                adr_core::adr_repo::superseded_by(_matches.value_of("name").unwrap(), _matches.value_of("by").unwrap()).unwrap();
+            }
+        }
+        ("completed-by", Some(_matches)) => {
+            if _matches.is_present("name") && _matches.is_present("by") {
+                adr_core::adr_repo::completed_by(_matches.value_of("name").unwrap(), _matches.value_of("by").unwrap()).unwrap();
+            }
+        }
+        ("config", Some(config_matches)) => {
+            match config_matches.subcommand() {
+                ("list", Some(_remote_matches)) => {
+                    list_all_config().unwrap();
+                }
+                ("set", Some(set_matches)) => {
+                    set_config(set_matches.value_of("name").unwrap(), set_matches.value_of("value").unwrap()).unwrap();
+                }
+                _ => unreachable!(),
+            } 
+        }
+    
+        ("", None) => println!("No subcommand was used"), // If no subcommand was usd it'll match the tuple ("", None)
+        _ => unreachable!(), // If all subcommands are defined above, anything else is unreachabe!()
+    }   
+}
