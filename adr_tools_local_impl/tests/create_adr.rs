@@ -49,11 +49,11 @@ mod create_new_adr_steps {
             adr.name = name.to_string();
         };
 
-        when "I want to create a new Decision Record" |_adr, _step| {
+        when "I create a new Decision Record" |_adr, _step| {
 
         };
 
-        then "I can create a new ADR" |adr, _step| {
+        then regex r"A new file named (.+) is created$" (String) |adr, name, _step| {
             let is_created = helper::create_decision(&adr.name).unwrap();
             assert_eq!(is_created, true);
             
@@ -62,7 +62,9 @@ mod create_new_adr_steps {
                 None => panic!("issue while preparing test"),
                 Some(project_dirs) => project_dirs
             };
-            let t = project_dirs.cache_dir().join(format!("src/{}.adoc", &adr.name));
+            let t = project_dirs.cache_dir().join(
+                format!("src/{}.adoc", name.to_string())
+            );
             //
             let expected_path = t.as_path();
             assert_eq!(expected_path.exists(), true);

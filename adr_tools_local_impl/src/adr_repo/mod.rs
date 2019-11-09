@@ -25,6 +25,10 @@ lazy_static! {
 /// Creates the file (based on template file). Returns true if file is created, false if not 
 /// (because target file already exists...)
 pub fn create_adr(name: &str, templates_dir: &Path, src_dir: &Path) -> io::Result<(bool)> {
+    let name = match format_decision_name(name) {
+        Ok(name) => name,
+        Err(_why) => panic!(format!("Problem while formatting name [{}]", name)),
+    };
     let target_path = src_dir.join(format!("{}.adoc", name));
     let is_target_file = target_path.is_file();
     if !is_target_file {
@@ -55,6 +59,13 @@ fn get_seq_id(name: &str) -> Result<(usize)> {
     let id: usize = cap[0].to_string().parse().unwrap();
 
     Ok(id)
+}
+
+pub fn format_decision_name(name: &str) -> Result<(String)> {
+    let name = name.to_ascii_lowercase();
+    let name = name.replace(" ", "-");
+
+    Ok(name.to_string())
 }
 
 pub fn list_all_adr(dir: &str) -> io::Result<(Vec<String>)> {
@@ -139,5 +150,15 @@ mod tests {
 
         let result = std::panic::catch_unwind(|| super::get_seq_id("path/my-decision-full.adoc"));
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_format_decision_name() {
+        let name = super::format_decision_name("my-decision").unwrap();
+        assert_eq!(name, "my-decision");
+        let name = super::format_decision_name("my decision").unwrap();
+        assert_eq!(name, "my-decision");
+        let name = super::format_decision_name("my Decision").unwrap();
+        assert_eq!(name, "my-decision");
     }
 }
