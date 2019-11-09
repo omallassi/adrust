@@ -42,7 +42,7 @@ pub fn create_adr(name: &str, templates_dir: &Path, src_dir: &Path) -> io::Resul
     Ok(!is_target_file)
 }
 
-fn get_seq_id(name: &str) -> Result<(usize)> {
+fn extract_seq_id(name: &str) -> Result<(usize)> {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"(\d+)").unwrap();
     }
@@ -50,7 +50,7 @@ fn get_seq_id(name: &str) -> Result<(usize)> {
     let cap = match RE.captures(name) {
         Some(val) => val, 
         None => {
-            error!(LOGGER, "Unable to get_seq_id from [{}]", name);
+            error!(LOGGER, "Unable to extract_seq_id from [{}]", name);
             panic!();
         },
     };
@@ -133,22 +133,22 @@ pub fn completed_by(_adr_name: &str, _by: &str) -> io::Result<()> {
 mod tests {
     #[test]
     fn test_get_seq() {
-        let seq = super::get_seq_id("01-my-decision.adoc").unwrap();
+        let seq = super::extract_seq_id("01-my-decision.adoc").unwrap();
         assert_eq!(seq, 1);
-        let seq = super::get_seq_id("00000010-my-decision.adoc").unwrap();
+        let seq = super::extract_seq_id("00000010-my-decision.adoc").unwrap();
         assert_eq!(seq, 10);
-        let seq = super::get_seq_id("mypath/00000001-my-decision.adoc").unwrap();
+        let seq = super::extract_seq_id("mypath/00000001-my-decision.adoc").unwrap();
         assert_eq!(seq, 1);
-        let seq = super::get_seq_id("mypath/00000001-my-decision-594.adoc").unwrap();
+        let seq = super::extract_seq_id("mypath/00000001-my-decision-594.adoc").unwrap();
         assert_eq!(seq, 1);
-        let seq = super::get_seq_id("mypath/00000001-my-decision-594-full.adoc").unwrap();
+        let seq = super::extract_seq_id("mypath/00000001-my-decision-594-full.adoc").unwrap();
         assert_eq!(seq, 1);
-        let seq = super::get_seq_id("00000001-my-decision-594-full.adoc").unwrap();
+        let seq = super::extract_seq_id("00000001-my-decision-594-full.adoc").unwrap();
         assert_eq!(seq, 1);
-        let seq = super::get_seq_id("mypath/00000001/00000002-my-decision-594-full.adoc").unwrap();
+        let seq = super::extract_seq_id("mypath/00000001/00000002-my-decision-594-full.adoc").unwrap();
         assert_eq!(seq, 1);
 
-        let result = std::panic::catch_unwind(|| super::get_seq_id("path/my-decision-full.adoc"));
+        let result = std::panic::catch_unwind(|| super::extract_seq_id("path/my-decision-full.adoc"));
         assert!(result.is_err());
     }
 
