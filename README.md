@@ -38,7 +38,7 @@ SUBCOMMANDS:
 
 In more details, 
 | Tables        | Are           | 
-| ------------- |-------------| 
+| ------------- | ------------- | 
 | `adr list`      | will list all the ADR
 | `adr config list`     | will list the configuration. Configuration is stored in [config_dir](https://docs.rs/directories/2.0.2/directories/struct.ProjectDirs.html#method.config_dir) | 
 | `adr config set --name prop --value val`      | will set the configuration property | 
