@@ -37,6 +37,7 @@ mod helper {
 
 mod create_new_adr_steps {
     use cucumber::steps;
+    use std::fs;
     extern crate directories;
     use directories::ProjectDirs;
 
@@ -62,9 +63,12 @@ mod create_new_adr_steps {
                 Some(project_dirs) => project_dirs
             };
             let t = project_dirs.cache_dir().join(format!("src/{}.adoc", &adr.name));
+            //
             let expected_path = t.as_path();
-
             assert_eq!(expected_path.exists(), true);
+            //
+            let content: String = fs::read_to_string(expected_path).unwrap();
+            assert!(content.contains("{cl-wip}"));
         };
     });
 }
