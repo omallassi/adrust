@@ -13,8 +13,7 @@ Here are the main features:
 ## Installation 
 The current code line is tested on `MacOs / Rust 1.39` and build with `cargo`. Once all this pre-requisites installed, cloning the repo, `cargo test`and `cargo build` should be enough. 
 
-Run `adr config list` to view the default configuration. __Displayed `Path` should exist prior to usage__, as an `init` command is missing. 
-
+Run `adr config list` to view the default configuration (and why not modify it). Run `adr init` : directories specified in `config` should be created and a default template copied in `templates` sub-folder. 
 
 
 ## Play...

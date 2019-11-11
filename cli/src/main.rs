@@ -2,6 +2,7 @@ extern crate slog;
 extern crate slog_term;
 use slog::*;
 
+use std::fs;
 use std::io::{self};
 use std::path::Path;
 
@@ -90,6 +91,28 @@ fn list_all_config() -> Result<()> {
     Ok(())
 }
 
+/**
+ * init based on config
+ */
+fn init() -> Result<()> {
+    let cfg: AdrToolConfig = adr_config::config::get_config();
+    let path = String::from(cfg.adr_root_dir);
+    fs::create_dir_all(&path)?;
+    info!(LOGGER, "[{}] created]", path);
+
+    let path = String::from(cfg.adr_src_dir);
+    fs::create_dir_all(&path)?;
+    info!(LOGGER, "[{}] created]", path);
+
+    let path = String::from(cfg.adr_template_dir);
+    fs::create_dir_all(&path)?;
+    info!(LOGGER, "[{}] created]", &path);
+
+    fs::copy("./templates/adr-template-v0.1.adoc", format!("{}/adr-template-v0.1.adoc", &path))?;
+
+    Ok(())
+}
+
 fn main() {
     let cfg: AdrToolConfig = adr_config::config::get_config();
     //
@@ -118,6 +141,10 @@ fn main() {
             )
         .subcommand(SubCommand::with_name("list")
             .about("Lists all Decision Records")
+            .version("0.1.0")
+        )
+        .subcommand(SubCommand::with_name("init")
+            .about("Init ADRust based on config")
             .version("0.1.0")
         )
         .subcommand(
@@ -190,6 +217,9 @@ fn main() {
         }
         ("list", Some(_matches)) => {
             list_all_adr().unwrap();
+        }
+        ("init", Some(_matches)) => {
+            init().unwrap();
         }
         ("decided", Some(_matches)) => {
             if _matches.is_present("name") {
