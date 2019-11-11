@@ -4,7 +4,7 @@ The idea is to provide a cli to managed ADR. One more? yes...reality is that was
 
 Here are the main features: 
 * [wip] Manage ADR lifecycle (create, obsoletes...). ADR should be written in _asciidoc_
-* [not started yet] an `init` command
+* [done] an `init` command
 * [not started yet] Integrate with Git
 * [not started yet] Manage Tags and why not search
 * [not started yet] Support different types of templates
