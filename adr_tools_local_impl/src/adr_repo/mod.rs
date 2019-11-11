@@ -83,18 +83,22 @@ pub fn list_all_adr(dir: &str) -> io::Result<(Vec<String>)> {
     Ok(results)
 }
 
-pub fn update_to_decided(adr_name: &str) -> io::Result<()> {
+pub fn update_to_decided(adr_name: &str) -> io::Result<(bool)> {
     let mut f = File::open(adr_name)?;
 
     let mut contents = String::new();
     f.read_to_string(&mut contents).unwrap();
-    let new_content = contents.replace("{cl-wip}", "{cl-decided}");
+    let contains = contents.contains("{cl-wip}");
+    if contains {
+        let new_content = contents.replace("{cl-wip}", "{cl-decided}");
+        fs::write(adr_name, new_content)?;
+        info!(LOGGER, "Decision Record [{}] has been decided - Congrats!!", adr_name);
+    }
+    else {
+        error!(LOGGER, "Decision Record [{}] has certainly not the right status and cannot be updated", adr_name);
+    }
 
-    fs::write(adr_name, new_content)?;
-
-    info!(LOGGER, "Decision Record [{}] has been decided - Congrats!!", adr_name);
-
-    Ok(())
+    Ok(contains)
 }
 
 pub fn superseded_by(adr_name: &str, by: &str) -> io::Result<()> {

@@ -1,0 +1,71 @@
+// Include contents of docinfo.html
+:docinfo1:
+:cl-wip: pass:quotes[[.label.wip]#In Progress#]
+:cl-decided: pass:q[[.label.decided]#Decided#]
+:cl-updated: pass:q[[.label.updated]#Completed By#]
+:cl-completes: pass:q[[.label.updated]#Completes#]
+:cl-supersedes: pass:q[[.label.updated]#Supersedes#]
+:cl-superseded: pass:q[[.label.obsoleted]#Superseded By#]
+:cl-obsoleted: pass:q[[.label.obsoleted]#Obsolete#]
+
+== ADR-MVA-507 Decide about ...
+
+*Status:* {cl-superseded} /tmp/adr-samples/src/my-decision-2.adoc  *Date:* 2019-10-28
+
+[cols=",",options="header",%autowidth]
+|===
+|role |people
+|_Decision Makers_ |@John Smith
+|_Experts_ |@John Smith
+|_Stakeholders_ |@John Smith
+|===
+
+=== Context and Problem Statement
+
+bla bla
+
+=== Decision Drivers
+
+* Reduce ...
+* Ensure ...
+
+=== Considered Options
+
+Following options have been considered:
+
+[cols=",",options="header",%autowidth]
+|===
+|Option |Description
+|Option #1 |Manage 
+|Option #2 |Manage 
+|===
+
+=== Decision Outcome
+
+The decision goes with *Option #2* :
+
+* These capabilities should only b...
+* It is likely...
+
+=== Implications / Consequences
+
+To be defined
+
+=== Appendices
+
+==== Appendix A - Options Comparison
+
+The Appendix A describes in details the type of communications
+
+[width="100%",cols="10%,45%,45%",options="header",%autowidth]
+|===
+| |Pros |Cons
+|*Option #1* |Simplicity for .... |
+
+| |Simplicity for ....  |
+
+|*Option #2* |Capabilities ....
+|Complexity in ...
+
+
+|===
