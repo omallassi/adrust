@@ -6,6 +6,9 @@ use std::fs;
 use std::io::{self};
 use std::path::Path;
 
+extern crate regex;
+use regex::Regex;
+
 #[macro_use] extern crate prettytable;
 use prettytable::{Table};
 use prettytable::format;
@@ -39,9 +42,33 @@ pub fn list_all_adr() -> io::Result<()> {
 
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
-    table.set_titles(row![b -> "Title", b -> "File"]);
+    table.set_titles(row![b -> "Title", b -> "File", b -> "Tags"]);
     for entry in adr_core::adr_repo::list_all_adr(&cfg.adr_src_dir)? {
-        table.add_row(row![entry, entry]);
+        //read the content 
+        let content: String = fs::read_to_string(&entry).unwrap();
+        lazy_static! {
+            static ref RE: Regex = Regex::new(r"== (.+)").unwrap();
+        }
+        let cap = match RE.captures(&content) {
+            Some(val) => val, 
+            None => {
+                error!(LOGGER, "Unable to get title from [{}]", &entry);
+                panic!();
+            },
+        };
+
+        lazy_static! {
+            static ref RE_TAGS: Regex = Regex::new(r"tags::(.+)").unwrap();
+        }
+        let tags = match RE_TAGS.captures(&content) {
+            Some(val) => val[1].to_string(), 
+            None => {
+                info!(LOGGER, "Unable to get tags from [{}]", &entry);
+                "None".to_string()
+            },
+        };
+
+        table.add_row(row![cap[1].to_string(), entry, tags]);
     }
     
     // Print the table to stdout
@@ -66,6 +93,37 @@ fn set_config(name: &str, value: &str) -> Result<()> {
 
         adr_config::config::store(cfg);
     }
+
+    Ok(())
+}
+
+fn list_all_tags() -> Result<()> {
+    let cfg: AdrToolConfig = adr_config::config::get_config();
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+    table.set_titles(row![b -> "Tags"]);
+    for entry in adr_core::adr_repo::list_all_adr(&cfg.adr_src_dir)? {
+        //read the content 
+        let content: String = fs::read_to_string(&entry).unwrap();
+        lazy_static! {
+            static ref RE_TAGS: Regex = Regex::new(r"tags::(.+)").unwrap();
+        }
+        let tags = match RE_TAGS.captures(&content) {
+            Some(val) => {
+                val[1].to_string()
+            }, 
+            None => {
+                info!(LOGGER, "Unable to get tags from [{}]", &entry);
+                "".to_string()
+            },
+        };
+
+        table.add_row(row![tags]);
+    }
+    
+    // Print the table to stdout
+    table.printstd();
 
     Ok(())
 }
@@ -169,6 +227,12 @@ fn main() {
                 )
                 .subcommand(SubCommand::with_name("list").about("List All the Configuration Items")),
         )
+        .subcommand(
+            App::new("tags")
+                .about("Manage Tags")
+                .setting(AppSettings::SubcommandRequiredElseHelp)
+                .subcommand(SubCommand::with_name("list").about("List All the Tags")),
+        )
         .subcommand(SubCommand::with_name("superseded-by")
             .about("update the Status to Decide")
             .version("0.1.0")
@@ -243,6 +307,14 @@ fn main() {
                 }
                 ("set", Some(set_matches)) => {
                     set_config(set_matches.value_of("name").unwrap(), set_matches.value_of("value").unwrap()).unwrap();
+                }
+                _ => unreachable!(),
+            } 
+        }
+        ("tags", Some(tags_matches)) => {
+            match tags_matches.subcommand() {
+                ("list", Some(_remote_matches)) => {
+                    list_all_tags().unwrap();
                 }
                 _ => unreachable!(),
             } 

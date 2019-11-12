@@ -69,3 +69,6 @@ The Appendix A describes in details the type of communications
 
 
 |===
+
+
+tags::Application_1;Security;Deployment
