@@ -59,5 +59,5 @@ In more details,
 For now, template should be in _asciidoc_. Look at `./templates/adr-temaplate-v0.1.adoc` (in particularly the header) for more details. ADR lifecycle is managed based on the `cl-*` information (available in template headers).
 
 ## Tags
-There is a beta support for tags. You can add this `tags::Application_1;MVA;Security;Deployment` to your template / decision.
+There is a beta support for tags. You can add this `tags::Application_1;Security;Deployment` to your template / decision.
 This tags, if available, will be used in `adr list` and `adr tags ...`
