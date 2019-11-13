@@ -25,16 +25,17 @@ extern crate adr_core;
 extern crate adr_config;
 use adr_config::config::AdrToolConfig;
 
-lazy_static! {
-    static ref LOGGER : slog::Logger = { 
-        let decorator = slog_term::TermDecorator::new().build();
-        let drain = slog_term::FullFormat::new(decorator).build().fuse();
-        let drain = slog_async::Async::new(drain).build().fuse();
+fn get_logger() -> slog::Logger {
+    let cfg: AdrToolConfig = adr_config::config::get_config();
+    
+    let decorator = slog_term::TermDecorator::new().build();
+    let drain = slog_term::FullFormat::new(decorator).build().fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
+    let drain = slog::LevelFilter::new(drain, Level::from_usize(cfg.log_level).unwrap_or(Level::Debug)).fuse();
 
-        let log = slog::Logger::root(drain, o!());
+    let log = slog::Logger::root(drain, o!());
 
-        log
-    };
+    log
 }
 
 pub fn list_all_adr() -> io::Result<()> {
@@ -52,7 +53,7 @@ pub fn list_all_adr() -> io::Result<()> {
         let cap = match RE.captures(&content) {
             Some(val) => val, 
             None => {
-                error!(LOGGER, "Unable to get title from [{}]", &entry);
+                error!(get_logger(), "Unable to get title from [{}]", &entry);
                 panic!();
             },
         };
@@ -63,7 +64,7 @@ pub fn list_all_adr() -> io::Result<()> {
         let tags = match RE_TAGS.captures(&content) {
             Some(val) => val[1].to_string(), 
             None => {
-                debug!(LOGGER, "Unable to get tags from [{}]", &entry);
+                debug!(get_logger(), "Unable to get tags from [{}]", &entry);
                 "None".to_string()
             },
         };
@@ -77,9 +78,11 @@ pub fn list_all_adr() -> io::Result<()> {
     Ok(())
 }
 
+//TODO need to find a proper way to map to the config struct
 fn set_config(name: &str, value: &str) -> Result<()> {
+    let mut cfg: AdrToolConfig = adr_config::config::get_config();
     if "adr_root_dir" == name {
-        let mut cfg: AdrToolConfig = adr_config::config::get_config();
+        
         let val = String::from(value);
         cfg.adr_root_dir = val;
 
@@ -90,9 +93,35 @@ fn set_config(name: &str, value: &str) -> Result<()> {
         let mut val = String::from(value);
         val.push_str("/templates");
         cfg.adr_template_dir = val;
-
-        adr_config::config::store(cfg);
     }
+    if "log_level" == name {
+        cfg.log_level = value.parse().unwrap();
+    }
+
+    adr_config::config::store(cfg);
+
+    Ok(())
+}
+
+/**
+ * default config will be stored in directories::ProjectDir::config_dir() (a.k.a ls -la $HOME/Library/Preferences/)
+ * 
+ * TODO need to find a proper way to map to the config struct - could be managed with a macro
+ */
+fn list_all_config() -> Result<()> {
+    info!(get_logger(), "list all configuration elements", );
+    let cfg: AdrToolConfig = adr_config::config::get_config();
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+    table.set_titles(row![b -> "Property", b -> "Value", b -> "Modifiable"]);
+    table.add_row(row!["adr_root_dir", cfg.adr_root_dir, "Y"]);
+    table.add_row(row!["adr_src_dir", cfg.adr_src_dir, "N"]);
+    table.add_row(row!["adr_template_dir", cfg.adr_template_dir, "N"]);
+    table.add_row(row!["log_level", cfg.log_level, "Y"]);
+
+    // Print the table to stdout
+    table.printstd();
 
     Ok(())
 }
@@ -114,7 +143,7 @@ fn list_all_tags() -> Result<()> {
                 val[1].to_string()
             }, 
             None => {
-                debug!(LOGGER, "Unable to get tags from [{}]", &entry);
+                debug!(get_logger(), "Unable to get tags from [{}]", &entry);
                 "".to_string()
             },
         };
@@ -129,42 +158,21 @@ fn list_all_tags() -> Result<()> {
 }
 
 /**
- * default config will be stored in directories::ProjectDir::config_dir() (a.k.a ls -la $HOME/Library/Preferences/)
- */
-fn list_all_config() -> Result<()> {
-    info!(LOGGER, "list all configuration elements", );
-    let cfg: AdrToolConfig = adr_config::config::get_config();
-
-    let mut table = Table::new();
-    table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
-    table.set_titles(row![b -> "Property", b -> "Value", b -> "Modifiable"]);
-    //TODO - looks like it could be managed via a Macro...
-    table.add_row(row!["adr_root_dir", cfg.adr_root_dir, "Y"]);
-    table.add_row(row!["adr_src_dir", cfg.adr_src_dir, "N"]);
-    table.add_row(row!["adr_template_dir", cfg.adr_template_dir, "N"]);
-
-    // Print the table to stdout
-    table.printstd();
-
-    Ok(())
-}
-
-/**
  * init based on config
  */
 fn init() -> Result<()> {
     let cfg: AdrToolConfig = adr_config::config::get_config();
     let path = String::from(cfg.adr_root_dir);
     fs::create_dir_all(&path)?;
-    info!(LOGGER, "[{}] created]", path);
+    info!(get_logger(), "[{}] created]", path);
 
     let path = String::from(cfg.adr_src_dir);
     fs::create_dir_all(&path)?;
-    info!(LOGGER, "[{}] created]", path);
+    info!(get_logger(), "[{}] created]", path);
 
     let path = String::from(cfg.adr_template_dir);
     fs::create_dir_all(&path)?;
-    info!(LOGGER, "[{}] created]", &path);
+    info!(get_logger(), "[{}] created]", &path);
 
     fs::copy("./templates/adr-template-v0.1.adoc", format!("{}/adr-template-v0.1.adoc", &path))?;
 

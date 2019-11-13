@@ -61,3 +61,7 @@ For now, template should be in _asciidoc_. Look at `./templates/adr-temaplate-v0
 ## Tags
 There is a beta support for tags. You can add this `tags::Application_1;Security;Deployment` to your template / decision.
 This tags, if available, will be used in `adr list` and `adr tags ...`
+
+## Log 
+`adr config list` will show the [Level](https://docs.rs/slog/2.5.2/slog/enum.Level.html#method.as_usize) as defined in [slog](https://docs.rs/slog/2.5.2/slog/). 
+To set the log level to Debug `adr config set --name log_level --value 6`

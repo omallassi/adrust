@@ -12,15 +12,20 @@ use regex::Regex;
 
 use walkdir::{DirEntry, WalkDir};
 
-lazy_static! {
-    static ref LOGGER : slog::Logger = { 
-        let decorator = slog_term::PlainSyncDecorator::new(std::io::stdout());
-        let drain = slog_term::FullFormat::new(decorator).build().fuse();
+extern crate adr_config;
+use adr_config::config::AdrToolConfig;
 
-        let log = slog::Logger::root(drain, o!());
+fn get_logger() -> slog::Logger {
+    let cfg: AdrToolConfig = adr_config::config::get_config();
+    
+    let decorator = slog_term::TermDecorator::new().build();
+    let drain = slog_term::FullFormat::new(decorator).build().fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
+    let drain = slog::LevelFilter::new(drain, Level::from_usize(cfg.log_level).unwrap_or(Level::Debug)).fuse();
 
-        log
-    };
+    let log = slog::Logger::root(drain, o!());
+
+    log
 }
 
 ///
@@ -35,10 +40,10 @@ pub fn create_adr(name: &str, templates_dir: &Path, src_dir: &Path) -> io::Resul
     let is_target_file = target_path.is_file();
     if !is_target_file {
         fs::copy(templates_dir.join("adr-template-v0.1.adoc"), &target_path)?;
-        info!(LOGGER, "New ADR {:?} created", target_path);
+        info!(get_logger(), "New ADR {:?} created", target_path);
     }
     else {
-        error!(LOGGER, "Decision already exists. Please use another name", );
+        error!(get_logger(), "Decision already exists. Please use another name", );
     }
 
     Ok(!is_target_file)
@@ -52,12 +57,12 @@ fn extract_seq_id(name: &str) -> Result<(usize)> {
     let cap = match RE.captures(name) {
         Some(val) => val, 
         None => {
-            error!(LOGGER, "Unable to extract_seq_id from [{}]", name);
+            error!(get_logger(), "Unable to extract_seq_id from [{}]", name);
             panic!();
         },
     };
 
-    debug!(LOGGER, "found first match [{}]", cap[0].to_string());
+    debug!(get_logger(), "found first match [{}]", cap[0].to_string());
     let id: usize = cap[0].to_string().parse().unwrap();
 
     Ok(id)
@@ -87,7 +92,6 @@ pub fn list_all_adr(dir: &str) -> io::Result<(Vec<String>)> {
             let entry = entry?;
             let metadata = entry.metadata().unwrap();
             if metadata.is_file() {
-                //println!("{:?}", entry.metadata().unwrap());
                 let path = entry.path().display();
                 results.push(format!("{}", &path));
             }
@@ -106,10 +110,10 @@ pub fn update_to_decided(adr_name: &str) -> io::Result<(bool)> {
     if contains {
         let new_content = contents.replace("{cl-wip}", "{cl-decided}");
         fs::write(adr_name, new_content)?;
-        info!(LOGGER, "Decision Record [{}] has been decided - Congrats!!", adr_name);
+        info!(get_logger(), "Decision Record [{}] has been decided - Congrats!!", adr_name);
     }
     else {
-        error!(LOGGER, "Decision Record [{}] has certainly not the right status and cannot be updated", adr_name);
+        error!(get_logger(), "Decision Record [{}] has certainly not the right status and cannot be updated", adr_name);
     }
 
     Ok(contains)
@@ -136,7 +140,7 @@ pub fn superseded_by(adr_name: &str, by: &str) -> io::Result<()> {
     let new_content = contents.replace("{cl-decided}", &supersed);
     fs::write(by, new_content)?;
 
-    info!(LOGGER, "Decision Record [{}] has been superseded by [{}]", adr_name, by);
+    info!(get_logger(), "Decision Record [{}] has been superseded by [{}]", adr_name, by);
 
     Ok(())
 }
