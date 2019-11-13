@@ -10,6 +10,8 @@ use std::path::Path;
 extern crate regex;
 use regex::Regex;
 
+use walkdir::{DirEntry, WalkDir};
+
 lazy_static! {
     static ref LOGGER : slog::Logger = { 
         let decorator = slog_term::PlainSyncDecorator::new(std::io::stdout());
@@ -68,16 +70,28 @@ pub fn format_decision_name(name: &str) -> Result<(String)> {
     Ok(name.to_string())
 }
 
+fn is_hidden(entry: &DirEntry) -> bool {
+    entry.file_name()
+        .to_str()
+        .map(|s| s.starts_with("."))
+        .unwrap_or(false)
+}
+
 pub fn list_all_adr(dir: &str) -> io::Result<(Vec<String>)> {
     let mut results = std::vec::Vec::new();
 
+    
     if Path::new(dir).is_dir() {
-        for entry in fs::read_dir(Path::new(dir))? {
-            let entry_path = entry?.path();
-            let path = entry_path.display(); //display() is not the best 
-
-            results.push(format!("{}", &path));
-        }
+        let walker = WalkDir::new(dir).into_iter();
+        for entry in walker.filter_entry( |e| !is_hidden(e) ) {
+            let entry = entry?;
+            let metadata = entry.metadata().unwrap();
+            if metadata.is_file() {
+                //println!("{:?}", entry.metadata().unwrap());
+                let path = entry.path().display();
+                results.push(format!("{}", &path));
+            }
+        }        
     }
 
     Ok(results)

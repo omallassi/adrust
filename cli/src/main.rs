@@ -45,7 +45,7 @@ pub fn list_all_adr() -> io::Result<()> {
     table.set_titles(row![b -> "Title", b -> "File", b -> "Tags"]);
     for entry in adr_core::adr_repo::list_all_adr(&cfg.adr_src_dir)? {
         //read the content 
-        let content: String = fs::read_to_string(&entry).unwrap();
+        let content: String = fs::read_to_string(&entry)?;
         lazy_static! {
             static ref RE: Regex = Regex::new(r"== (.+)").unwrap();
         }
@@ -63,7 +63,7 @@ pub fn list_all_adr() -> io::Result<()> {
         let tags = match RE_TAGS.captures(&content) {
             Some(val) => val[1].to_string(), 
             None => {
-                info!(LOGGER, "Unable to get tags from [{}]", &entry);
+                debug!(LOGGER, "Unable to get tags from [{}]", &entry);
                 "None".to_string()
             },
         };
@@ -114,7 +114,7 @@ fn list_all_tags() -> Result<()> {
                 val[1].to_string()
             }, 
             None => {
-                info!(LOGGER, "Unable to get tags from [{}]", &entry);
+                debug!(LOGGER, "Unable to get tags from [{}]", &entry);
                 "".to_string()
             },
         };
