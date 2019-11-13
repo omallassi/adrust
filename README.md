@@ -3,7 +3,7 @@
 The idea is to provide a cli to managed ADR. One more? yes...reality is that was mostly an excuse to play with `Rust`. 
 
 Here are the main features: 
-* [wip] Manage ADR lifecycle (create, obsoletes...). ADR should be written in _asciidoc_
+* [wip] Manage ADR lifecycle (create, obsoletes...). ADR should be written in _asciidoc_ (this is a long story...) 
 * [done] an `init` command
 * [not started yet] Integrate with Git
 * [wip] Manage Tags and why not search
