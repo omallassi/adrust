@@ -191,7 +191,7 @@ pub fn superseded_by(adr_name: &str, by: &str) -> io::Result<()> {
             update_adr_file(by, &supersed)?;
 
             info!(get_logger(), "Decision Record [{}] has been superseded by [{}]", adr_name, by);
-        }
+        },
         false => {
             error!(get_logger(), "Decision Record [{}] has certainly not the right status and cannot be updated", adr_name);
         }
@@ -213,15 +213,26 @@ fn update_adr_file(adr_name: &str, tag_to_replace: &str) -> io::Result<()> {
 }
 
 pub fn completed_by(adr_name: &str, by: &str) -> io::Result<()> {
-    //manage the from
-    let completed_by = format!("{{cl-updated}} {}", by);
-    update_adr_file(adr_name, &completed_by)?;
+    //check the decisino is decided
+    let mut f = File::open(adr_name)?;
+    let mut contents = String::new();
+    f.read_to_string(&mut contents).unwrap();
+    match contents.contains("{cl-decided}") {
+        true => {
+            //manage the from
+            let completed_by = format!("{{cl-updated}} {}", by);
+            update_adr_file(adr_name, &completed_by)?;
 
-    //manage the by
-    let completes = format!("{{cl-completes}} {}", adr_name);
-    update_adr_file(by, &completes)?;
+            //manage the by
+            let completes = format!("{{cl-completes}} {}", adr_name);
+            update_adr_file(by, &completes)?;
 
-    info!(get_logger(), "Decision Record [{}] has been completed by [{}]", adr_name, by);
+            info!(get_logger(), "Decision Record [{}] has been completed by [{}]", adr_name, by);
+        }, 
+        false => {
+            error!(get_logger(), "Decision Record [{}] has certainly not the right status and cannot be updated", adr_name);
+        }
+    }
 
     Ok(())
 }
