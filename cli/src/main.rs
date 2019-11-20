@@ -10,7 +10,6 @@ use std::path::Path;
 use prettytable::{Table};
 use prettytable::format;
 
-#[macro_use]
 extern crate lazy_static;
 
 extern crate clap;
@@ -182,7 +181,7 @@ fn main() {
                         .arg(Arg::with_name("name")
                             .short("n")
                             .long("name")
-                            .required(true)
+                            .required(true) 
                             .takes_value(true)
                             .help("the name of the property"),)
                         .arg(Arg::with_name("value")                

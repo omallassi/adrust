@@ -176,33 +176,41 @@ pub fn update_to_decided(adr_name: &str) -> io::Result<(bool)> {
 }
 
 pub fn superseded_by(adr_name: &str, by: &str) -> io::Result<()> {
-    //manage the adr_name
-    let mut contents = String::new();
-    {
-        let mut f = File::open(adr_name)?;
-        f.read_to_string(&mut contents).unwrap();
-    }
+    //manage the from
     let superseded_by = format!("{{cl-superseded}} {}", by);
-    let new_content = contents.replace("{cl-decided}", &superseded_by);
-    fs::write(adr_name, new_content)?;
+    update_adr_file(adr_name, &superseded_by)?;
 
     //manage the by
-    let mut contents = String::new();
-    {
-        let mut f = File::open(by)?;
-        f.read_to_string(&mut contents).unwrap();
-    }
     let supersed = format!("{{cl-supersedes}} {}", adr_name);
-    let new_content = contents.replace("{cl-decided}", &supersed);
-    fs::write(by, new_content)?;
+    update_adr_file(by, &supersed)?;
 
     info!(get_logger(), "Decision Record [{}] has been superseded by [{}]", adr_name, by);
 
     Ok(())
 }
 
-pub fn completed_by(_adr_name: &str, _by: &str) -> io::Result<()> {
-    println!("et hops depuis un autre crate");
+fn update_adr_file(adr_name: &str, tag_to_replace: &str) -> io::Result<()> {
+    let mut contents = String::new();
+    {
+        let mut f = File::open(adr_name)?;
+        f.read_to_string(&mut contents).unwrap();
+    }
+    let new_content = contents.replace("{cl-decided}", tag_to_replace);
+    fs::write(adr_name, new_content)?;
+
+    Ok(())
+}
+
+pub fn completed_by(adr_name: &str, by: &str) -> io::Result<()> {
+    //manage the from
+    let completed_by = format!("{{cl-updated}} {}", by);
+    update_adr_file(adr_name, &completed_by)?;
+
+    //manage the by
+    let completes = format!("{{cl-completes}} {}", adr_name);
+    update_adr_file(by, &completes)?;
+
+    info!(get_logger(), "Decision Record [{}] has been completed by [{}]", adr_name, by);
 
     Ok(())
 }
