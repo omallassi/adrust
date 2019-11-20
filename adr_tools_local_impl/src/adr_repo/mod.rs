@@ -176,15 +176,26 @@ pub fn update_to_decided(adr_name: &str) -> io::Result<(bool)> {
 }
 
 pub fn superseded_by(adr_name: &str, by: &str) -> io::Result<()> {
-    //manage the from
-    let superseded_by = format!("{{cl-superseded}} {}", by);
-    update_adr_file(adr_name, &superseded_by)?;
+    //check the decisino is decided
+    let mut f = File::open(adr_name)?;
+    let mut contents = String::new();
+    f.read_to_string(&mut contents).unwrap();
+    match contents.contains("{cl-decided}") {
+        true => {
+            //manage the from
+            let superseded_by = format!("{{cl-superseded}} {}", by);
+            update_adr_file(adr_name, &superseded_by)?;
 
-    //manage the by
-    let supersed = format!("{{cl-supersedes}} {}", adr_name);
-    update_adr_file(by, &supersed)?;
+            //manage the by
+            let supersed = format!("{{cl-supersedes}} {}", adr_name);
+            update_adr_file(by, &supersed)?;
 
-    info!(get_logger(), "Decision Record [{}] has been superseded by [{}]", adr_name, by);
+            info!(get_logger(), "Decision Record [{}] has been superseded by [{}]", adr_name, by);
+        }
+        false => {
+            error!(get_logger(), "Decision Record [{}] has certainly not the right status and cannot be updated", adr_name);
+        }
+    }
 
     Ok(())
 }
