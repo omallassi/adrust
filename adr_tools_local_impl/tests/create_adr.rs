@@ -70,7 +70,7 @@ mod create_new_adr_steps {
             assert_eq!(expected_path.exists(), true);
             //
             let content: String = fs::read_to_string(expected_path).unwrap();
-            assert!(content.contains("{cl-wip}"));
+            assert!(content.contains("{wip}"));
         };
     });
 }
@@ -130,7 +130,7 @@ mod update_adr_decided_steps {
             let mut content = String::new();
             f.read_to_string(&mut content).unwrap();
 
-            assert_eq!(content.contains("{cl-wip}"), true);
+            assert_eq!(content.contains("{wip}"), true);
 
             let contains = adr_core::adr_repo::update_to_decided(&adr.name).unwrap();
             assert_eq!(contains, true);
@@ -143,7 +143,7 @@ mod update_adr_decided_steps {
             let mut content = String::new();
             f.read_to_string(&mut content).unwrap();
 
-            assert_eq!(content.contains("{cl-decided}"), true);
+            assert_eq!(content.contains("{decided}"), true);
         };
     });
 }
@@ -184,7 +184,7 @@ mod not_update_adr_decided_steps {
             let mut content = String::new();
             f.read_to_string(&mut content).unwrap();
 
-            assert_eq!(content.contains("{cl-superseded} /tmp/adr-samples/src/my-decision-2.adoc"), true);
+            assert_eq!(content.contains("{superseded} /tmp/adr-samples/src/my-decision-2.adoc"), true);
         };
     });
 }

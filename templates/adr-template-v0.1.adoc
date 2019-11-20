@@ -1,16 +1,16 @@
 // Include contents of docinfo.html
 :docinfo1:
-:cl-wip: pass:quotes[[.label.wip]#In Progress#]
-:cl-decided: pass:q[[.label.decided]#Decided#]
-:cl-updated: pass:q[[.label.updated]#Completed By#]
-:cl-completes: pass:q[[.label.updated]#Completes#]
-:cl-supersedes: pass:q[[.label.updated]#Supersedes#]
-:cl-obsoleted: pass:q[[.label.obsoleted]#Obsolete#]
-:cl-superseded: pass:q[[.label.obsoleted]#Superseded By#]
+:wip: pass:quotes[[.label.wip]#In Progress#]
+:decided: pass:q[[.label.decided]#Decided#]
+:completed: pass:q[[.label.updated]#Completed By#]
+:completes: pass:q[[.label.updated]#Completes#]
+:supersedes: pass:q[[.label.updated]#Supersedes#]
+:superseded: pass:q[[.label.obsoleted]#Superseded By#]
+:obsoleted: pass:q[[.label.obsoleted]#Obsolete#]
 
 == ADR-MVA-507 Decide about ...
 
-*Status:* {cl-wip}  *Date:* 2019-10-28
+*Status:* {wip}  *Date:* 2019-10-28
 
 [cols=",",options="header",%autowidth]
 |===

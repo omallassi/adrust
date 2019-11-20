@@ -93,7 +93,8 @@ fn is_hidden(entry: &DirEntry) -> bool {
 pub struct Adr {
     pub path: String,
     pub content: String, 
-    pub title: String, 
+    pub title: String,
+    pub status: String,  
     pub tags: String,
 }
 
@@ -145,12 +146,25 @@ fn build_adr(path: String, content: String) -> io::Result<(Adr)> {
         },
     };
 
+    //build the status
+    lazy_static! {
+        static ref RE_STATUS: Regex = Regex::new(r"\{(.+)\}").unwrap();
+    }
+    let status = match RE_STATUS.captures(&val) {
+        Some(val) => val[1].trim().to_string(), 
+        None => {
+            debug!(get_logger(), "Unable to get status from [{}]", path);
+            "None".to_string()
+        },
+    };
+
     //build the returned object
     let adr: Adr = Adr {
         path : path,
         content: content, 
         title: cap[1].to_string(), 
         tags: tags,
+        status: status,
     };
 
     Ok(adr)
@@ -162,9 +176,9 @@ pub fn update_to_decided(adr_name: &str) -> io::Result<(bool)> {
     let mut contents = String::new();
     f.read_to_string(&mut contents).unwrap();
 
-    let contains = contents.contains("{cl-wip}");
+    let contains = contents.contains("{wip}");
     if contains {
-        let new_content = contents.replace("{cl-wip}", "{cl-decided}");
+        let new_content = contents.replace("{wip}", "{decided}");
         fs::write(adr_name, new_content)?;
         info!(get_logger(), "Decision Record [{}] has been decided - Congrats!!", adr_name);
     }
@@ -180,14 +194,14 @@ pub fn superseded_by(adr_name: &str, by: &str) -> io::Result<()> {
     let mut f = File::open(adr_name)?;
     let mut contents = String::new();
     f.read_to_string(&mut contents).unwrap();
-    match contents.contains("{cl-decided}") {
+    match contents.contains("{decided}") {
         true => {
             //manage the from
-            let superseded_by = format!("{{cl-superseded}} {}", by);
+            let superseded_by = format!("{{superseded}} {}", by);
             update_adr_file(adr_name, &superseded_by)?;
 
             //manage the by
-            let supersed = format!("{{cl-supersedes}} {}", adr_name);
+            let supersed = format!("{{supersedes}} {}", adr_name);
             update_adr_file(by, &supersed)?;
 
             info!(get_logger(), "Decision Record [{}] has been superseded by [{}]", adr_name, by);
@@ -206,7 +220,7 @@ fn update_adr_file(adr_name: &str, tag_to_replace: &str) -> io::Result<()> {
         let mut f = File::open(adr_name)?;
         f.read_to_string(&mut contents).unwrap();
     }
-    let new_content = contents.replace("{cl-decided}", tag_to_replace);
+    let new_content = contents.replace("{decided}", tag_to_replace);
     fs::write(adr_name, new_content)?;
 
     Ok(())
@@ -217,14 +231,14 @@ pub fn completed_by(adr_name: &str, by: &str) -> io::Result<()> {
     let mut f = File::open(adr_name)?;
     let mut contents = String::new();
     f.read_to_string(&mut contents).unwrap();
-    match contents.contains("{cl-decided}") {
+    match contents.contains("{decided}") {
         true => {
             //manage the from
-            let completed_by = format!("{{cl-updated}} {}", by);
+            let completed_by = format!("{{updated}} {}", by);
             update_adr_file(adr_name, &completed_by)?;
 
             //manage the by
-            let completes = format!("{{cl-completes}} {}", adr_name);
+            let completes = format!("{{completes}} {}", adr_name);
             update_adr_file(by, &completes)?;
 
             info!(get_logger(), "Decision Record [{}] has been completed by [{}]", adr_name, by);
@@ -275,7 +289,7 @@ mod tests {
         let content = "
         == ADR-MVA-507 Decide about ...
         
-        *Status:* {cl-wip}  *Date:* 2019-10-28
+        *Status:* {wip}  *Date:* 2019-10-28
         ....
         
         tags::Application_1;Security;Deployment";
@@ -286,6 +300,7 @@ mod tests {
         assert_eq!(adr_sut.path, "a_path");
         assert_eq!(adr_sut.content, content.to_string());
         assert_eq!(adr_sut.tags, "Application_1;Security;Deployment");
+        assert_eq!(adr_sut.status, "wip");
     }
 
 
@@ -294,7 +309,7 @@ mod tests {
         let content = "
         == ADR-MVA-507 Decide about ...
         
-        *Status:* {cl-wip}  *Date:* 2019-10-28
+        *Status:* {wip}  *Date:* 2019-10-28
         ....";
 
         let adr_sut = super::build_adr("a_path".to_string(), content.to_string()).unwrap();

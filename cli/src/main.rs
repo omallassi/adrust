@@ -39,10 +39,10 @@ pub fn list_all_adr() -> io::Result<()> {
 
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
-    table.set_titles(row![b -> "Title", b -> "File", b -> "Tags"]);
+    table.set_titles(row![b -> "Title", b-> "Status", b -> "File", b -> "Tags"]);
     for entry in adr_core::adr_repo::list_all_adr(&cfg.adr_src_dir)? {
         // table.add_row(row![cap[1].to_string(), entry, tags]);
-        table.add_row(row![entry.title, entry.path, entry.tags]);
+        table.add_row(row![entry.title, entry.status, entry.path, entry.tags]);
     }
     
     // Print the table to stdout
