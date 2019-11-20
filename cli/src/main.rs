@@ -6,9 +6,6 @@ use std::fs;
 use std::io::{self};
 use std::path::Path;
 
-extern crate regex;
-use regex::Regex;
-
 #[macro_use] extern crate prettytable;
 use prettytable::{Table};
 use prettytable::format;
@@ -45,31 +42,8 @@ pub fn list_all_adr() -> io::Result<()> {
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
     table.set_titles(row![b -> "Title", b -> "File", b -> "Tags"]);
     for entry in adr_core::adr_repo::list_all_adr(&cfg.adr_src_dir)? {
-        //read the content 
-        let content: String = fs::read_to_string(&entry)?;
-        lazy_static! {
-            static ref RE: Regex = Regex::new(r"== (.+)").unwrap();
-        }
-        let cap = match RE.captures(&content) {
-            Some(val) => val, 
-            None => {
-                error!(get_logger(), "Unable to get title from [{}]", &entry);
-                panic!();
-            },
-        };
-
-        lazy_static! {
-            static ref RE_TAGS: Regex = Regex::new(r"tags::(.+)").unwrap();
-        }
-        let tags = match RE_TAGS.captures(&content) {
-            Some(val) => val[1].to_string(), 
-            None => {
-                debug!(get_logger(), "Unable to get tags from [{}]", &entry);
-                "None".to_string()
-            },
-        };
-
-        table.add_row(row![cap[1].to_string(), entry, tags]);
+        // table.add_row(row![cap[1].to_string(), entry, tags]);
+        table.add_row(row![entry.title, entry.path, entry.tags]);
     }
     
     // Print the table to stdout
@@ -133,22 +107,7 @@ fn list_all_tags() -> Result<()> {
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
     table.set_titles(row![b -> "Tags"]);
     for entry in adr_core::adr_repo::list_all_adr(&cfg.adr_src_dir)? {
-        //read the content 
-        let content: String = fs::read_to_string(&entry).unwrap();
-        lazy_static! {
-            static ref RE_TAGS: Regex = Regex::new(r"tags::(.+)").unwrap();
-        }
-        let tags = match RE_TAGS.captures(&content) {
-            Some(val) => {
-                val[1].to_string()
-            }, 
-            None => {
-                debug!(get_logger(), "Unable to get tags from [{}]", &entry);
-                "".to_string()
-            },
-        };
-
-        table.add_row(row![tags]);
+        table.add_row(row![entry.tags]);
     }
     
     // Print the table to stdout

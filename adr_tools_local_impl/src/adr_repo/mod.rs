@@ -90,7 +90,14 @@ fn is_hidden(entry: &DirEntry) -> bool {
         .unwrap_or(false)
 }
 
-pub fn list_all_adr(dir: &str) -> io::Result<(Vec<String>)> {
+pub struct Adr {
+    pub path: String,
+    pub content: String, 
+    pub title: String, 
+    pub tags: String,
+}
+
+pub fn list_all_adr(dir: &str) -> io::Result<(Vec<Adr>)> {
     let mut results = std::vec::Vec::new();
 
     if Path::new(dir).is_dir() {
@@ -99,13 +106,54 @@ pub fn list_all_adr(dir: &str) -> io::Result<(Vec<String>)> {
             let entry = entry?;
             let metadata = entry.metadata().unwrap();
             if metadata.is_file() {
-                let path = entry.path().display();
-                results.push(format!("{}", &path));
+                let content: String = fs::read_to_string(entry.path()).unwrap();
+                let adr = build_adr(String::from(entry.path().to_str().unwrap()), content)?;
+                results.push(adr);
+                //
+                //let path = entry.path().display();
+                //results.push(format!("{}", &path));
             }
         }        
     }
 
     Ok(results)
+}
+
+fn build_adr(path: String, content: String) -> io::Result<(Adr)> {
+    //get the title
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"== (.+)").unwrap();
+    }
+    let val = String::from(&content);
+    let cap = match RE.captures(&val) {
+        Some(val) => val, 
+        None => {
+            error!(get_logger(), "Unable to get title from [{}]", path);
+            panic!();
+        },
+    };
+
+    //build the tags
+    lazy_static! {
+        static ref RE_TAGS: Regex = Regex::new(r"tags::(.+)").unwrap();
+    }
+    let tags = match RE_TAGS.captures(&val) {
+        Some(val) => val[1].to_string(), 
+        None => {
+            debug!(get_logger(), "Unable to get tags from [{}]", path);
+            "None".to_string()
+        },
+    };
+
+    //build the returned object
+    let adr: Adr = Adr {
+        path : path,
+        content: content, 
+        title: cap[1].to_string(), 
+        tags: tags,
+    };
+
+    Ok(adr)
 }
 
 pub fn update_to_decided(adr_name: &str) -> io::Result<(bool)> {
@@ -190,5 +238,40 @@ mod tests {
         assert_eq!(name, "my-decision");
         let name = super::format_decision_name("my Decision").unwrap();
         assert_eq!(name, "my-decision");
+    }
+
+    #[test]
+    fn test_build_adr() {
+        let content = "
+        == ADR-MVA-507 Decide about ...
+        
+        *Status:* {cl-wip}  *Date:* 2019-10-28
+        ....
+        
+        tags::Application_1;Security;Deployment";
+
+        let adr_sut = super::build_adr("a_path".to_string(), content.to_string()).unwrap();
+
+        assert_eq!(adr_sut.title, "ADR-MVA-507 Decide about ...");
+        assert_eq!(adr_sut.path, "a_path");
+        assert_eq!(adr_sut.content, content.to_string());
+        assert_eq!(adr_sut.tags, "Application_1;Security;Deployment");
+    }
+
+
+    #[test]
+    fn test_build_adr_wo_tags() {
+        let content = "
+        == ADR-MVA-507 Decide about ...
+        
+        *Status:* {cl-wip}  *Date:* 2019-10-28
+        ....";
+
+        let adr_sut = super::build_adr("a_path".to_string(), content.to_string()).unwrap();
+
+        assert_eq!(adr_sut.title, "ADR-MVA-507 Decide about ...");
+        assert_eq!(adr_sut.path, "a_path");
+        assert_eq!(adr_sut.content, content.to_string());
+        assert_eq!(adr_sut.tags, "None");
     }
 }
