@@ -39,8 +39,16 @@ pub fn create_adr(name: &str, templates_dir: &Path, src_dir: &Path) -> io::Resul
     let target_path = src_dir.join(format!("{}.adoc", name));
     let is_target_file = target_path.is_file();
     if !is_target_file {
-        fs::copy(templates_dir.join("adr-template-v0.1.adoc"), &target_path)?;
-        info!(get_logger(), "New ADR {:?} created", target_path);
+        let path_to_template = templates_dir.join("adr-template-v0.1.adoc");
+        match path_to_template.exists() {
+            true => {
+                fs::copy(path_to_template, &target_path)?;
+                info!(get_logger(), "New ADR {:?} created", target_path);
+            },
+            false => {
+                error!(get_logger(), "[{}] was not found", "adr-template-v0.1.adoc" );
+            }
+        }
     }
     else {
         error!(get_logger(), "Decision already exists. Please use another name", );
@@ -85,7 +93,6 @@ fn is_hidden(entry: &DirEntry) -> bool {
 pub fn list_all_adr(dir: &str) -> io::Result<(Vec<String>)> {
     let mut results = std::vec::Vec::new();
 
-    
     if Path::new(dir).is_dir() {
         let walker = WalkDir::new(dir).into_iter();
         for entry in walker.filter_entry( |e| !is_hidden(e) ) {
@@ -106,6 +113,7 @@ pub fn update_to_decided(adr_name: &str) -> io::Result<(bool)> {
 
     let mut contents = String::new();
     f.read_to_string(&mut contents).unwrap();
+
     let contains = contents.contains("{cl-wip}");
     if contains {
         let new_content = contents.replace("{cl-wip}", "{cl-decided}");

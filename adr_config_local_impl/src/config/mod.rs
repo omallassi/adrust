@@ -12,7 +12,7 @@ impl ::std::default::Default for AdrToolConfig {
             adr_root_dir: "/tmp/adr-samples".to_string(), 
             adr_src_dir: "/tmp/adr-samples/src".to_string(),
             adr_template_dir: "/tmp/adr-samples/templates".to_string(),
-            log_level: 2,
+            log_level: 4, //info
         }
     }
 }
