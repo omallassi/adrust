@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/omallassi/adrust.svg?branch=master)](https://travis-ci.org/omallassi/adrust)
+
 # ADRust : adr-tools in Rust
 
 The idea is to provide a cli to managed ADR. One more? yes...reality is that was mostly an excuse to play with `Rust`. 
