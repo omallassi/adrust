@@ -7,7 +7,7 @@ use std::io::{self};
 use std::path::Path;
 
 #[macro_use] extern crate prettytable;
-use prettytable::{Table};
+use prettytable::{Table, Row, Cell};
 use prettytable::format;
 
 extern crate lazy_static;
@@ -41,8 +41,17 @@ pub fn list_all_adr() -> io::Result<()> {
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
     table.set_titles(row![b -> "Title", b-> "Status", b -> "File", b -> "Tags"]);
     for entry in adr_core::adr_repo::list_all_adr(&cfg.adr_src_dir)? {
-        // table.add_row(row![cap[1].to_string(), entry, tags]);
-        table.add_row(row![entry.title, entry.status, entry.path, entry.tags]);
+        //table.add_row(row![entry.title, Fg->entry.status, entry.path, entry.tags]);
+        let style = match entry.status.as_ref() {
+            "wip" => "Fy",
+            "decided" => "Fg",
+            _ => "Fr"
+        };
+        table.add_row(Row::new(vec![
+            Cell::new(&entry.title),
+            Cell::new(&entry.status).style_spec(style),
+            Cell::new(&entry.path),
+            Cell::new(&entry.tags)]));
     }
     
     // Print the table to stdout
