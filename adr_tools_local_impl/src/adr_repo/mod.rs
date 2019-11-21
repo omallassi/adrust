@@ -90,11 +90,39 @@ fn is_hidden(entry: &DirEntry) -> bool {
         .unwrap_or(false)
 }
 
+#[derive(Debug,PartialEq)]
+pub enum Status {
+    WIP,
+    DECIDED, 
+    OBSOLETED,
+    NONE,
+}
+
+impl Status {
+    pub fn as_str(&self) -> &'static str {
+        match *self {
+            Status::DECIDED => "decided",
+            Status::WIP => "wip",
+            Status::OBSOLETED => "obsoleted",
+            Status::NONE => "unknown",
+        }
+    }
+
+    fn from_str(val: String) -> Status {
+        match val.as_str() {
+            "decided" => Status::DECIDED,
+            "wip" => Status::WIP,
+            "obsoleted" => Status::OBSOLETED,
+            _ => Status::NONE,
+        }
+    }
+}
+
 pub struct Adr {
     pub path: String,
     pub content: String, 
     pub title: String,
-    pub status: String,  
+    pub status: Status,  
     pub tags: String,
 }
 
@@ -110,9 +138,6 @@ pub fn list_all_adr(dir: &str) -> io::Result<(Vec<Adr>)> {
                 let content: String = fs::read_to_string(entry.path()).unwrap();
                 let adr = build_adr(String::from(entry.path().to_str().unwrap()), content)?;
                 results.push(adr);
-                //
-                //let path = entry.path().display();
-                //results.push(format!("{}", &path));
             }
         }        
     }
@@ -164,7 +189,7 @@ fn build_adr(path: String, content: String) -> io::Result<(Adr)> {
         content: content, 
         title: cap[1].to_string(), 
         tags: tags,
-        status: status,
+        status: Status::from_str(status),
     };
 
     Ok(adr)
@@ -253,6 +278,7 @@ pub fn completed_by(adr_name: &str, by: &str) -> io::Result<()> {
 
 #[cfg(test)]
 mod tests {
+
     #[test]
     fn test_get_seq() {
         let seq = super::extract_seq_id("01-my-decision.adoc").unwrap();
@@ -300,7 +326,7 @@ mod tests {
         assert_eq!(adr_sut.path, "a_path");
         assert_eq!(adr_sut.content, content.to_string());
         assert_eq!(adr_sut.tags, "Application_1;Security;Deployment");
-        assert_eq!(adr_sut.status, "wip");
+        assert_eq!(adr_sut.status, super::Status::WIP);
     }
 
 

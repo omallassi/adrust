@@ -18,6 +18,7 @@ use clap::{Arg, App, SubCommand, AppSettings};
 extern crate dirs;
 
 extern crate adr_core;
+use adr_core::adr_repo::{Status};
 extern crate adr_config;
 use adr_config::config::AdrToolConfig;
 
@@ -42,14 +43,14 @@ pub fn list_all_adr() -> io::Result<()> {
     table.set_titles(row![b -> "Title", b-> "Status", b -> "File", b -> "Tags"]);
     for entry in adr_core::adr_repo::list_all_adr(&cfg.adr_src_dir)? {
         //table.add_row(row![entry.title, Fg->entry.status, entry.path, entry.tags]);
-        let style = match entry.status.as_ref() {
-            "wip" => "Fy",
-            "decided" => "Fg",
+        let style = match entry.status {
+            Status::WIP => "Fy",
+            Status::DECIDED => "Fg",
             _ => "Fr"
         };
         table.add_row(Row::new(vec![
             Cell::new(&entry.title),
-            Cell::new(&entry.status).style_spec(style),
+            Cell::new(&entry.status.as_str()).style_spec(style),
             Cell::new(&entry.path),
             Cell::new(&entry.tags)]));
     }
