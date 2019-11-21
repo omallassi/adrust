@@ -94,6 +94,10 @@ fn is_hidden(entry: &DirEntry) -> bool {
 pub enum Status {
     WIP,
     DECIDED, 
+    COMPLETED,
+    COMPLETES,
+    SUPERSEDED, 
+    SUPERSEDES,
     OBSOLETED,
     NONE,
 }
@@ -101,8 +105,12 @@ pub enum Status {
 impl Status {
     pub fn as_str(&self) -> &'static str {
         match *self {
-            Status::DECIDED => "decided",
             Status::WIP => "wip",
+            Status::DECIDED => "decided",
+            Status::COMPLETED => "completed",
+            Status::COMPLETES => "completes",
+            Status::SUPERSEDED => "superseded",
+            Status::SUPERSEDES => "supersedes",
             Status::OBSOLETED => "obsoleted",
             Status::NONE => "unknown",
         }
@@ -110,8 +118,12 @@ impl Status {
 
     fn from_str(val: String) -> Status {
         match val.as_str() {
-            "decided" => Status::DECIDED,
             "wip" => Status::WIP,
+            "decided" => Status::DECIDED,
+            "completed" => Status::COMPLETED,
+            "completes" => Status::COMPLETES,
+            "superseded" => Status::SUPERSEDED,
+            "supersedes" => Status::SUPERSEDES,
             "obsoleted" => Status::OBSOLETED,
             _ => Status::NONE,
         }
@@ -259,7 +271,7 @@ pub fn completed_by(adr_name: &str, by: &str) -> io::Result<()> {
     match contents.contains("{decided}") {
         true => {
             //manage the from
-            let completed_by = format!("{{updated}} {}", by);
+            let completed_by = format!("{{completed}} {}", by);
             update_adr_file(adr_name, &completed_by)?;
 
             //manage the by
