@@ -61,8 +61,24 @@ In more details,
 For now, template should be in _asciidoc_. Look at `./templates/adr-temaplate-v0.1.adoc` (in particularly the header) for more details. ADR lifecycle is managed based on the `cl-*` information (available in template headers).
 
 ## Tags
-There is a beta support for tags. You can add this `tags::Application_1;Security;Deployment` to your template / decision.
-This tags, if available, will be used in `adr list` and `adr tags ...`
+There is a beta support for tags. These tags, if available, will be used in `adr list` and `adr tags ...`
+
+You can specify your tags directly (and anywhere) into the `.adoc` document, the following way
+```
+[tags]#deployment view# [tags]#network# [tags]#security#
+```
+
+It has nothing to do with `adrust` but you can also enrich you `Asciidoctor CSS` with a style for your `tags`. For instance: 
+```
+.tags {
+    color: #fff;
+    padding: .1em .5em .2em;
+    font-weight: 500;
+    border-radius: .25em;
+    font-size: 90%;
+    background-color: #aaa6a6;
+}
+```
 
 ## Log 
 `adr config list` will show the [Level](https://docs.rs/slog/2.5.2/slog/enum.Level.html#method.as_usize) as defined in [slog](https://docs.rs/slog/2.5.2/slog/). 

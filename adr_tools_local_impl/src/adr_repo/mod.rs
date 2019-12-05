@@ -6,6 +6,7 @@ use std::fs::{self, File};
 use std::io::{self};
 use std::io::prelude::*;
 use std::path::Path;
+use std::fmt::Write;
 
 extern crate regex;
 use regex::Regex;
@@ -171,17 +172,8 @@ fn build_adr(path: String, content: String) -> io::Result<(Adr)> {
         },
     };
 
-    //build the tags
-    lazy_static! {
-        static ref RE_TAGS: Regex = Regex::new(r"tags::(.+)").unwrap();
-    }
-    let tags = match RE_TAGS.captures(&val) {
-        Some(val) => val[1].to_string(), 
-        None => {
-            debug!(get_logger(), "Unable to get tags from [{}]", path);
-            "None".to_string()
-        },
-    };
+    //build the tags 
+    let tags = get_tags(&val);
 
     //build the status
     lazy_static! {
@@ -205,6 +197,19 @@ fn build_adr(path: String, content: String) -> io::Result<(Adr)> {
     };
 
     Ok(adr)
+}
+
+fn get_tags(val: &String) -> String {
+    lazy_static! {
+        static ref RE_TAGS: Regex = Regex::new(r"(\[tags]\#([^#]+)\#)").unwrap();
+    }
+
+    let mut tags = String::from("");
+    for cap in RE_TAGS.captures_iter(val) {
+        write!(tags, "{}, ", &cap[2]).unwrap();
+    }
+
+    tags
 }
 
 pub fn update_to_decided(adr_name: &str) -> io::Result<(bool)> {
@@ -330,14 +335,14 @@ mod tests {
         *Status:* {wip}  *Date:* 2019-10-28
         ....
         
-        tags::Application_1;Security;Deployment";
+        [tags]#deployment view# [tags]#network# [tags]#security#";
 
         let adr_sut = super::build_adr("a_path".to_string(), content.to_string()).unwrap();
 
         assert_eq!(adr_sut.title, "ADR-MVA-507 Decide about ...");
         assert_eq!(adr_sut.path, "a_path");
         assert_eq!(adr_sut.content, content.to_string());
-        assert_eq!(adr_sut.tags, "Application_1;Security;Deployment");
+        assert_eq!(adr_sut.tags, "deployment view, network, security, ");
         assert_eq!(adr_sut.status, super::Status::WIP);
     }
 
@@ -355,6 +360,6 @@ mod tests {
         assert_eq!(adr_sut.title, "ADR-MVA-507 Decide about ...");
         assert_eq!(adr_sut.path, "a_path");
         assert_eq!(adr_sut.content, content.to_string());
-        assert_eq!(adr_sut.tags, "None");
+        assert_eq!(adr_sut.tags, "");
     }
 }
