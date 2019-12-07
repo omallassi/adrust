@@ -21,6 +21,8 @@ extern crate adr_core;
 use adr_core::adr_repo::{Status};
 extern crate adr_config;
 use adr_config::config::AdrToolConfig;
+extern crate adr_search;
+use adr_search::search::*;
 
 fn get_logger() -> slog::Logger {
     let cfg: AdrToolConfig = adr_config::config::get_config();
@@ -241,12 +243,11 @@ fn main() {
                 .required(true)
                 .help("Give the name of the DR which completes"))
             )
+        .subcommand(SubCommand::with_name("search")
+            .about("Beta")
+            .version("0.1.0")
+        )
         .get_matches();
-
- 
-    if let Some(_options) = _options.subcommand_matches("completed-by") {
-        
-    }  
 
     //
     match _options.subcommand() {
@@ -294,6 +295,9 @@ fn main() {
                 }
                 _ => unreachable!(),
             } 
+        }
+        ("search", Some(search_matches)) => {
+            adr_search::search::test_search();
         }
     
         ("", None) => println!("No subcommand was used"), // If no subcommand was usd it'll match the tuple ("", None)

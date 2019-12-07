@@ -1,0 +1,9 @@
+[package]
+name = "adr_search"
+version = "0.1.0"
+authors = ["MALLASSI Olivier <Olivier.MALLASSI@murex.com>"]
+edition = "2018"
+
+[dependencies]
+tantivy = "0.10.3"
+tempdir = "0.3.7"
