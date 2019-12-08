@@ -49,7 +49,7 @@ In more details,
 | Command        | Description           |
 | ------------- | ------------- |
 | `adr list`      | will list all the Decision Record, Title and Tags |
-| `adr config list`     | will list the configuration. Configuration is stored in [config_dir](https://docs.rs/directories/2.0.2/directories/struct.ProjectDirs.html#method.config_dir) |
+| `adr config list`     | will list the configuration. Configuration is stored in [config_dir](https://docs.rs/directories/2.0.2/directories/struct.ProjectDirs.html#method.config_dir)`/rs.adrust-tools.adrust-tools/` (so on MacOs `$HOME/Library/Preferences/rs.adrust-tools.adrust-tools/`)
 | `adr config set --name prop --value val`      | will set the configuration property |
 | `adr new --name my-decision`      | will create a new decision  |
 | `adr decided --name my-decision.md`      | will transition an ADR to decided |
@@ -83,3 +83,7 @@ It has nothing to do with `adrust` but you can also enrich you `Asciidoctor CSS`
 ## Log 
 `adr config list` will show the [Level](https://docs.rs/slog/2.5.2/slog/enum.Level.html#method.as_usize) as defined in [slog](https://docs.rs/slog/2.5.2/slog/). 
 To set the log level to Debug `adr config set --name log_level --value 6`
+
+## Trouleshoot
+
+* it may happen that `config`object evolves between commits and create issues. The usual symptoms are to get a `panic`when running `adr config list`or `adr init`, specifying that property `adr_....`cannot be found. In this case, the easiest is to run `rm $HOME/Library/Preferences/rs.adrust-tools.adrust-tools/adrust-tools.toml`. This will yet fallback to default values...
