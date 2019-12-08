@@ -136,7 +136,7 @@ fn list_all_tags() -> Result<()> {
 }
 
 /**
- * //TODO init based on config
+ * init based on config
  */
 fn init() -> Result<()> {
     adr_config::config::init()
