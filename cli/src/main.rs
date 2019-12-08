@@ -2,7 +2,6 @@ extern crate slog;
 extern crate slog_term;
 use slog::*;
 
-use std::fs;
 use std::io::{self};
 use std::path::Path;
 
@@ -140,29 +139,7 @@ fn list_all_tags() -> Result<()> {
  * //TODO init based on config
  */
 fn init() -> Result<()> {
-    let cfg: AdrToolConfig = adr_config::config::get_config();
-    let path = String::from(cfg.adr_root_dir);
-    fs::create_dir_all(&path)?;
-    info!(get_logger(), "[{}] created]", path);
-
-    let path = String::from(cfg.adr_src_dir);
-    fs::create_dir_all(&path)?;
-    info!(get_logger(), "[{}] created]", path);
-
-    let path = String::from(cfg.adr_template_dir);
-    fs::create_dir_all(&path)?;
-    info!(get_logger(), "[{}] created]", &path);
-
-    let path = String::from(cfg.adr_search_index);
-    fs::create_dir_all(&path)?;
-    info!(get_logger(), "[{}] created]", &path);
-
-    fs::copy(
-        "./templates/adr-template-v0.1.adoc",
-        format!("{}/adr-template-v0.1.adoc", &path),
-    )?;
-
-    Ok(())
+    adr_config::config::init()
 }
 
 fn main() {
