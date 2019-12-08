@@ -67,32 +67,8 @@ pub fn list_all_adr() -> io::Result<()> {
     Ok(())
 }
 
-//TODO need to find a proper way to map to the config struct
 fn set_config(name: &str, value: &str) -> Result<()> {
-    let mut cfg: AdrToolConfig = adr_config::config::get_config();
-    if "adr_root_dir" == name {
-        let val = String::from(value);
-        cfg.adr_root_dir = val;
-
-        let mut val = String::from(value);
-        val.push_str("/src");
-        cfg.adr_src_dir = val;
-
-        let mut val = String::from(value);
-        val.push_str("/templates");
-        cfg.adr_template_dir = val;
-
-        let mut val = String::from(value);
-        val.push_str("/.index");
-        cfg.adr_template_dir = val;
-    }
-    if "log_level" == name {
-        cfg.log_level = value.parse().unwrap();
-    }
-
-    adr_config::config::store(cfg);
-
-    Ok(())
+    adr_config::config::set_config(name, value)
 }
 
 /**
