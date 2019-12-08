@@ -1,4 +1,4 @@
-use cucumber::{cucumber, before, after};
+use cucumber::{after, before, cucumber};
 
 extern crate directories;
 use directories::ProjectDirs;
@@ -26,12 +26,15 @@ mod helper {
     pub fn create_decision(name: &str) -> io::Result<(bool)> {
         let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool", "test") {
             None => panic!("issue while preparing test"),
-            Some(project_dirs) => project_dirs
+            Some(project_dirs) => project_dirs,
         };
 
-        Ok(adr_core::adr_repo::create_adr(name, 
-            project_dirs.cache_dir().join("templates").as_path(), 
-            project_dirs.cache_dir().join("src").as_path()).unwrap())
+        Ok(adr_core::adr_repo::create_adr(
+            name,
+            project_dirs.cache_dir().join("templates").as_path(),
+            project_dirs.cache_dir().join("src").as_path(),
+        )
+        .unwrap())
     }
 }
 
@@ -210,16 +213,15 @@ after!(an_after_fn => |_scenario| {
 
 fn setup() {}
 
-
-cucumber!{
+cucumber! {
     features: "./features/create_adr",
     world: crate::Adr,
     steps: &[
-        create_new_adr_steps::steps, 
+        create_new_adr_steps::steps,
         create_already_adr_steps::steps,
-        update_adr_decided_steps::steps, 
+        update_adr_decided_steps::steps,
         not_update_adr_decided_steps::steps,
-    ], 
+    ],
     setup: setup,
     before: &[a_before_fn],
     after: &[an_after_fn]

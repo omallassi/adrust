@@ -6,6 +6,11 @@ use tantivy::Index;
 use tantivy::ReloadPolicy;
 use tempdir::TempDir;
 
+pub fn build_index() -> Result<(), ()> {
+    println!("build_index");
+    Ok(())
+}
+
 pub fn test_search() -> Result<(), ()> {
     println!("et hop");
 
@@ -15,9 +20,8 @@ pub fn test_search() -> Result<(), ()> {
 }
 
 fn use_tantivy() -> tantivy::Result<()> {
-
     let index_path = TempDir::new("tantivy_example_dir")?;
-    
+
     let mut schema_builder = Schema::builder();
     schema_builder.add_text_field("title", TEXT | STORED);
     schema_builder.add_text_field("body", TEXT);
@@ -39,7 +43,7 @@ fn use_tantivy() -> tantivy::Result<()> {
                 debris of the winter’s flooding; and sycamores with mottled, white, recumbent \
                 limbs and branches that arch over the pool"
     ));
-    
+
     index_writer.add_document(doc!(
     title => "Of Mice and Men",
     body => "A few miles south of Soledad, the Salinas River drops in close to the hillside \
@@ -60,7 +64,7 @@ fn use_tantivy() -> tantivy::Result<()> {
                  yesterday, and my first task is to assure my dear sister of my welfare and \
                  increasing confidence in the success of my undertaking."
     ));
-        
+
     index_writer.commit()?;
 
     let reader = index

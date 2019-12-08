@@ -2,11 +2,11 @@ extern crate slog;
 extern crate slog_term;
 use slog::*;
 
-use std::fs::{self, File};
-use std::io::{self};
-use std::io::prelude::*;
-use std::path::Path;
 use std::fmt::Write;
+use std::fs::{self, File};
+use std::io::prelude::*;
+use std::io::{self};
+use std::path::Path;
 
 extern crate regex;
 use regex::Regex;
@@ -18,11 +18,15 @@ use adr_config::config::AdrToolConfig;
 
 fn get_logger() -> slog::Logger {
     let cfg: AdrToolConfig = adr_config::config::get_config();
-    
+
     let decorator = slog_term::TermDecorator::new().build();
     let drain = slog_term::FullFormat::new(decorator).build().fuse();
     let drain = slog_async::Async::new(drain).build().fuse();
-    let drain = slog::LevelFilter::new(drain, Level::from_usize(cfg.log_level).unwrap_or(Level::Debug)).fuse();
+    let drain = slog::LevelFilter::new(
+        drain,
+        Level::from_usize(cfg.log_level).unwrap_or(Level::Debug),
+    )
+    .fuse();
 
     let log = slog::Logger::root(drain, o!());
 
@@ -30,7 +34,7 @@ fn get_logger() -> slog::Logger {
 }
 
 ///
-/// Creates the file (based on template file). Returns true if file is created, false if not 
+/// Creates the file (based on template file). Returns true if file is created, false if not
 /// (because target file already exists...)
 pub fn create_adr(name: &str, templates_dir: &Path, src_dir: &Path) -> io::Result<(bool)> {
     let name = match format_decision_name(name) {
@@ -45,14 +49,16 @@ pub fn create_adr(name: &str, templates_dir: &Path, src_dir: &Path) -> io::Resul
             true => {
                 fs::copy(path_to_template, &target_path)?;
                 info!(get_logger(), "New ADR {:?} created", target_path);
-            },
+            }
             false => {
-                error!(get_logger(), "[{}] was not found", "adr-template-v0.1.adoc" );
+                error!(get_logger(), "[{}] was not found", "adr-template-v0.1.adoc");
             }
         }
-    }
-    else {
-        error!(get_logger(), "Decision already exists. Please use another name", );
+    } else {
+        error!(
+            get_logger(),
+            "Decision already exists. Please use another name",
+        );
     }
 
     Ok(!is_target_file)
@@ -64,11 +70,11 @@ fn extract_seq_id(name: &str) -> Result<(usize)> {
     }
 
     let cap = match RE.captures(name) {
-        Some(val) => val, 
+        Some(val) => val,
         None => {
             error!(get_logger(), "Unable to extract_seq_id from [{}]", name);
             panic!();
-        },
+        }
     };
 
     debug!(get_logger(), "found first match [{}]", cap[0].to_string());
@@ -85,19 +91,20 @@ pub fn format_decision_name(name: &str) -> Result<(String)> {
 }
 
 fn is_hidden(entry: &DirEntry) -> bool {
-    entry.file_name()
+    entry
+        .file_name()
         .to_str()
         .map(|s| s.starts_with("."))
         .unwrap_or(false)
 }
 
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Status {
     WIP,
-    DECIDED, 
+    DECIDED,
     COMPLETED,
     COMPLETES,
-    SUPERSEDED, 
+    SUPERSEDED,
     SUPERSEDES,
     OBSOLETED,
     NONE,
@@ -133,9 +140,9 @@ impl Status {
 
 pub struct Adr {
     pub path: String,
-    pub content: String, 
+    pub content: String,
     pub title: String,
-    pub status: Status,  
+    pub status: Status,
     pub tags: String,
 }
 
@@ -144,7 +151,7 @@ pub fn list_all_adr(dir: &str) -> io::Result<(Vec<Adr>)> {
 
     if Path::new(dir).is_dir() {
         let walker = WalkDir::new(dir).into_iter();
-        for entry in walker.filter_entry( |e| !is_hidden(e) ) {
+        for entry in walker.filter_entry(|e| !is_hidden(e)) {
             let entry = entry?;
             let metadata = entry.metadata().unwrap();
             if metadata.is_file() {
@@ -152,7 +159,7 @@ pub fn list_all_adr(dir: &str) -> io::Result<(Vec<Adr>)> {
                 let adr = build_adr(String::from(entry.path().to_str().unwrap()), content)?;
                 results.push(adr);
             }
-        }        
+        }
     }
 
     Ok(results)
@@ -165,14 +172,14 @@ fn build_adr(path: String, content: String) -> io::Result<(Adr)> {
     }
     let val = String::from(&content);
     let cap = match RE.captures(&val) {
-        Some(val) => val, 
+        Some(val) => val,
         None => {
             error!(get_logger(), "Unable to get title from [{}]", path);
             panic!();
-        },
+        }
     };
 
-    //build the tags 
+    //build the tags
     let tags = get_tags(&val);
 
     //build the status
@@ -180,18 +187,18 @@ fn build_adr(path: String, content: String) -> io::Result<(Adr)> {
         static ref RE_STATUS: Regex = Regex::new(r"\{(.+)\}").unwrap();
     }
     let status = match RE_STATUS.captures(&val) {
-        Some(val) => val[1].trim().to_string(), 
+        Some(val) => val[1].trim().to_string(),
         None => {
             debug!(get_logger(), "Unable to get status from [{}]", path);
             "None".to_string()
-        },
+        }
     };
 
     //build the returned object
     let adr: Adr = Adr {
-        path : path,
-        content: content, 
-        title: cap[1].to_string(), 
+        path: path,
+        content: content,
+        title: cap[1].to_string(),
         tags: tags,
         status: Status::from_str(status),
     };
@@ -222,10 +229,16 @@ pub fn update_to_decided(adr_name: &str) -> io::Result<(bool)> {
     if contains {
         let new_content = contents.replace("{wip}", "{decided}");
         fs::write(adr_name, new_content)?;
-        info!(get_logger(), "Decision Record [{}] has been decided - Congrats!!", adr_name);
-    }
-    else {
-        error!(get_logger(), "Decision Record [{}] has certainly not the right status and cannot be updated", adr_name);
+        info!(
+            get_logger(),
+            "Decision Record [{}] has been decided - Congrats!!", adr_name
+        );
+    } else {
+        error!(
+            get_logger(),
+            "Decision Record [{}] has certainly not the right status and cannot be updated",
+            adr_name
+        );
     }
 
     Ok(contains)
@@ -246,10 +259,17 @@ pub fn superseded_by(adr_name: &str, by: &str) -> io::Result<()> {
             let supersed = format!("{{supersedes}} {}", adr_name);
             update_adr_file(by, &supersed)?;
 
-            info!(get_logger(), "Decision Record [{}] has been superseded by [{}]", adr_name, by);
-        },
+            info!(
+                get_logger(),
+                "Decision Record [{}] has been superseded by [{}]", adr_name, by
+            );
+        }
         false => {
-            error!(get_logger(), "Decision Record [{}] has certainly not the right status and cannot be updated", adr_name);
+            error!(
+                get_logger(),
+                "Decision Record [{}] has certainly not the right status and cannot be updated",
+                adr_name
+            );
         }
     }
 
@@ -283,10 +303,17 @@ pub fn completed_by(adr_name: &str, by: &str) -> io::Result<()> {
             let completes = format!("{{completes}} {}", adr_name);
             update_adr_file(by, &completes)?;
 
-            info!(get_logger(), "Decision Record [{}] has been completed by [{}]", adr_name, by);
-        }, 
+            info!(
+                get_logger(),
+                "Decision Record [{}] has been completed by [{}]", adr_name, by
+            );
+        }
         false => {
-            error!(get_logger(), "Decision Record [{}] has certainly not the right status and cannot be updated", adr_name);
+            error!(
+                get_logger(),
+                "Decision Record [{}] has certainly not the right status and cannot be updated",
+                adr_name
+            );
         }
     }
 
@@ -310,10 +337,12 @@ mod tests {
         assert_eq!(seq, 1);
         let seq = super::extract_seq_id("00000001-my-decision-594-full.adoc").unwrap();
         assert_eq!(seq, 1);
-        let seq = super::extract_seq_id("mypath/00000001/00000002-my-decision-594-full.adoc").unwrap();
+        let seq =
+            super::extract_seq_id("mypath/00000001/00000002-my-decision-594-full.adoc").unwrap();
         assert_eq!(seq, 1);
 
-        let result = std::panic::catch_unwind(|| super::extract_seq_id("path/my-decision-full.adoc"));
+        let result =
+            std::panic::catch_unwind(|| super::extract_seq_id("path/my-decision-full.adoc"));
         assert!(result.is_err());
     }
 
@@ -345,7 +374,6 @@ mod tests {
         assert_eq!(adr_sut.tags, "deployment view, network, security, ");
         assert_eq!(adr_sut.status, super::Status::WIP);
     }
-
 
     #[test]
     fn test_build_adr_wo_tags() {

@@ -7,9 +7,9 @@ pub struct AdrToolConfig {
 }
 
 impl ::std::default::Default for AdrToolConfig {
-    fn default() -> AdrToolConfig {        
-        AdrToolConfig { 
-            adr_root_dir: "/tmp/adr-samples".to_string(), 
+    fn default() -> AdrToolConfig {
+        AdrToolConfig {
+            adr_root_dir: "/tmp/adr-samples".to_string(),
             adr_src_dir: "/tmp/adr-samples/src".to_string(),
             adr_template_dir: "/tmp/adr-samples/templates".to_string(),
             log_level: 4, //info
