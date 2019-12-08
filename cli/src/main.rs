@@ -82,6 +82,10 @@ fn set_config(name: &str, value: &str) -> Result<()> {
         let mut val = String::from(value);
         val.push_str("/templates");
         cfg.adr_template_dir = val;
+
+        let mut val = String::from(value);
+        val.push_str("/.index");
+        cfg.adr_template_dir = val;
     }
     if "log_level" == name {
         cfg.log_level = value.parse().unwrap();
@@ -107,6 +111,7 @@ fn list_all_config() -> Result<()> {
     table.add_row(row!["adr_root_dir", cfg.adr_root_dir, "Y"]);
     table.add_row(row!["adr_src_dir", cfg.adr_src_dir, "N"]);
     table.add_row(row!["adr_template_dir", cfg.adr_template_dir, "N"]);
+    table.add_row(row!["adr_search_dir", cfg.adr_search_index, "N"]);
     table.add_row(row!["log_level", cfg.log_level, "Y"]);
 
     // Print the table to stdout
@@ -132,7 +137,7 @@ fn list_all_tags() -> Result<()> {
 }
 
 /**
- * init based on config
+ * //TODO init based on config
  */
 fn init() -> Result<()> {
     let cfg: AdrToolConfig = adr_config::config::get_config();
@@ -145,6 +150,10 @@ fn init() -> Result<()> {
     info!(get_logger(), "[{}] created]", path);
 
     let path = String::from(cfg.adr_template_dir);
+    fs::create_dir_all(&path)?;
+    info!(get_logger(), "[{}] created]", &path);
+
+    let path = String::from(cfg.adr_search_index);
     fs::create_dir_all(&path)?;
     info!(get_logger(), "[{}] created]", &path);
 
