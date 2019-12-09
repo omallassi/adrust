@@ -39,7 +39,7 @@ SUBCOMMANDS:
     decided          update the Status to Decide
     help             Prints this message or the help of the given subcommand(s)
     index            Index all available ADRs
-    init             Init ADRust based on config
+    init             Init ADRust based on `config`
     list             Lists all Decision Records
     new              will create a new Decision Record
     search           Search across all ADRs
@@ -51,6 +51,7 @@ In more details,
 
 | Command        | Description           |
 | ------------- | ------------- |
+| `adr init`      | certainly the first command to run (will create folders specified in `adr config` etc...) |
 | `adr list`      | will list all the Decision Record, Title and Tags |
 | `adr config list`     | will list the configuration. Configuration is stored in [config_dir](https://docs.rs/directories/2.0.2/directories/struct.ProjectDirs.html#method.config_dir)`/rs.adrust-tools.adrust-tools/` (so on MacOs `$HOME/Library/Preferences/rs.adrust-tools.adrust-tools/`)
 | `adr config set --name prop --value val`      | will set the configuration property |
