@@ -8,7 +8,8 @@ Here are the main features:
 * [wip] Manage ADR lifecycle (create, obsoletes...). ADR should be written in _asciidoc_ (this is a long story...) 
 * [done] an `init` command
 * [not started yet] Integrate with Git
-* [wip] Manage Tags and why not search
+* [wip] Manage Tags
+* [wip] Support search
 * [not started yet] Support different types of templates
 * [not started yet] Why not integrate with Microsoft Teams
 
@@ -21,7 +22,7 @@ Run `adr config list` to view the default configuration (and why not modify it).
 ## Play...
 
 ```
-[omallassi@omallassi-mac adrust]$./target/debug/adr -h
+[omallassi@omallassi-mac adrust]$./target/debug/adr help
 adr 0.1.0
 A CLI to help you manage your ADR in git
 
@@ -37,9 +38,11 @@ SUBCOMMANDS:
     config           Manage Configuration Items
     decided          update the Status to Decide
     help             Prints this message or the help of the given subcommand(s)
+    index            Index all available ADRs
     init             Init ADRust based on config
     list             Lists all Decision Records
     new              will create a new Decision Record
+    search           Search across all ADRs
     superseded-by    update the Status to Decide
     tags             Manage Tags
 ```
@@ -55,6 +58,8 @@ In more details,
 | `adr decided --name my-decision.md`      | will transition an ADR to decided |
 | `adr superseded-by --name my-decision.md --by my-new-decision.md`      | will supersed an ADR `by` the specified one |
 | `adr tags list`      | List all the tags whatever the Decision Record |
+| `adr index --build`      | Build the index (not incrementally for now) in the folder defined in `adr config list`|
+| `adr search --query "my search"`      | Search across indexed ADRs |
 
 ## ADR Template & lifecycle
 
@@ -83,6 +88,9 @@ It has nothing to do with `adrust` but you can also enrich you `Asciidoctor CSS`
 ## Log 
 `adr config list` will show the [Level](https://docs.rs/slog/2.5.2/slog/enum.Level.html#method.as_usize) as defined in [slog](https://docs.rs/slog/2.5.2/slog/). 
 To set the log level to Debug `adr config set --name log_level --value 6`
+
+## Search
+Search is based on [Tantivy Search](https://github.com/tantivy-search/tantivy). 
 
 ## Trouleshoot
 

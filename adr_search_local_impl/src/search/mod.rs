@@ -1,34 +1,49 @@
-#[macro_use]
 use tantivy::collector::TopDocs;
 use tantivy::query::QueryParser;
 use tantivy::schema::*;
 use tantivy::Index;
 use tantivy::ReloadPolicy;
-use tempdir::TempDir;
+use tantivy::directory::MmapDirectory;
 
-pub fn build_index() -> Result<(), ()> {
-    println!("build_index");
-    Ok(())
+use std::path::Path;
+
+extern crate slog;
+extern crate slog_term;
+use slog::*;
+
+extern crate adr_config;
+use adr_config::config::*;
+
+fn get_logger() -> slog::Logger {
+    let cfg: AdrToolConfig = get_config();
+
+    let decorator = slog_term::TermDecorator::new().build();
+    let drain = slog_term::FullFormat::new(decorator).build().fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
+    let drain = slog::LevelFilter::new(
+        drain,
+        Level::from_usize(cfg.log_level).unwrap_or(Level::Debug),
+    )
+    .fuse();
+
+    let log = slog::Logger::root(drain, o!());
+
+    log
 }
 
-pub fn test_search() -> Result<(), ()> {
-    println!("et hop");
+pub fn build_index(index_path: String) -> tantivy::Result<()>/*Result<(), ()>*/ {
+    info!(get_logger(), "Building Index in folder [{}]", index_path);
 
-    use_tantivy().unwrap();
-
-    Ok(())
-}
-
-fn use_tantivy() -> tantivy::Result<()> {
-    let index_path = TempDir::new("tantivy_example_dir")?;
+    let index_path = Path::new(&index_path);
 
     let mut schema_builder = Schema::builder();
     schema_builder.add_text_field("title", TEXT | STORED);
     schema_builder.add_text_field("body", TEXT);
     let schema = schema_builder.build();
 
-    let index = Index::create_in_dir(&index_path, schema.clone())?;
-    let mut index_writer = index.writer(50_000_000)?;
+    let mmap_directory = MmapDirectory::open(index_path)?;
+    let index = Index::create(mmap_directory, schema.clone())?; // should use open_or_create to not overwrite existing index.
+    let mut index_writer = index.writer(100_000_000)?;
 
     let title = schema.get_field("title").unwrap();
     let body = schema.get_field("body").unwrap();
@@ -67,6 +82,26 @@ fn use_tantivy() -> tantivy::Result<()> {
 
     index_writer.commit()?;
 
+    Ok(())
+}
+
+pub fn search(index_path: String, query_as_string: String) -> tantivy::Result<()>/*Result<()>*/ {
+    debug!(get_logger(), "Searching [{}] based on Index in folder [{}]", query_as_string, index_path);
+
+    let index_path = Path::new(&index_path);
+    let mmap_directory = MmapDirectory::open(index_path)?;
+    //println!("file exist {}", Index::exists(&mmap_directory) );
+    let index = Index::open(mmap_directory)?;
+
+
+    let mut schema_builder = Schema::builder();
+    schema_builder.add_text_field("title", TEXT | STORED);
+    schema_builder.add_text_field("body", TEXT);
+    let schema = schema_builder.build();
+    let title = schema.get_field("title").unwrap();
+    let body = schema.get_field("body").unwrap();
+
+    //
     let reader = index
         .reader_builder()
         .reload_policy(ReloadPolicy::OnCommit)
@@ -75,7 +110,7 @@ fn use_tantivy() -> tantivy::Result<()> {
     let searcher = reader.searcher();
 
     let query_parser = QueryParser::for_index(&index, vec![title, body]);
-    let query = query_parser.parse_query("Mice OR Prometheus")?;
+    let query = query_parser.parse_query(&query_as_string)?;
 
     let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
 

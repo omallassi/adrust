@@ -238,8 +238,16 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("search")
-                .about("Beta - does not work")
-                .version("0.1.0"),
+                .about("Search across all ADRs")
+                .version("0.1.0")
+                .arg(
+                    Arg::with_name("query")
+                        .short("q")
+                        .long("query")
+                        .takes_value(true)
+                        .required(true)
+                        .help("Provide your search query"),
+                ),
         )
         .subcommand(
             SubCommand::with_name("index")
@@ -316,12 +324,14 @@ fn main() {
             }
             _ => unreachable!(),
         },
-        ("search", Some(_search_matches)) => {
-            adr_search::search::test_search().unwrap();
+        ("search", Some(search_matches)) => {
+            let cfg: AdrToolConfig = adr_config::config::get_config();
+            adr_search::search::search(cfg.adr_search_index, search_matches.value_of("query").unwrap().to_string()).unwrap();
         }
         ("index", Some(_matches)) => {
             if _matches.is_present("build")  {
-                adr_search::search::build_index().unwrap();    
+                let cfg: AdrToolConfig = adr_config::config::get_config();
+                adr_search::search::build_index(cfg.adr_search_index).unwrap();    
             }   
         },
 
