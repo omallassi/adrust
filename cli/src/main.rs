@@ -111,6 +111,42 @@ fn list_all_tags() -> Result<()> {
     Ok(())
 }
 
+fn build_index() -> Result<()> {
+    let cfg: AdrToolConfig = adr_config::config::get_config();
+    let adrs = match adr_core::adr_repo::list_all_adr(&cfg.adr_src_dir) {
+        Ok(e) => e,
+        Err(why) => panic!(format!("{:?}", why)),
+    };
+    adr_search::search::build_index(cfg.adr_search_index, adrs).unwrap();    
+
+    Ok(())
+}
+
+fn search(query: String) -> Result<()> {
+    let cfg: AdrToolConfig = adr_config::config::get_config();
+
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+    table.set_titles(row![b -> "Title", b -> "File", b -> "Tags"]);
+
+    let results = match adr_search::search::search(cfg.adr_search_index, query) {
+        Ok(e) => e,
+        Err(why) => panic!(format!("{:?}", why)),
+    };
+
+    for entry in  results{
+        table.add_row(Row::new(vec![
+            Cell::new(&entry.title[0]),
+            Cell::new(&entry.path[0]),
+            Cell::new(&entry.tags[0]),
+        ]));
+    }
+
+    table.printstd();
+
+    Ok(())
+}
+
 /**
  * init based on config
  */
@@ -325,13 +361,12 @@ fn main() {
             _ => unreachable!(),
         },
         ("search", Some(search_matches)) => {
-            let cfg: AdrToolConfig = adr_config::config::get_config();
-            adr_search::search::search(cfg.adr_search_index, search_matches.value_of("query").unwrap().to_string()).unwrap();
+            let query = search_matches.value_of("query").unwrap().to_string();
+            search(query).unwrap();
         }
         ("index", Some(_matches)) => {
             if _matches.is_present("build")  {
-                let cfg: AdrToolConfig = adr_config::config::get_config();
-                adr_search::search::build_index(cfg.adr_search_index).unwrap();    
+                build_index().unwrap();
             }   
         },
 

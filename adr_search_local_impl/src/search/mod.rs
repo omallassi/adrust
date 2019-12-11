@@ -6,6 +6,7 @@ use tantivy::ReloadPolicy;
 use tantivy::directory::MmapDirectory;
 
 use std::path::Path;
+use std::time::{Instant};
 
 extern crate slog;
 extern crate slog_term;
@@ -13,6 +14,9 @@ use slog::*;
 
 extern crate adr_config;
 use adr_config::config::*;
+
+extern crate adr_core;
+use adr_core::adr_repo::*;
 
 fn get_logger() -> slog::Logger {
     let cfg: AdrToolConfig = get_config();
@@ -31,14 +35,17 @@ fn get_logger() -> slog::Logger {
     log
 }
 
-pub fn build_index(index_path: String) -> tantivy::Result<()>/*Result<(), ()>*/ {
+pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()>/*Result<(), ()>*/ {
     info!(get_logger(), "Building Index in folder [{}]", index_path);
 
+    let now = Instant::now();
     let index_path = Path::new(&index_path);
 
     let mut schema_builder = Schema::builder();
     schema_builder.add_text_field("title", TEXT | STORED);
     schema_builder.add_text_field("body", TEXT);
+    schema_builder.add_text_field("tags", TEXT | STORED);
+    schema_builder.add_text_field("path", TEXT | STORED);
     let schema = schema_builder.build();
 
     let mmap_directory = MmapDirectory::open(index_path)?;
@@ -47,45 +54,34 @@ pub fn build_index(index_path: String) -> tantivy::Result<()>/*Result<(), ()>*/ 
 
     let title = schema.get_field("title").unwrap();
     let body = schema.get_field("body").unwrap();
-    index_writer.add_document(doc!(
-    title => "Of Mice and Men",
-    body => "A few miles south of Soledad, the Salinas River drops in close to the hillside \
-                bank and runs deep and green. The water is warm too, for it has slipped twinkling \
-                over the yellow sands in the sunlight before reaching the narrow pool. On one \
-                side of the river the golden foothill slopes curve up to the strong and rocky \
-                Gabilan Mountains, but on the valley side the water is lined with trees—willows \
-                fresh and green with every spring, carrying in their lower leaf junctures the \
-                debris of the winter’s flooding; and sycamores with mottled, white, recumbent \
-                limbs and branches that arch over the pool"
-    ));
+    let tags = schema.get_field("tags").unwrap();
+    let path = schema.get_field("path").unwrap();
 
-    index_writer.add_document(doc!(
-    title => "Of Mice and Men",
-    body => "A few miles south of Soledad, the Salinas River drops in close to the hillside \
-                bank and runs deep and green. The water is warm too, for it has slipped twinkling \
-                over the yellow sands in the sunlight before reaching the narrow pool. On one \
-                side of the river the golden foothill slopes curve up to the strong and rocky \
-                Gabilan Mountains, but on the valley side the water is lined with trees—willows \
-                fresh and green with every spring, carrying in their lower leaf junctures the \
-                debris of the winter’s flooding; and sycamores with mottled, white, recumbent \
-                limbs and branches that arch over the pool"
-    ));
-
-    index_writer.add_document(doc!(
-    title => "Frankenstein",
-    title => "The Modern Prometheus",
-    body => "You will rejoice to hear that no disaster has accompanied the commencement of an \
-                 enterprise which you have regarded with such evil forebodings.  I arrived here \
-                 yesterday, and my first task is to assure my dear sister of my welfare and \
-                 increasing confidence in the success of my undertaking."
-    ));
+    for adr in adrs {
+        index_writer.add_document(doc!(
+            title => adr.title,
+            body => adr.content,
+            tags => adr.tags,
+            path => adr.path,
+            ));
+    }
 
     index_writer.commit()?;
+
+    info!(get_logger(), "Indexing Time [{}] milli seconds", now.elapsed().as_millis());
 
     Ok(())
 }
 
-pub fn search(index_path: String, query_as_string: String) -> tantivy::Result<()>/*Result<()>*/ {
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SearchResult {
+    pub title: [String; 1],
+    pub tags: [String; 1],
+    pub path: [String; 1],
+}
+
+pub fn search(index_path: String, query_as_string: String) -> tantivy::Result<(Vec<SearchResult>)>/*Result<()>*/ {
     debug!(get_logger(), "Searching [{}] based on Index in folder [{}]", query_as_string, index_path);
 
     let index_path = Path::new(&index_path);
@@ -93,13 +89,18 @@ pub fn search(index_path: String, query_as_string: String) -> tantivy::Result<()
     //println!("file exist {}", Index::exists(&mmap_directory) );
     let index = Index::open(mmap_directory)?;
 
-
+    //
     let mut schema_builder = Schema::builder();
     schema_builder.add_text_field("title", TEXT | STORED);
     schema_builder.add_text_field("body", TEXT);
+    schema_builder.add_text_field("tags", TEXT | STORED);
+    schema_builder.add_text_field("path", TEXT | STORED);
     let schema = schema_builder.build();
+
     let title = schema.get_field("title").unwrap();
     let body = schema.get_field("body").unwrap();
+    //let tags = schema.get_field("tags").unwrap();
+    //let path = schema.get_field("path").unwrap();
 
     //
     let reader = index
@@ -112,13 +113,17 @@ pub fn search(index_path: String, query_as_string: String) -> tantivy::Result<()
     let query_parser = QueryParser::for_index(&index, vec![title, body]);
     let query = query_parser.parse_query(&query_as_string)?;
 
-    let top_docs = searcher.search(&query, &TopDocs::with_limit(10))?;
+    let top_docs = searcher.search(&query, &TopDocs::with_limit(20))?;
 
+    let mut results = std::vec::Vec::new();
     for (_score, doc_address) in top_docs {
         let retrieved_doc = searcher.doc(doc_address)?;
-        println!("here {}", schema.to_json(&retrieved_doc));
+        debug!(get_logger(), "Found doc [{}]", schema.to_json(&retrieved_doc));
+
+        let doc_as_json = schema.to_json(&retrieved_doc);
+        let search_result: SearchResult = serde_json::from_str(&doc_as_json).unwrap();
+        results.push(search_result);
     }
 
-    println!("finish");
-    Ok(())
+    Ok(results)
 }
