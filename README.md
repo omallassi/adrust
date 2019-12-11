@@ -5,11 +5,11 @@
 The idea is to provide a cli to managed ADR. One more? yes...reality is that was mostly an excuse to play with `Rust`. 
 
 Here are the main features: 
-* [wip] Manage ADR lifecycle (create, obsoletes...). ADR should be written in _asciidoc_ (this is a long story...) 
+* [wip] Manage ADR lifecycle (create, obsoletes...). ADR should be written in _asciidoc_ (this is a long story...). Look at `./template` folder for more details. 
 * [done] an `init` command
+* [done] Support Tags
+* [done] Support search across title, content and tags 
 * [not started yet] Integrate with Git
-* [wip] Manage Tags
-* [wip] Support search
 * [not started yet] Support different types of templates
 * [not started yet] Why not integrate with Microsoft Teams
 
@@ -64,7 +64,7 @@ In more details,
 
 ## ADR Template & lifecycle
 
-For now, template should be in _asciidoc_. Look at `./templates/adr-temaplate-v0.1.adoc` (in particularly the header) for more details. ADR lifecycle is managed based on the `cl-*` information (available in template headers).
+For now, template should be in _asciidoc_. Look at `./templates/adr-temaplate-v0.1.adoc` (in particularly the header) for more details. ADR lifecycle is managed based on the `*Status:* {...}` information (available in template headers).
 
 ## Tags
 There is a beta support for tags. These tags, if available, will be used in `adr list` and `adr tags ...`
