@@ -74,7 +74,7 @@ You can specify your tags directly (and anywhere) into the `.adoc` document, the
 [tags]#deployment view# [tags]#network# [tags]#security#
 ```
 
-It has nothing to do with `adrust` but you can also enrich you `Asciidoctor CSS` with a style for your `tags`. For instance: 
+It has nothing to do with `adrust` but you can also enrich your `Asciidoctor CSS` with a style for your `tags`. For instance: 
 ```
 .tags {
     color: #fff;
@@ -91,7 +91,7 @@ It has nothing to do with `adrust` but you can also enrich you `Asciidoctor CSS`
 To set the log level to Debug `adr config set --name log_level --value 6`
 
 ## Search
-Search is based on [Tantivy Search](https://github.com/tantivy-search/tantivy). 
+Search is based on [Tantivy Search](https://github.com/tantivy-search/tantivy). You can build your local index via `adr index --build` and search via `adr search --query "word#1 AND word#2"`
 
 ## Trouleshoot
 
