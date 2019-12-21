@@ -86,6 +86,7 @@ fn list_all_config() -> Result<()> {
     table.add_row(row!["adr_root_dir", cfg.adr_root_dir, "Y"]);
     table.add_row(row!["adr_src_dir", cfg.adr_src_dir, "N"]);
     table.add_row(row!["adr_template_dir", cfg.adr_template_dir, "N"]);
+    table.add_row(row!["adr_template_file", cfg.adr_template_file, "N"]);
     table.add_row(row!["adr_search_dir", cfg.adr_search_index, "N"]);
     table.add_row(row!["log_level", cfg.log_level, "Y"]);
 
