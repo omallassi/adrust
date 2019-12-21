@@ -70,7 +70,6 @@ pub fn init() -> Result<()> {
             info!(get_logger(), "[{}] created]",format!("{}/adr-template-v0.1.adoc", &path));
         }
     };
-    
 
     let path = String::from(cfg.adr_search_index);
     fs::create_dir_all(&path)?;
