@@ -5,6 +5,7 @@ os:
   - windows
 rust:
   - 1.39.0
+  - 1.40.0
 script:
   - cargo build --verbose --all
   - cargo test --verbose --all
