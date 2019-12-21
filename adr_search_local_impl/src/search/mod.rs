@@ -81,7 +81,7 @@ pub struct SearchResult {
     pub path: [String; 1],
 }
 
-pub fn search(index_path: String, query_as_string: String) -> tantivy::Result<(Vec<SearchResult>)>/*Result<()>*/ {
+pub fn search(index_path: String, query_as_string: String) -> tantivy::Result<Vec<SearchResult>>/*Result<()>*/ {
     debug!(get_logger(), "Searching [{}] based on Index in folder [{}]", query_as_string, index_path);
 
     let index_path = Path::new(&index_path);

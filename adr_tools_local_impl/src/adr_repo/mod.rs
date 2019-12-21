@@ -36,7 +36,7 @@ fn get_logger() -> slog::Logger {
 ///
 /// Creates the file (based on template file). Returns true if file is created, false if not
 /// (because target file already exists...)
-pub fn create_adr(name: &str, templates_dir: &Path, src_dir: &Path) -> io::Result<(bool)> {
+pub fn create_adr(name: &str, templates_dir: &Path, src_dir: &Path) -> io::Result<bool> {
     let name = match format_decision_name(name) {
         Ok(name) => name,
         Err(_why) => panic!(format!("Problem while formatting name [{}]", name)),
@@ -64,7 +64,7 @@ pub fn create_adr(name: &str, templates_dir: &Path, src_dir: &Path) -> io::Resul
     Ok(!is_target_file)
 }
 
-fn extract_seq_id(name: &str) -> Result<(usize)> {
+fn extract_seq_id(name: &str) -> Result<usize> {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"(\d+)").unwrap();
     }
@@ -83,7 +83,7 @@ fn extract_seq_id(name: &str) -> Result<(usize)> {
     Ok(id)
 }
 
-pub fn format_decision_name(name: &str) -> Result<(String)> {
+pub fn format_decision_name(name: &str) -> Result<String> {
     let name = name.to_ascii_lowercase();
     let name = name.replace(" ", "-");
 
@@ -146,7 +146,7 @@ pub struct Adr {
     pub tags: String,
 }
 
-pub fn list_all_adr(dir: &str) -> io::Result<(Vec<Adr>)> {
+pub fn list_all_adr(dir: &str) -> io::Result<Vec<Adr>> {
     let mut results = std::vec::Vec::new();
 
     if Path::new(dir).is_dir() {
@@ -165,7 +165,7 @@ pub fn list_all_adr(dir: &str) -> io::Result<(Vec<Adr>)> {
     Ok(results)
 }
 
-fn build_adr(path: String, content: String) -> io::Result<(Adr)> {
+fn build_adr(path: String, content: String) -> io::Result<Adr> {
     //get the title
     lazy_static! {
         static ref RE: Regex = Regex::new(r"== (.+)").unwrap();
@@ -219,7 +219,7 @@ fn get_tags(val: &String) -> String {
     tags
 }
 
-pub fn update_to_decided(adr_name: &str) -> io::Result<(bool)> {
+pub fn update_to_decided(adr_name: &str) -> io::Result<bool> {
     let mut f = File::open(adr_name)?;
 
     let mut contents = String::new();
