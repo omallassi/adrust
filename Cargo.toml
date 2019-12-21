@@ -1,6 +1,6 @@
 [workspace]
 members = ["cli", 
-    "adr_tools_local_impl", 
+    "adr_core_local_impl", 
     "adr_config_local_impl",
     "adr_search_local_impl"
 ]

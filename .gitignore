@@ -1,6 +1,6 @@
 target/
 .vscode/settings.json
-adr_tools_local_impl/Cargo.lock
+adr_core_local_impl/Cargo.lock
 Cargo.lock
 Cargo.lock
 Cargo.lock
