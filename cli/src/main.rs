@@ -306,7 +306,7 @@ fn main() {
             if matches.is_present("name") {
                 adr_core::adr_repo::create_adr(
                     matches.value_of("name").unwrap(),
-                    Path::new(&cfg.adr_template_dir),
+                    Path::new(&cfg.adr_template_dir).join(cfg.adr_template_file).as_path(),
                     Path::new(&cfg.adr_src_dir),
                 )
                 .unwrap();

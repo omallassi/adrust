@@ -9,6 +9,7 @@ pub struct AdrToolConfig {
     pub adr_root_dir: String,
     pub adr_src_dir: String,
     pub adr_template_dir: String,
+    pub adr_template_file: String,
     pub adr_search_index: String
 }
 
@@ -18,8 +19,11 @@ impl ::std::default::Default for AdrToolConfig {
             adr_root_dir: "/tmp/adr-samples".to_string(),
             adr_src_dir: "/tmp/adr-samples/src".to_string(),
             adr_template_dir: "/tmp/adr-samples/templates".to_string(),
+            adr_template_file: "adr-template-v0.1.adoc".to_string(),
             adr_search_index: "/tmp/adr-samples/.index".to_string(),
             log_level: 4, //info
+
+            
         }
     }
 }
@@ -55,14 +59,22 @@ pub fn init() -> Result<()> {
     fs::create_dir_all(&path)?;
     info!(get_logger(), "[{}] created]", &path);
 
+    match fs::copy(
+        "./templates/adr-template-v0.1.adoc",
+        format!("{}/adr-template-v0.1.adoc", &path),
+    ) {
+        Err(_why) => {
+            warn!(get_logger(), "Unable to create [{}]", format!("{}/adr-template-v0.1.adoc", &path));
+        }
+        Ok(_val) => {
+            info!(get_logger(), "[{}] created]",format!("{}/adr-template-v0.1.adoc", &path));
+        }
+    };
+    
+
     let path = String::from(cfg.adr_search_index);
     fs::create_dir_all(&path)?;
     info!(get_logger(), "[{}] created]", &path);
-
-    fs::copy(
-        "./templates/adr-template-v0.1.adoc",
-        format!("{}/adr-template-v0.1.adoc", &path),
-    )?;
 
     Ok(())
 }
@@ -83,6 +95,7 @@ pub fn set_config(name: &str, value: &str) -> Result<()> {
             adr_root_dir: String::from(value),
             adr_src_dir: adr_src_dir,
             adr_template_dir: adr_template_dir,
+            adr_template_file: "adr-template-v0.1.adoc".to_string(),
             adr_search_index: adr_search_index,
             log_level: cfg.log_level, //info
         };

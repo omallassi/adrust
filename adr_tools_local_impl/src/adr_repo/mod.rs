@@ -36,7 +36,7 @@ fn get_logger() -> slog::Logger {
 ///
 /// Creates the file (based on template file). Returns true if file is created, false if not
 /// (because target file already exists...)
-pub fn create_adr(name: &str, templates_dir: &Path, src_dir: &Path) -> io::Result<bool> {
+pub fn create_adr(name: &str, path_to_template: &Path, src_dir: &Path) -> io::Result<bool> {
     let name = match format_decision_name(name) {
         Ok(name) => name,
         Err(_why) => panic!(format!("Problem while formatting name [{}]", name)),
@@ -44,14 +44,13 @@ pub fn create_adr(name: &str, templates_dir: &Path, src_dir: &Path) -> io::Resul
     let target_path = src_dir.join(format!("{}.adoc", name));
     let is_target_file = target_path.is_file();
     if !is_target_file {
-        let path_to_template = templates_dir.join("adr-template-v0.1.adoc");
         match path_to_template.exists() {
             true => {
                 fs::copy(path_to_template, &target_path)?;
                 info!(get_logger(), "New ADR {:?} created", target_path);
             }
             false => {
-                error!(get_logger(), "[{}] was not found", "adr-template-v0.1.adoc");
+                error!(get_logger(), "[{}] was not found", path_to_template.to_string_lossy());
             }
         }
     } else {

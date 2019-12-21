@@ -31,7 +31,7 @@ mod helper {
 
         Ok(adr_core::adr_repo::create_adr(
             name,
-            project_dirs.cache_dir().join("templates").as_path(),
+            project_dirs.cache_dir().join("templates/adr-template-v0.1.adoc").as_path(),
             project_dirs.cache_dir().join("src").as_path(),
         )
         .unwrap())
