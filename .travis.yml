@@ -6,6 +6,7 @@ os:
 rust:
   - 1.39.0
   - 1.40.0
+cache: cargo
 script:
   - cargo build --verbose --all
   - cargo test --verbose --all

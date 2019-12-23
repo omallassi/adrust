@@ -13,10 +13,16 @@ Here are the main features:
 * [not started yet] Support different types of templates
 * [not started yet] Why not integrate with Microsoft Teams
 
-## Installation 
-The current code line is tested on `MacOs / Rust 1.39` and build with `cargo`. Once all this pre-requisites installed, cloning the repo, `cargo test`and `cargo build` should be enough. 
+## Operating Env
+The current code line is tested on `MacOs / Rust 1.39` and build with `cargo`. [Travis CI](https://travis-ci.org/omallassi/adrust/builds) will build on `Linux / Windows` and `Rust 1.40`
 
-Run `adr config list` to view the default configuration (and why not modify it). Run `adr init` (from the `src dir`): directories specified in `config` should be created and a default template copied in `templates` sub-folder. 
+## Getting Started 
+
+At this stage, the tool is not published on [crates.io](https://crates.io/). so `git clone` is for now your best friend. 
+
+Once cloned, `cd` at the root of the cloned repo and run `cargo install --path cli` (the executable should be installed `$HOME/.cargo/bin/adr`)
+
+Run `adr config list` to view the default configuration (and why not modify it) and `adr init` : directories specified in `config` should be created and a default template copied in `templates` sub-folder. 
 
 
 ## Play...
