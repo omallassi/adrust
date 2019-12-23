@@ -175,7 +175,12 @@ mod tests {
         let name = format!("adrust-tools-4-tests-{}", uuid);
         let config = name.as_str();
 
-        super::set_config_from_name(config, "adr_root_dir", "/tmp/adr-samples-4-tests").unwrap();
+        match super::set_config_from_name(config, "adr_root_dir", "/tmp/adr-samples-4-tests"){
+            Ok(e) => e,
+            Err(why) => {
+                eprintln!("error in test : {}", why);
+            },
+        };
         let cfg = super::get_config_from_name(config);
         assert_eq!(cfg.adr_root_dir, "/tmp/adr-samples-4-tests");
         assert_eq!(cfg.adr_search_index, "/tmp/adr-samples-4-tests/.index");
@@ -192,7 +197,12 @@ mod tests {
         let name = format!("adrust-tools-4-tests-{}", uuid);
         let config = name.as_str();
 
-        super::set_config_from_name(config, "adr_template_file", "new-template.adoc").unwrap();
+        match super::set_config_from_name(config, "adr_template_file", "new-template.adoc") {
+            Ok(e) => e,
+            Err(why) => {
+                eprintln!("error in test : {}", why);
+            },
+        }
         let cfg = super::get_config_from_name(config);
         assert_eq!(cfg.adr_template_file, "new-template.adoc");
 
