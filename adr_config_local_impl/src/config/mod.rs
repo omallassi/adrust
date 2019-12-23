@@ -146,10 +146,13 @@ fn get_config_from_name(config: &str) -> AdrToolConfig {
 mod tests {
     use directories::ProjectDirs;
     use std::fs::{self};
+    use uuid::*;
 
     #[test]
     fn test_set_config_log_level() {
-        let config = "adrust-tools-4-tests";
+        let uuid = Uuid::new_v4();
+        let name = format!("adrust-tools-4-tests-{}", uuid);
+        let config = name.as_str();
 
         super::set_config_from_name(config, "log_level", "7").unwrap();
         let cfg = super::get_config_from_name(config);
@@ -168,7 +171,9 @@ mod tests {
 
     #[test]
     fn test_set_config_adr_root() {
-        let config = "adrust-tools-4-tests-2";
+        let uuid = Uuid::new_v4();
+        let name = format!("adrust-tools-4-tests-{}", uuid);
+        let config = name.as_str();
 
         super::set_config_from_name(config, "adr_root_dir", "/tmp/adr-samples-4-tests").unwrap();
         let cfg = super::get_config_from_name(config);
@@ -183,7 +188,9 @@ mod tests {
 
     #[test]
     fn test_set_config_adr_template_file() {
-        let config = "adrust-tools-4-tests-3";
+        let uuid = Uuid::new_v4();
+        let name = format!("adrust-tools-4-tests-{}", uuid);
+        let config = name.as_str();
 
         super::set_config_from_name(config, "adr_template_file", "new-template.adoc").unwrap();
         let cfg = super::get_config_from_name(config);
