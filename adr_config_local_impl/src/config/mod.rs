@@ -94,7 +94,7 @@ pub fn get_config() -> AdrToolConfig {
 }
 
 fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()> {
-    if "adr_root_dir" == name {
+    if ADR_ROOT_DIR == name {
         let cfg: AdrToolConfig = get_config();
         let mut adr_src_dir = String::from(value);
         adr_src_dir.push_str("/src");
@@ -116,12 +116,12 @@ fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()> {
 
         confy::store(config, new_cfg).unwrap();
     }
-    if "adr_template_file" == name {
+    if ADR_TEMPLATE_FILE == name {
         let mut cfg: AdrToolConfig = get_config();
         cfg.adr_template_file = String::from(value);      
         confy::store(config, cfg).unwrap();
     }
-    if "log_level" == name {
+    if LOG_LEVEL == name {
         let mut cfg: AdrToolConfig = get_config();
         cfg.log_level = value.parse().unwrap();      
         confy::store(config, cfg).unwrap();
