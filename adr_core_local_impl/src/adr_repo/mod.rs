@@ -167,14 +167,14 @@ pub fn list_all_adr(dir: &str) -> io::Result<Vec<Adr>> {
 fn build_adr(path: String, content: String) -> io::Result<Adr> {
     //get the title
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"== (.+)").unwrap();
+        static ref RE: Regex = Regex::new(r"= (.+)").unwrap();
     }
     let val = String::from(&content);
     let cap = match RE.captures(&val) {
-        Some(val) => val,
+        Some(val) => val[1].to_string(),
         None => {
             error!(get_logger(), "Unable to get title from [{}]", path);
-            panic!();
+            "None".to_string()
         }
     };
 
@@ -197,7 +197,7 @@ fn build_adr(path: String, content: String) -> io::Result<Adr> {
     let adr: Adr = Adr {
         path: path,
         content: content,
-        title: cap[1].to_string(),
+        title: cap,
         tags: tags,
         status: Status::from_str(status),
     };
