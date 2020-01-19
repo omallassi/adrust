@@ -10,7 +10,9 @@ pub struct AdrToolConfig {
     pub adr_src_dir: String,
     pub adr_template_dir: String,
     pub adr_template_file: String,
-    pub adr_search_index: String
+    pub adr_search_index: String,
+    pub use_id_prefix: bool,
+    pub id_prefix_width: usize,
 }
 
 pub const LOG_LEVEL: &str = "log_level";
@@ -19,6 +21,8 @@ pub const ADR_SRC_DIR: &str = "adr_src_dir";
 pub const ADR_TEMPLATE_DIR: &str = "adr_template_dir";
 pub const ADR_TEMPLATE_FILE: &str = "adr_template_file";
 pub const ADR_SEARCH_INDEX: &str = "adr_search_dir";
+pub const USE_ID_PREFIX: &str = "use_id_prefix";
+pub const ID_PREFIX_WIDTH: &str = "id_prefix_width";
 
 impl ::std::default::Default for AdrToolConfig {
     fn default() -> Self {
@@ -29,8 +33,8 @@ impl ::std::default::Default for AdrToolConfig {
             adr_template_file: "adr-template-v0.1.adoc".to_string(),
             adr_search_index: "/tmp/adr-samples/.index".to_string(),
             log_level: 4, //info
-
-            
+            use_id_prefix : true,            
+            id_prefix_width : 6,
         }
     }
 }
@@ -112,6 +116,8 @@ fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()> {
             adr_template_file: cfg.adr_template_file,
             adr_search_index: adr_search_index,
             log_level: cfg.log_level, //info
+            use_id_prefix: cfg.use_id_prefix,
+            id_prefix_width: cfg.id_prefix_width,
         };
 
         confy::store(config, new_cfg).unwrap();
@@ -124,6 +130,18 @@ fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()> {
     if LOG_LEVEL == name {
         let mut cfg: AdrToolConfig = get_config();
         cfg.log_level = value.parse().unwrap();      
+        confy::store(config, cfg).unwrap();
+    }
+
+    if USE_ID_PREFIX == name {
+        let mut cfg: AdrToolConfig = get_config();
+        cfg.use_id_prefix = value.parse().unwrap();
+        confy::store(config, cfg).unwrap();
+    }
+
+    if ID_PREFIX_WIDTH ==name {
+        let mut cfg: AdrToolConfig = get_config();
+        cfg.id_prefix_width = value.parse().unwrap();
         confy::store(config, cfg).unwrap();
     }
 
@@ -162,6 +180,34 @@ mod tests {
         teardown(config);
     }
 
+    #[test]
+    fn test_set_config_use_id() {
+        let uuid = Uuid::new_v4();
+        let name = format!("adrust-tools-4-tests-{}", uuid);
+        let config = name.as_str();
+
+        super::set_config_from_name(config, "use_id_prefix", "false").unwrap();
+        let cfg = super::get_config_from_name(config);
+
+        assert_eq!(cfg.use_id_prefix, false);
+
+        teardown(config);
+    }
+
+    #[test]
+    fn test_set_config_id_width() {
+        let uuid = Uuid::new_v4();
+        let name = format!("adrust-tools-4-tests-{}", uuid);
+        let config = name.as_str();
+
+        super::set_config_from_name(config, "id_prefix_width", "10").unwrap();
+        let cfg = super::get_config_from_name(config);
+
+        assert_eq!(cfg.id_prefix_width, 10);
+
+        teardown(config);
+    }
+
     fn teardown(name: &str) {
         //delete confy files
         if let Some(dir) = ProjectDirs::from("rs", name, name) {
@@ -186,7 +232,7 @@ mod tests {
         assert_eq!(cfg.adr_search_index, "/tmp/adr-samples-4-tests/.index");
         assert_eq!(cfg.adr_template_dir, "/tmp/adr-samples-4-tests/templates");
         assert_eq!(cfg.adr_template_file, "adr-template-v0.1.adoc");
-        assert_eq!(cfg.log_level, 4);
+
 
         teardown(config);
     }

@@ -36,8 +36,9 @@ fn get_logger() -> slog::Logger {
 ///
 /// Creates the file (based on template file). Returns true if file is created, false if not
 /// (because target file already exists...)
-pub fn create_adr(name: &str, path_to_template: &Path, src_dir: &Path) -> io::Result<bool> {
-    let name = match format_decision_name(name) {
+pub fn create_adr(cfg: AdrToolConfig, name: &str, path_to_template: &Path, src_dir: &Path) -> io::Result<bool> {
+    //specify last seq_id , the rest of the config (use_prefix and width can be get from the method)
+    let name = match format_decision_name(cfg, name) {
         Ok(name) => name,
         Err(_why) => panic!(format!("Problem while formatting name [{}]", name)),
     };
@@ -65,28 +66,69 @@ pub fn create_adr(name: &str, path_to_template: &Path, src_dir: &Path) -> io::Re
 
 fn extract_seq_id(name: &str) -> Result<usize> {
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"(\d+)").unwrap();
+        static ref RE: Regex = Regex::new(r"(\d+)-{1}").unwrap();
     }
 
-    let cap = match RE.captures(name) {
-        Some(val) => val,
-        None => {
-            error!(get_logger(), "Unable to extract_seq_id from [{}]", name);
-            panic!();
-        }
-    };
-
-    debug!(get_logger(), "found first match [{}]", cap[0].to_string());
-    let id: usize = cap[0].to_string().parse().unwrap();
+    // let cap = match RE.captures(name) {
+    //     Some(val) => val,
+    //     None => {
+    //         error!(get_logger(), "Unable to extract_seq_id from [{}]", name);
+    //         //panic!();
+    //         continue;
+    //     }
+    // };
+    let mut id: usize = 0;
+    if let Some(cap) = RE.captures(name) {
+        debug!(get_logger(), "found first match [{}]", cap[1].to_string());
+        id = cap[1].to_string().parse().unwrap();
+    }
+    else
+    {
+        debug!(get_logger(), "Unable to extract_seq_id from [{}]", name);
+    }
 
     Ok(id)
 }
 
-pub fn format_decision_name(name: &str) -> Result<String> {
+fn extract_seq_id_from_all(adr_paths: Vec<String>) -> usize {
+    let mut seq = 0;
+    for path in adr_paths.iter(){
+        //extract the seq_id
+        let extracted_seq_id = extract_seq_id(path.as_str()).unwrap();
+        if extracted_seq_id > seq {
+            debug!(get_logger(), "got seq_id {} - compared to {}", extracted_seq_id, seq);
+            seq = extracted_seq_id;
+        }
+    }
+
+    debug!(get_logger(), "returned seq_id [{}]", seq);
+
+    seq
+}
+
+fn get_last_seq_id(dir: &Path) -> usize {
+    let adrs: Vec<Adr> = list_all_adr_from_path(dir).unwrap();
+    let adrs_paths = adrs.iter().map(|adr| {
+                                    let path = adr.path.clone();
+                                    path
+                                }).collect::<Vec<String>>();
+
+    extract_seq_id_from_all(adrs_paths)
+}
+
+pub fn format_decision_name(cfg: AdrToolConfig, name: &str) -> Result<String> {
+    let mut prefix = String::new();
+    if cfg.use_id_prefix {
+    let last_seq_id = get_last_seq_id(Path::new(cfg.adr_src_dir.as_str()));
+        prefix = format!("{:0>width$}-", last_seq_id + 1, width = cfg.id_prefix_width);  //"{:0width$}", x, width = width
+        debug!(get_logger(), "got seq number [{}]", prefix);
+    }
+
     let name = name.to_ascii_lowercase();
     let name = name.replace(" ", "-");
+    let name = format!("{}{}", prefix, name);
 
-    Ok(name.to_string())
+    Ok( name.to_string() )
 }
 
 fn is_hidden(entry: &DirEntry) -> bool {
@@ -146,9 +188,15 @@ pub struct Adr {
 }
 
 pub fn list_all_adr(dir: &str) -> io::Result<Vec<Adr>> {
-    let mut results = std::vec::Vec::new();
+    let dir_path = Path::new(dir);
 
-    if Path::new(dir).is_dir() {
+    list_all_adr_from_path(dir_path)    
+}
+
+fn list_all_adr_from_path(dir: &Path) -> io::Result<Vec<Adr>> {
+    let mut results = std::vec::Vec::new();
+    
+    if dir.is_dir() {
         let walker = WalkDir::new(dir).into_iter();
         for entry in walker.filter_entry(|e| !is_hidden(e)) {
             let entry = entry?;
@@ -338,20 +386,65 @@ mod tests {
         assert_eq!(seq, 1);
         let seq =
             super::extract_seq_id("mypath/00000001/00000002-my-decision-594-full.adoc").unwrap();
-        assert_eq!(seq, 1);
+        assert_eq!(seq, 2
+        );
 
-        let result =
-            std::panic::catch_unwind(|| super::extract_seq_id("path/my-decision-full.adoc"));
-        assert!(result.is_err());
+        let seq =
+        super::extract_seq_id("path/my-decision-full.adoc").unwrap();
+        assert_eq!(seq, 0);
+
+        // let result =
+        //     std::panic::catch_unwind(|| super::extract_seq_id("path/my-decision-full.adoc"));
+        // assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_extract_seq_id_from_all_1() {
+        let mut paths = Vec::new();
+        paths.push(String::from("01-my-decision.adoc"));
+        paths.push(String::from("00000010-my-decision.adoc"));
+        paths.push(String::from("mypath/00000002-my-decision.adoc"));
+        paths.push(String::from("mypath/00000003-my-decision-594.adoc"));
+        paths.push(String::from("mypath/00000001-my-decision-594-full.adoc"));
+        paths.push(String::from("00000001-my-decision-594-full.adoc"));
+        paths.push(String::from("mypath/00000001/00000002-my-decision-594-full.adoc"));
+        paths.push(String::from("path/my-decision-full.adoc"));
+
+        let seq = super::extract_seq_id_from_all(paths);
+        assert_eq!(seq, 10);
+    }
+
+    #[test]
+    fn test_extract_seq_id_from_all_2() {
+        let mut paths = Vec::new();
+        paths.push(String::from("attemtps.adoc"));
+        paths.push(String::from("attemtps43.adoc"));
+        paths.push(String::from("this-is-a-sample-12.adoc"));
+        paths.push(String::from("this-is-a-sample-14.adoc"));
+        paths.push(String::from("this-is-a-sample-17.adoc"));
+        paths.push(String::from("this-is-a-smple4.adoc"));
+        paths.push(String::from(""));
+        paths.push(String::from("this-is-a-smple7.adoc"));
+
+        let seq = super::extract_seq_id_from_all(paths);
+        assert_eq!(seq, 0);
     }
 
     #[test]
     fn test_format_decision_name() {
-        let name = super::format_decision_name("my-decision").unwrap();
+        let mut cfg: super::AdrToolConfig = adr_config::config::get_config();
+        cfg.use_id_prefix = false;
+        let name = super::format_decision_name(cfg, "my-decision").unwrap();
         assert_eq!(name, "my-decision");
-        let name = super::format_decision_name("my decision").unwrap();
+
+        let mut cfg: super::AdrToolConfig = adr_config::config::get_config();
+        cfg.use_id_prefix = false;
+        let name = super::format_decision_name(cfg, "my decision").unwrap();
         assert_eq!(name, "my-decision");
-        let name = super::format_decision_name("my Decision").unwrap();
+
+        let mut cfg: super::AdrToolConfig = adr_config::config::get_config();
+        cfg.use_id_prefix = false;
+        let name = super::format_decision_name(cfg, "my Decision").unwrap();
         assert_eq!(name, "my-decision");
     }
 

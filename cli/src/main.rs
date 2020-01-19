@@ -89,6 +89,8 @@ fn list_all_config() -> Result<()> {
     table.add_row(row![adr_config::config::ADR_TEMPLATE_FILE, cfg.adr_template_file, "Y"]);
     table.add_row(row![adr_config::config::ADR_SEARCH_INDEX, cfg.adr_search_index, "N"]);
     table.add_row(row![adr_config::config::LOG_LEVEL, cfg.log_level, "Y"]);
+    table.add_row(row![adr_config::config::USE_ID_PREFIX, cfg.use_id_prefix, "Y"]);
+    table.add_row(row![adr_config::config::ID_PREFIX_WIDTH, cfg.id_prefix_width, "Y"]);
 
     // Print the table to stdout
     table.printstd();
@@ -306,6 +308,7 @@ fn main() {
         ("new", Some(matches)) => {
             if matches.is_present("name") {
                 adr_core::adr_repo::create_adr(
+                    adr_config::config::get_config(),
                     matches.value_of("name").unwrap(),
                     Path::new(&cfg.adr_template_dir).join(cfg.adr_template_file).as_path(),
                     Path::new(&cfg.adr_src_dir),

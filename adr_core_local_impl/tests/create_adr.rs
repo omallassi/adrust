@@ -29,7 +29,11 @@ mod helper {
             Some(project_dirs) => project_dirs,
         };
 
+        let mut cfg: adr_config::config::AdrToolConfig = adr_config::config::get_config();
+        cfg.use_id_prefix = false;
+
         Ok(adr_core::adr_repo::create_adr(
+            cfg, 
             name,
             project_dirs.cache_dir().join("templates/adr-template-v0.1.adoc").as_path(),
             project_dirs.cache_dir().join("src").as_path(),
@@ -56,7 +60,7 @@ mod create_new_adr_steps {
 
         };
 
-        then regex r"A new file named (.+) is created$" (String) |adr, name, _step| {
+        then regex r"A new file named (.+) is created$" (String) |adr, name, _step| {   
             let is_created = helper::create_decision(&adr.name).unwrap();
             assert_eq!(is_created, true);
             
