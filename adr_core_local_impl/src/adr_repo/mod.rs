@@ -131,12 +131,24 @@ pub fn format_decision_name(cfg: AdrToolConfig, name: &str) -> Result<String> {
     Ok( name.to_string() )
 }
 
-fn is_hidden(entry: &DirEntry) -> bool {
-    entry
+fn is_ok(entry: &DirEntry) -> bool {
+
+    let metadata = entry.metadata().unwrap();
+    let is_dir = metadata.is_dir();
+    
+    let is_hidden = entry
         .file_name()
         .to_str()
         .map(|s| s.starts_with("."))
-        .unwrap_or(false)
+        .unwrap_or(false);
+
+    let is_adoc = entry
+        .file_name()
+        .to_str()
+        .map(|s| s.ends_with(".adoc"))
+        .unwrap_or(false);
+    
+    (is_dir && !is_hidden) || (is_adoc && !is_hidden)
 }
 
 #[derive(Debug, PartialEq)]
@@ -197,14 +209,23 @@ fn list_all_adr_from_path(dir: &Path) -> io::Result<Vec<Adr>> {
     let mut results = std::vec::Vec::new();
     
     if dir.is_dir() {
-        let walker = WalkDir::new(dir).into_iter();
-        for entry in walker.filter_entry(|e| !is_hidden(e)) {
+        let walker = WalkDir::new(dir).follow_links(true).into_iter();
+        for entry in walker.filter_entry(|e| is_ok(e)) {
             let entry = entry?;
+            debug!(get_logger(), "got file [{:?}]", entry.path());
             let metadata = entry.metadata().unwrap();
             if metadata.is_file() {
-                let content: String = fs::read_to_string(entry.path()).unwrap();
-                let adr = build_adr(String::from(entry.path().to_str().unwrap()), content)?;
-                results.push(adr);
+                match fs::read_to_string(entry.path()){
+                    Ok(content) => {
+                        let adr = build_adr(String::from(entry.path().to_str().unwrap()), content)?;
+                        results.push(adr);
+                    },
+                    Err(_why) => {
+                        debug!(get_logger(), "Unable to read file [{:?}]", entry.path());
+                    }
+                };
+
+                
             }
         }
     }
