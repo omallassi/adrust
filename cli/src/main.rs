@@ -105,7 +105,9 @@ fn list_all_tags() -> Result<()> {
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
     table.set_titles(row![b -> "Tags"]);
     for entry in adr_core::adr_repo::list_all_adr(&cfg.adr_src_dir)? {
-        table.add_row(row![entry.tags]);
+        if entry.tags.len() != 0 {
+            table.add_row(row![entry.tags]);
+        }
     }
 
     // Print the table to stdout
