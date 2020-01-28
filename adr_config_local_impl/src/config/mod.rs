@@ -216,7 +216,13 @@ mod tests {
     fn teardown(name: &str) {
         //delete confy files
         if let Some(dir) = ProjectDirs::from("rs", name, name) {
-            fs::remove_dir_all(dir.config_dir().to_str().unwrap()).unwrap();
+            println!("deleting test folders [{:?}]", dir);
+            if dir.config_dir().exists() {
+                fs::remove_dir_all(dir.config_dir().to_str().unwrap()).unwrap();
+            }
+            else {
+                println!("Unable to delete folder [{:?}]", dir.config_dir());
+            }
         }
     }
 
