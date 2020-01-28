@@ -122,6 +122,11 @@ fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()> {
 
         confy::store(config, new_cfg).unwrap();
     }
+    if ADR_SRC_DIR == name {
+        let mut cfg: AdrToolConfig = get_config();
+        cfg.adr_src_dir = String::from(value);      
+        confy::store(config, cfg).unwrap();
+    }
     if ADR_TEMPLATE_FILE == name {
         let mut cfg: AdrToolConfig = get_config();
         cfg.adr_template_file = String::from(value);      
@@ -251,6 +256,26 @@ mod tests {
         }
         let cfg = super::get_config_from_name(config);
         assert_eq!(cfg.adr_template_file, "new-template.adoc");
+
+        teardown(config);
+    }
+
+    #[test]
+    fn test_set_config_adr_src_dir() {
+        let uuid = Uuid::new_v4();
+        let name = format!("adrust-tools-4-tests-{}", uuid);
+        let config = name.as_str();
+
+        match super::set_config_from_name(config, "adr_src_dir", "/tmp/does-not-exists/src") {
+            Ok(e) => e,
+            Err(why) => {
+                eprintln!("error in test : {}", why);
+            },
+        }
+        let cfg = super::get_config_from_name(config);
+        assert_eq!(cfg.adr_src_dir, "/tmp/does-not-exists/src");
+        assert_eq!(cfg.adr_template_file, "adr-template-v0.1.adoc");
+        assert_eq!(cfg.adr_template_dir, "/tmp/adr-samples/templates");
 
         teardown(config);
     }

@@ -84,7 +84,7 @@ fn list_all_config() -> Result<()> {
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
     table.set_titles(row![b -> "Property", b -> "Value", b -> "Modifiable"]);
     table.add_row(row![adr_config::config::ADR_ROOT_DIR, cfg.adr_root_dir, "Y"]);
-    table.add_row(row![adr_config::config::ADR_SRC_DIR, cfg.adr_src_dir, "N"]);
+    table.add_row(row![adr_config::config::ADR_SRC_DIR, cfg.adr_src_dir, "Y"]);
     table.add_row(row![adr_config::config::ADR_TEMPLATE_DIR, cfg.adr_template_dir, "N"]);
     table.add_row(row![adr_config::config::ADR_TEMPLATE_FILE, cfg.adr_template_file, "Y"]);
     table.add_row(row![adr_config::config::ADR_SEARCH_INDEX, cfg.adr_search_index, "N"]);
