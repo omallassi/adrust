@@ -15,8 +15,8 @@ Here are the main features:
 * [not started yet] Support different types of templates
 * [not started yet] Why not integrate with Microsoft Teams
 
-## Operating Env
-The current code line is tested on `MacOs / Rust 1.39` and build with `cargo`. [Travis CI](https://travis-ci.org/omallassi/adrust/builds) will build on `Linux / Windows` and `Rust 1.40`
+## Supported OS and compiler
+The current code line is developped on `MacOs / Rust 1.39` and build with `cargo` but [Travis CI](https://travis-ci.org/omallassi/adrust/builds) will build on `MacOs / Linux / Windows` on `Rust 1.39` / `Rust 1.40`
 
 ## Getting Started 
 
