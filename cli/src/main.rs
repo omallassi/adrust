@@ -103,11 +103,12 @@ fn list_all_tags() -> Result<()> {
 
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
-    table.set_titles(row![b -> "Tags"]);
-    for entry in adr_core::adr_repo::list_all_adr(&cfg.adr_src_dir)? {
-        if entry.tags.len() != 0 {
-            table.add_row(row![entry.tags]);
-        }
+    table.set_titles(row![b -> "Tags", b -> "Popularity"]);
+
+    let popularity = adr_core::adr_repo::get_tags_popularity(&cfg.adr_src_dir)?;
+
+    for (key, val) in popularity.iter() {
+        table.add_row(row![key, val]);
     }
 
     // Print the table to stdout

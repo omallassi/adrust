@@ -7,6 +7,7 @@ use std::fs::{self, File};
 use std::io::prelude::*;
 use std::io::{self};
 use std::path::Path;
+use std::collections::HashMap;
 
 extern crate regex;
 use regex::Regex;
@@ -195,12 +196,24 @@ pub struct Adr {
     pub title: String,
     pub status: Status,
     pub tags: String,
+    pub tags_array: Vec<String>,
 }
 
 pub fn list_all_adr(dir: &str) -> io::Result<Vec<Adr>> {
     let dir_path = Path::new(dir);
 
     list_all_adr_from_path(dir_path)    
+}
+
+pub fn get_tags_popularity(dir: &str) -> Result<HashMap<String, u32>> {
+    let mut popularity: HashMap<String, u32> = HashMap::new();
+    for adr in list_all_adr(&dir)? {
+            for tag in adr.tags_array.iter() {
+                popularity.entry(tag.to_string()).and_modify(|e| { *e += 1 }).or_insert(1);
+            }    
+    }
+
+    Ok(popularity)
 }
 
 fn list_all_adr_from_path(dir: &Path) -> io::Result<Vec<Adr>> {
@@ -265,24 +278,27 @@ fn build_adr(path: String, content: String) -> io::Result<Adr> {
         path: path,
         content: content,
         title: cap,
-        tags: tags,
+        tags: tags.0,
+        tags_array: tags.1,
         status: Status::from_str(status),
     };
 
     Ok(adr)
 }
 
-fn get_tags(val: &String) -> String {
+fn get_tags(val: &String) -> (String, Vec<String>) {
     lazy_static! {
         static ref RE_TAGS: Regex = Regex::new(r"(\[tags]\#([^#]+)\#)").unwrap();
     }
 
-    let mut tags = String::from("");
+    let mut tags_str = String::from("");
     for cap in RE_TAGS.captures_iter(val) {
-        write!(tags, "{}, ", &cap[2]).unwrap();
+        write!(tags_str, "#{} ", &cap[2]).unwrap();
     }
 
-    tags
+    let tags = tags_str.split("#").filter(|s| s.len() > 0).map(|s| s.to_string()).collect();
+
+    (tags_str, tags)
 }
 
 pub fn update_to_decided(adr_name: &str) -> io::Result<bool> {
@@ -482,7 +498,7 @@ mod tests {
         assert_eq!(adr_sut.title, "ADR-MVA-507 Decide about ...");
         assert_eq!(adr_sut.path, "a_path");
         assert_eq!(adr_sut.content, content.to_string());
-        assert_eq!(adr_sut.tags, "deployment view, network, security, ");
+        assert_eq!(adr_sut.tags, "#deployment view #network #security ");
         assert_eq!(adr_sut.status, super::Status::WIP);
     }
 
