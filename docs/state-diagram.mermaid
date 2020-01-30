@@ -1,0 +1,15 @@
+<div class="mermaid">
+stateDiagram
+	[*] --> wip
+	wip --> decided
+    decided --> superseded
+    superseded --> [*]
+
+	decided --> obsoleted
+	obsoleted --> [*]
+
+	wip --> completed
+	decided --> completed
+    completed --> [*]: if [decided]
+	completed --> decided: if [wip]
+</div>

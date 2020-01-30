@@ -101,6 +101,12 @@ To set the log level to Debug `adr config set --name log_level --value 6`
 ## Search
 Search is based on [Tantivy Search](https://github.com/tantivy-search/tantivy). You can build your local index via `adr index --build` and search via `adr search --query "word#1 AND word#2"`
 
+## ADR Lifecycle
+
+ADRs follow the below lifecycle
+
+[![](https://mermaid.ink/img/eyJjb2RlIjoic3RhdGVEaWFncmFtXG5cdFsqXSAtLT4gd2lwXG5cdHdpcCAtLT4gZGVjaWRlZFxuICAgIGRlY2lkZWQgLS0-IHN1cGVyc2VkZWRcbiAgICBzdXBlcnNlZGVkIC0tPiBbKl1cblxuXHRkZWNpZGVkIC0tPiBvYnNvbGV0ZWRcblx0b2Jzb2xldGVkIC0tPiBbKl1cblxuXHR3aXAgLS0-IGNvbXBsZXRlZFxuXHRkZWNpZGVkIC0tPiBjb21wbGV0ZWRcbiAgICBjb21wbGV0ZWQgLS0-IFsqXTogaWYgW2RlY2lkZWRdXG5cdGNvbXBsZXRlZCAtLT4gZGVjaWRlZDogaWYgW3dpcF0iLCJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9fQ)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoic3RhdGVEaWFncmFtXG5cdFsqXSAtLT4gd2lwXG5cdHdpcCAtLT4gZGVjaWRlZFxuICAgIGRlY2lkZWQgLS0-IHN1cGVyc2VkZWRcbiAgICBzdXBlcnNlZGVkIC0tPiBbKl1cblxuXHRkZWNpZGVkIC0tPiBvYnNvbGV0ZWRcblx0b2Jzb2xldGVkIC0tPiBbKl1cblxuXHR3aXAgLS0-IGNvbXBsZXRlZFxuXHRkZWNpZGVkIC0tPiBjb21wbGV0ZWRcbiAgICBjb21wbGV0ZWQgLS0-IFsqXTogaWYgW2RlY2lkZWRdXG5cdGNvbXBsZXRlZCAtLT4gZGVjaWRlZDogaWYgW3dpcF0iLCJtZXJtYWlkIjp7InRoZW1lIjoiZGVmYXVsdCJ9fQ)
+
 ## Trouleshoot
 
 * it may happen that `config`object evolves between commits and create issues. The usual symptoms are to get a `panic`when running `adr config list`or `adr init`, specifying that property `adr_....`cannot be found. In this case, the easiest is to run `rm $HOME/Library/Preferences/rs.adrust-tools.adrust-tools/adrust-tools.toml`. This will yet fallback to default values...
