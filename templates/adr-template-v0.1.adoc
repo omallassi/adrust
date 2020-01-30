@@ -8,7 +8,7 @@
 :superseded: pass:q[[.label.obsoleted]#Superseded By#]
 :obsoleted: pass:q[[.label.obsoleted]#Obsolete#]
 
-== ADR-MVA-507 Decide about ...
+== {%%ADR TITLE%%}
 
 *Status:* {wip}  *Date:* 2019-10-28
 
