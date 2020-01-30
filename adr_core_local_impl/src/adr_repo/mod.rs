@@ -48,6 +48,12 @@ pub fn create_adr(cfg: AdrToolConfig, name: &str, path_to_template: &Path, src_d
         match path_to_template.exists() {
             true => {
                 fs::copy(path_to_template, &target_path)?;
+                //need to update the title of the ADR with specified name. there is certainly a better way
+                //reading again the file... 
+                let adr_content = fs::read_to_string(&target_path).unwrap();
+                let content = adr_content.replacen("== {%%ADR TITLE%%}", &name, 1);
+                fs::write(&target_path, content).unwrap();
+                //
                 info!(get_logger(), "New ADR {:?} created", target_path);
             }
             false => {
@@ -69,14 +75,6 @@ fn extract_seq_id(name: &str) -> Result<usize> {
         static ref RE: Regex = Regex::new(r"(\d+)-{1}").unwrap();
     }
 
-    // let cap = match RE.captures(name) {
-    //     Some(val) => val,
-    //     None => {
-    //         error!(get_logger(), "Unable to extract_seq_id from [{}]", name);
-    //         //panic!();
-    //         continue;
-    //     }
-    // };
     let mut id: usize = 0;
     if let Some(cap) = RE.captures(name) {
         debug!(get_logger(), "found first match [{}]", cap[1].to_string());
