@@ -37,11 +37,11 @@ fn get_logger() -> slog::Logger {
 ///
 /// Creates the file (based on template file). Returns true if file is created, false if not
 /// (because target file already exists...)
-pub fn create_adr(cfg: AdrToolConfig, name: &str, path_to_template: &Path, src_dir: &Path) -> io::Result<bool> {
+pub fn create_adr(cfg: AdrToolConfig, title: &str, path_to_template: &Path, src_dir: &Path) -> io::Result<bool> {
     //specify last seq_id , the rest of the config (use_prefix and width can be get from the method)
-    let name = match format_decision_name(cfg, name) {
+    let name = match format_decision_name(cfg, title) {
         Ok(name) => name,
-        Err(_why) => panic!(format!("Problem while formatting name [{}]", name)),
+        Err(_why) => panic!(format!("Problem while formatting name [{}]", title)),
     };
     let target_path = src_dir.join(format!("{}.adoc", name));
     let is_target_file = target_path.is_file();
@@ -52,7 +52,9 @@ pub fn create_adr(cfg: AdrToolConfig, name: &str, path_to_template: &Path, src_d
                 //need to update the title of the ADR with specified name. there is certainly a better way
                 //reading again the file... 
                 let adr_content = fs::read_to_string(&target_path).unwrap();
-                let content = adr_content.replacen("== {%%ADR TITLE%%}", &name, 1);
+                let mut adoc_title = String::from("== ");
+                adoc_title.push_str(&title);
+                let content = adr_content.replacen("== {%%ADR TITLE%%}", adoc_title.as_str(), 1);
                 fs::write(&target_path, content).unwrap();
                 //
                 info!(get_logger(), "New ADR {:?} created", target_path);
