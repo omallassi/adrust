@@ -180,19 +180,6 @@ fn main() {
                 ),
         )
         .subcommand(
-            SubCommand::with_name("decided")
-                .about("update the Status to Decide")
-                .version("0.1.0")
-                .arg(
-                    Arg::with_name("name")
-                        .short("n")
-                        .long("name")
-                        .takes_value(true)
-                        .required(true)
-                        .help("Give the name of your Decision Record"),
-                ),
-        )
-        .subcommand(
             SubCommand::with_name("list")
                 .about("Lists all Decision Records")
                 .version("0.1.0"),
@@ -237,46 +224,64 @@ fn main() {
                 .subcommand(SubCommand::with_name("list").about("List All the Tags")),
         )
         .subcommand(
-            SubCommand::with_name("superseded-by")
-                .about("update the Status to Decide")
-                .version("0.1.0")
-                .arg(
-                    Arg::with_name("name")
-                        .short("n")
-                        .long("name")
-                        .takes_value(true)
-                        .required(true)
-                        .help("Give the name of your Decision Record"),
+            App::new("lf")
+                .about("Manage ADRs lifecycle")
+                .setting(AppSettings::SubcommandRequiredElseHelp)
+                .subcommand(
+                    SubCommand::with_name("decided")
+                        .about("update the Status to Decide")
+                        .version("0.1.0")
+                        .arg(
+                            Arg::with_name("path")
+                                .short("p")
+                                .long("path")
+                                .takes_value(true)
+                                .required(true)
+                                .help("Give the path of your Decision Record"),
+                        ),
                 )
-                .arg(
-                    Arg::with_name("by")
-                        .short("b")
-                        .long("by")
-                        .takes_value(true)
-                        .required(true)
-                        .help("Give the name of your Decision Record"),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("completed-by")
-                .about("Complete a decision with another decision")
-                .version("0.1.0")
-                .arg(
-                    Arg::with_name("name")
-                        .short("n")
-                        .long("name")
-                        .takes_value(true)
-                        .required(true)
-                        .help("Give the name of the DR which is completed by"),
+                .subcommand(
+                    SubCommand::with_name("superseded-by")
+                    .about("update the Status to Decide")
+                    .version("0.1.0")
+                    .arg(
+                        Arg::with_name("path")
+                            .short("p")
+                            .long("path")
+                            .takes_value(true)
+                            .required(true)
+                            .help("Give the path of your Decision Record"),
+                    )
+                    .arg(
+                        Arg::with_name("by")
+                            .short("b")
+                            .long("by")
+                            .takes_value(true)
+                            .required(true)
+                            .help("Give the path of your Decision Record"),
+                    ),
                 )
-                .arg(
-                    Arg::with_name("by")
-                        .short("b")
-                        .long("by")
-                        .takes_value(true)
-                        .required(true)
-                        .help("Give the name of the DR which completes"),
-                ),
+                .subcommand(
+                    SubCommand::with_name("completed-by")
+                        .about("Complete a decision with another decision")
+                        .version("0.1.0")
+                        .arg(
+                            Arg::with_name("path")
+                                .short("p")
+                                .long("path")
+                                .takes_value(true)
+                                .required(true)
+                                .help("Give the path of the DR which is completed by"),
+                        )
+                        .arg(
+                            Arg::with_name("by")
+                                .short("b")
+                                .long("by")
+                                .takes_value(true)
+                                .required(true)
+                                .help("Give the path of the DR which completes"),
+                        ),
+                )
         )
         .subcommand(
             SubCommand::with_name("search")
@@ -325,29 +330,32 @@ fn main() {
         ("init", Some(_matches)) => {
             init().unwrap();
         }
-        ("decided", Some(_matches)) => {
-            if _matches.is_present("name") {
-                adr_core::adr_repo::transition_to_decided(_matches.value_of("name").unwrap()).unwrap();
+        ("lf", Some(matches)) => match matches.subcommand() {
+            ("decided", Some(set_matches)) => {
+                if set_matches.is_present("path") {
+                    adr_core::adr_repo::transition_to_decided(set_matches.value_of("path").unwrap()).unwrap();
+                }
             }
-        }
-        ("superseded-by", Some(_matches)) => {
-            if _matches.is_present("name") && _matches.is_present("by") {
-                adr_core::adr_repo::transition_to_superseded_by(
-                    _matches.value_of("name").unwrap(),
-                    _matches.value_of("by").unwrap(),
-                )
-                .unwrap();
+            ("completed-by", Some(set_matches)) => {
+                if set_matches.is_present("path") && set_matches.is_present("by") {
+                    adr_core::adr_repo::transition_to_completed_by(
+                        set_matches.value_of("path").unwrap(),
+                        set_matches.value_of("by").unwrap(),
+                    )
+                    .unwrap();
+                }
             }
-        }
-        ("completed-by", Some(_matches)) => {
-            if _matches.is_present("name") && _matches.is_present("by") {
-                adr_core::adr_repo::transition_to_completed_by(
-                    _matches.value_of("name").unwrap(),
-                    _matches.value_of("by").unwrap(),
-                )
-                .unwrap();
+            ("superseded-by", Some(set_matches)) => {
+                if set_matches.is_present("path") && set_matches.is_present("by") {
+                    adr_core::adr_repo::transition_to_superseded_by(
+                        set_matches.value_of("path").unwrap(),
+                        set_matches.value_of("by").unwrap(),
+                    )
+                    .unwrap();
+                }
             }
-        }
+            _ => unreachable!(),
+        },
         ("config", Some(config_matches)) => match config_matches.subcommand() {
             ("list", Some(_remote_matches)) => {
                 list_all_config().unwrap();

@@ -30,7 +30,7 @@ Run `adr config list` to view the default configuration (and why not modify it) 
 ## Play...
 
 ```
-[omallassi@omallassi-mac adrust]$./target/debug/adr help
+[omallassi@LEMON02 adrust]$./target/debug/adr -h
 adr 0.1.0
 A CLI to help you manage your ADR in git
 
@@ -42,17 +42,15 @@ FLAGS:
     -V, --version    Prints version information
 
 SUBCOMMANDS:
-    completed-by     Complete a decision with another decision
-    config           Manage Configuration Items
-    decided          update the Status to Decide
-    help             Prints this message or the help of the given subcommand(s)
-    index            Index all available ADRs
-    init             Init ADRust based on `config`
-    list             Lists all Decision Records
-    new              will create a new Decision Record
-    search           Search across all ADRs
-    superseded-by    update the Status to Decide
-    tags             Manage Tags
+    config    Manage Configuration Items
+    help      Prints this message or the help of the given subcommand(s)
+    index     Index all available ADRs
+    init      Init ADRust based on config
+    lf        Manage ADRs lifecycle
+    list      Lists all Decision Records
+    new       will create a new Decision Record
+    search    Search across all ADRs
+    tags      Manage Tags
 ```
 
 In more details, 
@@ -64,8 +62,8 @@ In more details,
 | `adr config list`     | will list the configuration. Configuration is stored in [config_dir](https://docs.rs/directories/2.0.2/directories/struct.ProjectDirs.html#method.config_dir)`/rs.adrust-tools.adrust-tools/` (so on MacOs `$HOME/Library/Preferences/rs.adrust-tools.adrust-tools/`)
 | `adr config set --name prop --value val`      | will set the configuration property |
 | `adr new --name my-decision`      | will create a new decision  |
-| `adr decided --name my-decision.md`      | will transition an ADR to decided |
-| `adr superseded-by --name my-decision.md --by my-new-decision.md`      | will supersed an ADR `by` the specified one |
+| `adr lf decided --path my-decision.md`      | will transition an ADR to decided |
+| `adr lf superseded-by --path my-decision.md --by my-new-decision.md`      | will supersed an ADR `by` the specified one |
 | `adr tags list`      | List all the tags whatever the Decision Record |
 | `adr index --build`      | Build the index (not incrementally for now) in the folder defined in `adr config list`|
 | `adr search --query "my search"`      | Search across indexed ADRs |
