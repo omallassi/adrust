@@ -3,6 +3,7 @@ extern crate slog_term;
 use slog::*;
 
 use std::fmt::Write;
+use std::fmt;
 use std::fs::{self, File};
 use std::io::prelude::*;
 use std::io::{self};
@@ -16,6 +17,7 @@ use walkdir::{DirEntry, WalkDir};
 
 extern crate adr_config;
 use adr_config::config::AdrToolConfig;
+
 
 fn get_logger() -> slog::Logger {
     let cfg: AdrToolConfig = adr_config::config::get_config();
@@ -150,46 +152,6 @@ fn is_ok(entry: &DirEntry) -> bool {
         .unwrap_or(false);
     
     (is_dir && !is_hidden) || (is_adoc && !is_hidden)
-}
-
-#[derive(Debug, PartialEq)]
-pub enum Status {
-    WIP,
-    DECIDED,
-    COMPLETED,
-    COMPLETES,
-    SUPERSEDED,
-    SUPERSEDES,
-    OBSOLETED,
-    NONE,
-}
-
-impl Status {
-    pub fn as_str(&self) -> &'static str {
-        match *self {
-            Status::WIP => "wip",
-            Status::DECIDED => "decided",
-            Status::COMPLETED => "completed",
-            Status::COMPLETES => "completes",
-            Status::SUPERSEDED => "superseded",
-            Status::SUPERSEDES => "supersedes",
-            Status::OBSOLETED => "obsoleted",
-            Status::NONE => "unknown",
-        }
-    }
-
-    fn from_str(val: String) -> Status {
-        match val.as_str() {
-            "wip" => Status::WIP,
-            "decided" => Status::DECIDED,
-            "completed" => Status::COMPLETED,
-            "completes" => Status::COMPLETES,
-            "superseded" => Status::SUPERSEDED,
-            "supersedes" => Status::SUPERSEDES,
-            "obsoleted" => Status::OBSOLETED,
-            _ => Status::NONE,
-        }
-    }
 }
 
 pub struct Adr {
@@ -404,8 +366,203 @@ pub fn completed_by(adr_name: &str, by: &str) -> io::Result<()> {
     Ok(())
 }
 
+pub trait State {
+    fn transition(&mut self, transition: TransitionStatus);
+
+    fn build(status: Status) -> AdrState;
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Status {
+    WIP,
+    DECIDED,
+    COMPLETED,
+    COMPLETES,
+    SUPERSEDED,
+    SUPERSEDES,
+    OBSOLETED,
+    CANCELLED,
+    NONE,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum TransitionStatus {
+    DECIDED,
+    COMPLETED,
+    OBSOLETED,
+    SUPERSEDED,
+    CANCELLED,
+}
+
+impl Status {
+    pub fn as_str(&self) -> &'static str {
+        match *self {
+            Status::WIP => "wip",
+            Status::DECIDED => "decided",
+            Status::COMPLETED => "completed",
+            Status::COMPLETES => "completes",
+            Status::SUPERSEDED => "superseded",
+            Status::SUPERSEDES => "supersedes",
+            Status::OBSOLETED => "obsoleted",
+            Status::CANCELLED => "cancelled",
+            Status::NONE => "unknown",
+        }
+    }
+
+    pub fn from_str(val: String) -> Status {
+        match val.as_str() {
+            "wip" => Status::WIP,
+            "decided" => Status::DECIDED,
+            "completed" => Status::COMPLETED,
+            "completes" => Status::COMPLETES,
+            "superseded" => Status::SUPERSEDED,
+            "supersedes" => Status::SUPERSEDES,
+            "obsoleted" => Status::OBSOLETED,
+            "cancelled" => Status::CANCELLED,
+            _ => Status::NONE,
+        }
+    }
+}
+
+pub struct AdrState {
+    status: Status,
+}
+
+impl State for AdrState {
+
+    fn transition(&mut self, transition: TransitionStatus) {  
+        let current_state = self.status.as_str();
+        let current_status = &self.status;
+        
+        let next_status= match current_status {
+            Status::WIP => {
+                match transition {
+                    TransitionStatus::DECIDED => {
+                        self.status = Status::DECIDED;
+                        Status::DECIDED
+                    },
+                    TransitionStatus::COMPLETED => {
+                        self.status = Status::COMPLETED;
+                        Status::COMPLETED
+                    },
+                    TransitionStatus::CANCELLED => {
+                        self.status = Status::CANCELLED;
+                        Status::CANCELLED
+                    },
+                    _ => {Status::WIP}                    
+                }
+            },
+            Status::DECIDED => {
+                match transition {
+                    TransitionStatus::COMPLETED => {
+                        self.status = Status::COMPLETED;
+                        Status::COMPLETED
+                    },
+                    TransitionStatus::CANCELLED => {
+                        self.status = Status::CANCELLED;
+                        Status::CANCELLED
+                    },
+                    TransitionStatus::SUPERSEDED => {
+                        self.status = Status::SUPERSEDED;
+                        Status::SUPERSEDED
+                    },
+                    _ => {Status::DECIDED}
+                }
+            },
+            Status::COMPLETED => {
+                match transition {
+                    TransitionStatus::DECIDED => {
+                        self.status = Status::DECIDED;
+                        Status::DECIDED
+                    },
+                    TransitionStatus::SUPERSEDED => {
+                        self.status = Status::SUPERSEDED;
+                        Status::SUPERSEDED
+                    },
+                    TransitionStatus::CANCELLED => {
+                        self.status = Status::CANCELLED;
+                        Status::CANCELLED
+                    },
+                    _ => {Status::COMPLETED}
+                }
+            },
+            Status::SUPERSEDED => {
+                match transition {
+                    TransitionStatus::CANCELLED => {
+                        self.status = Status::CANCELLED;
+                        Status::CANCELLED
+                    },
+                    _ => {Status::SUPERSEDED}
+                }
+            },
+            Status::CANCELLED => {
+                match transition {
+                    _ => {Status::CANCELLED}
+                }
+            },
+
+            _ => Status::NONE
+        };
+
+        self.status = next_status;
+
+        debug!(get_logger(), "transition [{:?}] has been called from [{:?}] to [{:?}]", transition, current_state, self.status);
+
+    }
+
+    fn build(status: Status) -> AdrState {
+        AdrState {
+            status: status,
+        } 
+    }
+}
+
+impl std::fmt::Debug for AdrState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "AdrState {{ status: {:?}}}", self.status)
+    }
+}
+
+impl std::cmp::PartialEq for AdrState {
+    fn eq(&self, other: &Self) -> bool {
+        self.status == other.status
+    }
+}
+
 #[cfg(test)]
 mod tests {
+
+    use crate::adr_repo::State;
+
+    #[test]
+    fn test_state_machine() {
+        let mut state = super::AdrState::build(super::Status::WIP);
+        assert_eq!(state, super::AdrState { status: super::Status::WIP});
+        state.transition(super::TransitionStatus::COMPLETED);
+        assert_eq!(state, super::AdrState { status: super::Status::COMPLETED});
+        state.transition(super::TransitionStatus::DECIDED);
+        assert_eq!(state, super::AdrState { status: super::Status::DECIDED});
+        state.transition(super::TransitionStatus::SUPERSEDED);
+        assert_eq!(state, super::AdrState { status: super::Status::SUPERSEDED});
+        state.transition(super::TransitionStatus::CANCELLED);
+        assert_eq!(state, super::AdrState { status: super::Status::CANCELLED});
+    }
+
+    #[test]
+    fn test_state_machine_2() {
+        let mut state = super::AdrState::build(super::Status::WIP);
+        assert_eq!(state, super::AdrState { status: super::Status::WIP});
+        state.transition(super::TransitionStatus::SUPERSEDED);
+        assert_eq!(state, super::AdrState { status: super::Status::WIP});
+        state.transition(super::TransitionStatus::DECIDED);
+        assert_eq!(state, super::AdrState { status: super::Status::DECIDED});
+        state.transition(super::TransitionStatus::COMPLETED);
+        assert_eq!(state, super::AdrState { status: super::Status::COMPLETED});
+        state.transition(super::TransitionStatus::SUPERSEDED);
+        assert_eq!(state, super::AdrState { status: super::Status::SUPERSEDED});
+        state.transition(super::TransitionStatus::CANCELLED);
+        assert_eq!(state, super::AdrState { status: super::Status::CANCELLED});
+    }
 
     #[test]
     fn test_get_seq() {
