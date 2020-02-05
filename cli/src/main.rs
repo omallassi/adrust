@@ -327,12 +327,12 @@ fn main() {
         }
         ("decided", Some(_matches)) => {
             if _matches.is_present("name") {
-                adr_core::adr_repo::update_to_decided(_matches.value_of("name").unwrap()).unwrap();
+                adr_core::adr_repo::transition_to_decided(_matches.value_of("name").unwrap()).unwrap();
             }
         }
         ("superseded-by", Some(_matches)) => {
             if _matches.is_present("name") && _matches.is_present("by") {
-                adr_core::adr_repo::superseded_by(
+                adr_core::adr_repo::transition_to_superseded_by(
                     _matches.value_of("name").unwrap(),
                     _matches.value_of("by").unwrap(),
                 )
@@ -341,7 +341,7 @@ fn main() {
         }
         ("completed-by", Some(_matches)) => {
             if _matches.is_present("name") && _matches.is_present("by") {
-                adr_core::adr_repo::completed_by(
+                adr_core::adr_repo::transition_to_completed_by(
                     _matches.value_of("name").unwrap(),
                     _matches.value_of("by").unwrap(),
                 )

@@ -265,50 +265,45 @@ fn get_tags(val: &String) -> (String, Vec<String>) {
     (tags_str, tags)
 }
 
-pub fn update_to_decided(adr_name: &str) -> io::Result<bool> {
-    let mut f = File::open(adr_name)?;
-
-    let mut contents = String::new();
-    f.read_to_string(&mut contents).unwrap();
-
-    let contains = contents.contains("{wip}");
-    if contains {
-        let new_content = contents.replace("{wip}", "{decided}");
-        fs::write(adr_name, new_content)?;
-        info!(
-            get_logger(),
-            "Decision Record [{}] has been decided - Congrats!!", adr_name
-        );
-    } else {
-        error!(
-            get_logger(),
-            "Decision Record [{}] has certainly not the right status and cannot be updated",
-            adr_name
-        );
-    }
-
-    Ok(contains)
+pub fn transition_to_decided(adr_name: &str) -> io::Result<bool> {
+    let current_status = "{wip}";
+    transition_to(adr_name, current_status, "{decided}", "", "")
 }
 
-pub fn superseded_by(adr_name: &str, by: &str) -> io::Result<()> {
-    //check the decisino is decided
+pub fn transition_to_superseded_by(adr_name: &str, by: &str) -> io::Result<bool> {
+    let current_status = "{decided}";
+    let updated_by = format!("{{superseded}} {}", by);
+    let updates = format!("{{supersedes}} {}", adr_name);
+
+    transition_to(adr_name, current_status, updated_by.as_str(), by, updates.as_str())
+}
+
+pub fn transition_to_completed_by(adr_name: &str, by: &str) -> io::Result<bool> {
+    let current_status = "{decided}";
+    let updated_by = format!("{{completed}} {}", by);
+    let updates = format!("{{completes}} {}", adr_name);
+
+    transition_to(adr_name, current_status, updated_by.as_str(), by, updates.as_str())
+}
+
+fn transition_to(adr_name: &str, current_status: &str, updated_by: &str, adr_by: &str, updates: &str) -> io::Result<bool> {
+    info!(get_logger(), "Want to transition [{}] from [{}] to [{}] - and - [{}] to [{}]", adr_name, current_status, updated_by, adr_by, updates);
     let mut f = File::open(adr_name)?;
     let mut contents = String::new();
     f.read_to_string(&mut contents).unwrap();
-    match contents.contains("{decided}") {
+    let contains = contents.contains(current_status);
+    match contains {
         true => {
-            //manage the from
-            let superseded_by = format!("{{superseded}} {}", by);
-            update_adr_file(adr_name, &superseded_by)?;
-
-            //manage the by
-            let supersed = format!("{{supersedes}} {}", adr_name);
-            update_adr_file(by, &supersed)?;
-
-            info!(
-                get_logger(),
-                "Decision Record [{}] has been superseded by [{}]", adr_name, by
-            );
+            //the initial ADR is {update}_by
+            update_adr_file(adr_name, current_status, &updated_by)?;
+            //the new ADR {updates}
+            if ! adr_by.is_empty() {
+                update_adr_file(adr_by, current_status, &updates)?;
+                info!(get_logger(), "Decision Record [{}] has been [{}] by [{}]", adr_name, updated_by, adr_by);
+            }
+            else {
+                info!(get_logger(), "Decision Record [{}] has been [{}]", adr_name, updated_by);
+            }
         }
         false => {
             error!(
@@ -317,51 +312,19 @@ pub fn superseded_by(adr_name: &str, by: &str) -> io::Result<()> {
                 adr_name
             );
         }
-    }
+    };
 
-    Ok(())
+    Ok(contains)
 }
 
-fn update_adr_file(adr_name: &str, tag_to_replace: &str) -> io::Result<()> {
+fn update_adr_file(adr_name: &str, old_tag: &str, new_tag: &str) -> io::Result<()> {
     let mut contents = String::new();
     {
         let mut f = File::open(adr_name)?;
         f.read_to_string(&mut contents).unwrap();
     }
-    let new_content = contents.replace("{decided}", tag_to_replace);
+    let new_content = contents.replace(old_tag, new_tag);
     fs::write(adr_name, new_content)?;
-
-    Ok(())
-}
-
-pub fn completed_by(adr_name: &str, by: &str) -> io::Result<()> {
-    //check the decisino is decided
-    let mut f = File::open(adr_name)?;
-    let mut contents = String::new();
-    f.read_to_string(&mut contents).unwrap();
-    match contents.contains("{decided}") {
-        true => {
-            //manage the from
-            let completed_by = format!("{{completed}} {}", by);
-            update_adr_file(adr_name, &completed_by)?;
-
-            //manage the by
-            let completes = format!("{{completes}} {}", adr_name);
-            update_adr_file(by, &completes)?;
-
-            info!(
-                get_logger(),
-                "Decision Record [{}] has been completed by [{}]", adr_name, by
-            );
-        }
-        false => {
-            error!(
-                get_logger(),
-                "Decision Record [{}] has certainly not the right status and cannot be updated",
-                adr_name
-            );
-        }
-    }
 
     Ok(())
 }
