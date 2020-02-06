@@ -159,6 +159,7 @@ pub struct Adr {
     pub content: String,
     pub title: String,
     pub status: Status,
+    pub state: AdrState,
     pub tags: String,
     pub tags_array: Vec<String>,
 }
@@ -190,22 +191,26 @@ fn list_all_adr_from_path(dir: &Path) -> io::Result<Vec<Adr>> {
             debug!(get_logger(), "got file [{:?}]", entry.path());
             let metadata = entry.metadata().unwrap();
             if metadata.is_file() {
-                match fs::read_to_string(entry.path()){
-                    Ok(content) => {
-                        let adr = build_adr(String::from(entry.path().to_str().unwrap()), content)?;
+                match build_adr_from_path(entry.path()) {
+                    Ok(adr) => {
                         results.push(adr);
                     },
                     Err(_why) => {
                         debug!(get_logger(), "Unable to read file [{:?}]", entry.path());
                     }
                 };
-
-                
             }
         }
     }
 
     Ok(results)
+}
+
+fn build_adr_from_path(file: &Path) -> io::Result<Adr> {
+    let content = fs::read_to_string(file) ? ;
+    let adr = build_adr(String::from(file.to_str().unwrap()), content) ? ;
+       
+    Ok(adr)
 }
 
 fn build_adr(path: String, content: String) -> io::Result<Adr> {
@@ -244,7 +249,8 @@ fn build_adr(path: String, content: String) -> io::Result<Adr> {
         title: cap,
         tags: tags.0,
         tags_array: tags.1,
-        status: Status::from_str(status),
+        status: Status::from_str(status.clone()),
+        state: AdrState { status: Status::from_str(status.clone()) },
     };
 
     Ok(adr)
@@ -266,27 +272,44 @@ fn get_tags(val: &String) -> (String, Vec<String>) {
 }
 
 pub fn transition_to_decided(adr_name: &str) -> io::Result<bool> {
-    let current_status = "{wip}";
-    transition_to(adr_name, current_status, "{decided}", "", "")
+    transition_to(TransitionStatus::DECIDED, adr_name, "")
 }
 
 pub fn transition_to_superseded_by(adr_name: &str, by: &str) -> io::Result<bool> {
-    let current_status = "{decided}";
-    let updated_by = format!("{{superseded}} {}", by);
-    let updates = format!("{{supersedes}} {}", adr_name);
-
-    transition_to(adr_name, current_status, updated_by.as_str(), by, updates.as_str())
+    transition_to(TransitionStatus::SUPERSEDED, adr_name, by)
 }
 
 pub fn transition_to_completed_by(adr_name: &str, by: &str) -> io::Result<bool> {
-    let current_status = "{decided}";
-    let updated_by = format!("{{completed}} {}", by);
-    let updates = format!("{{completes}} {}", adr_name);
-
-    transition_to(adr_name, current_status, updated_by.as_str(), by, updates.as_str())
+    transition_to(TransitionStatus::COMPLETED, adr_name, by)
 }
 
-fn transition_to(adr_name: &str, current_status: &str, updated_by: &str, adr_by: &str, updates: &str) -> io::Result<bool> {
+fn transition_to(transition: TransitionStatus, adr_name: &str, by: &str) -> io::Result<bool> {
+    let adr = build_adr_from_path(Path::new(adr_name))?;
+    let mut state = adr.state;
+    let current_status = format!("{{{status}}}", status = state.status.as_str() ); //you escape { with a { and final status is {wip}  o_O
+    let has_been_modified = state.transition(transition);
+    
+    if has_been_modified {
+        let mut new_status = String::from("");
+        let mut updates = String::from("");
+        
+        if by.is_empty() {
+            new_status = format!("{{{status}}}", status = state.status.as_str() );
+        }
+        else {
+            new_status = format!("{{{updated_by}}} {by}", updated_by = state.status.as_str(), by = by);
+            updates = format!("{{{updates}}} {adr_name}", updates = Status::revert(state.status).as_str(), adr_name = adr_name);
+        }
+
+        //TODO To work on Adr.content directly
+        write_transition_to_file(adr_name, current_status.as_str(), new_status.as_str(), by, updates.as_str())
+    }
+    else {
+        Ok(false) //not sure about OK(false) btw...
+    }
+}
+
+fn write_transition_to_file(adr_name: &str, current_status: &str, updated_by: &str, adr_by: &str, updates: &str) -> io::Result<bool> {
     info!(get_logger(), "Want to transition [{}] from [{}] to [{}] - and - [{}] to [{}]", adr_name, current_status, updated_by, adr_by, updates);
     let mut f = File::open(adr_name)?;
     let mut contents = String::new();
@@ -329,10 +352,14 @@ fn update_adr_file(adr_name: &str, old_tag: &str, new_tag: &str) -> io::Result<(
     Ok(())
 }
 
-pub trait State {
-    fn transition(&mut self, transition: TransitionStatus);
 
-    fn build(status: Status) -> AdrState;
+#[derive(Debug, PartialEq)]
+pub enum TransitionStatus {
+    DECIDED,
+    COMPLETED,
+    OBSOLETED,
+    SUPERSEDED,
+    CANCELLED,
 }
 
 #[derive(Debug, PartialEq)]
@@ -346,15 +373,6 @@ pub enum Status {
     OBSOLETED,
     CANCELLED,
     NONE,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum TransitionStatus {
-    DECIDED,
-    COMPLETED,
-    OBSOLETED,
-    SUPERSEDED,
-    CANCELLED,
 }
 
 impl Status {
@@ -385,6 +403,20 @@ impl Status {
             _ => Status::NONE,
         }
     }
+
+    fn revert(status: Status) -> Status {
+        match status {
+            Status::COMPLETED => Status::COMPLETES,
+            Status::SUPERSEDED => Status::SUPERSEDES,
+            _ => status,
+        }
+    }
+}
+
+pub trait State {
+    fn transition(&mut self, transition: TransitionStatus) -> bool;
+
+    fn build(status: Status) -> AdrState;
 }
 
 pub struct AdrState {
@@ -393,9 +425,11 @@ pub struct AdrState {
 
 impl State for AdrState {
 
-    fn transition(&mut self, transition: TransitionStatus) {  
+    fn transition(&mut self, transition: TransitionStatus) -> bool {  
         let current_state = self.status.as_str();
         let current_status = &self.status;
+
+        let mut has_been_modified = true;
         
         let next_status= match current_status {
             Status::WIP => {
@@ -412,7 +446,10 @@ impl State for AdrState {
                         self.status = Status::CANCELLED;
                         Status::CANCELLED
                     },
-                    _ => {Status::WIP}                    
+                    _ => {
+                        has_been_modified = false;
+                        Status::WIP
+                    }
                 }
             },
             Status::DECIDED => {
@@ -429,7 +466,10 @@ impl State for AdrState {
                         self.status = Status::SUPERSEDED;
                         Status::SUPERSEDED
                     },
-                    _ => {Status::DECIDED}
+                    _ => {
+                        has_been_modified = false;
+                        Status::DECIDED
+                    }
                 }
             },
             Status::COMPLETED => {
@@ -446,7 +486,10 @@ impl State for AdrState {
                         self.status = Status::CANCELLED;
                         Status::CANCELLED
                     },
-                    _ => {Status::COMPLETED}
+                    _ => {
+                        has_been_modified = false;
+                        Status::COMPLETED
+                    }
                 }
             },
             Status::SUPERSEDED => {
@@ -455,22 +498,31 @@ impl State for AdrState {
                         self.status = Status::CANCELLED;
                         Status::CANCELLED
                     },
-                    _ => {Status::SUPERSEDED}
+                    _ => {
+                        has_been_modified = false;
+                        Status::SUPERSEDED
+                    }
                 }
             },
             Status::CANCELLED => {
                 match transition {
-                    _ => {Status::CANCELLED}
+                    _ => {
+                        has_been_modified = false;
+                        Status::CANCELLED
+                    }
                 }
             },
 
-            _ => Status::NONE
+            _ => {
+                has_been_modified = false;
+                Status::NONE
+            },
         };
 
         self.status = next_status;
-
         debug!(get_logger(), "transition [{:?}] has been called from [{:?}] to [{:?}]", transition, current_state, self.status);
 
+        has_been_modified
     }
 
     fn build(status: Status) -> AdrState {
