@@ -3,9 +3,7 @@ extern crate slog_term;
 use slog::*;
 
 use std::fmt::Write;
-use std::fmt;
-use std::fs::{self, File};
-use std::io::prelude::*;
+use std::fs::{self};
 use std::io::{self};
 use std::path::Path;
 use std::collections::HashMap;
@@ -154,16 +152,6 @@ fn is_ok(entry: &DirEntry) -> bool {
     (is_dir && !is_hidden) || (is_adoc && !is_hidden)
 }
 
-pub struct Adr {
-    pub path: String,
-    pub content: String,
-    pub title: String,
-    pub status: Status,
-    pub state: AdrState,
-    pub tags: String,
-    pub tags_array: Vec<String>,
-}
-
 pub fn list_all_adr(dir: &str) -> io::Result<Vec<Adr>> {
     let dir_path = Path::new(dir);
 
@@ -284,7 +272,19 @@ pub fn transition_to_completed_by(adr_name: &str, by: &str) -> io::Result<bool> 
 }
 
 fn transition_to(transition: TransitionStatus, adr_name: &str, by: &str) -> io::Result<bool> {
-    let adr = build_adr_from_path(Path::new(adr_name))?;
+    let mut adr = build_adr_from_path(Path::new(adr_name))?;
+
+
+    // THIS IS A TEST - the rest of the method must be refactored to must everythign to ADR object etc....
+    let adr2 = build_adr_from_path(Path::new(adr_name))?;
+    let copied_transition = transition;
+    let copied_adr = adr2.update_status(copied_transition);
+    error!(get_logger(), "Debug Adr [{:?}] -> [{:?}] - content [{:?}]", adr.state, copied_adr.state, copied_adr.content);
+
+    let copied_adr = adr2.add_reference("adr_title: &str");
+    error!(get_logger(), "Debug Adr [{:?}] -> [{:?}] - content [{:?}]", adr.state, copied_adr.state, copied_adr.content);
+    // END OF THE TEST
+
 
     let mut state = adr.state;
     let current_status = format!("{{{status}}}", status = state.status.as_str() ); //you escape { with a { and final status is {wip}  o_O
@@ -304,9 +304,6 @@ fn transition_to(transition: TransitionStatus, adr_name: &str, by: &str) -> io::
             }
         };
 
-        //TODO To work on Adr.content directly
-        //write_transition_to_file(adr_name, current_status.as_str(), new_status.as_str(), by, updates.as_str())
-
         let adr_name = adr_name;
         let current_status = current_status.as_str();
         let updated_by = all_status.0.as_str();
@@ -319,10 +316,21 @@ fn transition_to(transition: TransitionStatus, adr_name: &str, by: &str) -> io::
         match contains {
             true => {
                 //the initial ADR is {update}_by
-                update_adr_file(adr_name, current_status, &updated_by)?;
+                let new_content = adr.content.replace(current_status, updated_by);
+                adr.content = new_content;
+
+                fs::write(adr_name, adr.content)?;
+
                 //the new ADR {updates}
                 if ! adr_by.is_empty() {
-                    update_adr_file(adr_by, current_status, &updates)?;
+                    let mut adr_by_obj = build_adr_from_path(Path::new(adr_by))?;
+
+                    let new_content = adr_by_obj.content.replace(current_status, updates);
+                    adr_by_obj.content = new_content;
+
+                    fs::write(adr_by, adr_by_obj.content)?;
+
+
                     info!(get_logger(), "Decision Record [{}] has been [{}] by [{}]", adr_name, updated_by, adr_by);
                 }
                 else {
@@ -345,20 +353,79 @@ fn transition_to(transition: TransitionStatus, adr_name: &str, by: &str) -> io::
     }
 }
 
-fn update_adr_file(adr_name: &str, old_tag: &str, new_tag: &str) -> io::Result<()> {
-    let mut contents = String::new();
-    {
-        let mut f = File::open(adr_name)?;
-        f.read_to_string(&mut contents).unwrap();
-    }
-    let new_content = contents.replace(old_tag, new_tag);
-    fs::write(adr_name, new_content)?;
-
-    Ok(())
+#[derive(Debug, Default)]
+pub struct Adr {
+    pub path: String,
+    pub content: String,
+    pub title: String,
+    pub status: Status,
+    pub state: AdrState,
+    pub tags: String,
+    pub tags_array: Vec<String>,
 }
 
+impl Adr {
+    pub fn update_status(&self, transition: TransitionStatus) -> Adr{
+        let current_status = format!("{{{status}}}", status = self.status.as_str() ); //you escape { with a { and final status is {wip}  o_O
+        let mut state = self.state;
+        let has_been_modified = state.transition(transition);
 
-#[derive(Debug, PartialEq)]
+        debug!(get_logger(), "Want transition [{:?}] - Adr State transitioned from [{:?}] to [{:?}] - has been modified [{:?}]", transition, self.state, state, has_been_modified);
+        
+        if has_been_modified {
+            let new_status = format!("{{{status}}}", status = state.status.as_str() );
+            let new_content = self.content.replace(current_status.as_str(), new_status.as_str());
+
+            //Todo maybe I it would be better to implement Copy Trait
+            Adr {
+                path: String::from(self.path.as_str()),
+                content: new_content,
+                title: String::from(self.title.as_str()),
+                tags: String::from(self.tags.as_str()),
+                tags_array: self.tags_array.clone(),
+                status: state.status,
+                state: state,
+            }
+        }
+        else {
+            self.clone()
+        }
+    }
+
+    pub fn add_reference(&self, adr_title: &str) -> Adr {
+        let current_status = format!("{{{status}}}", status = self.status.as_str() ); //you escape { with a { and final status is {wip}  o_O
+        let new_status = format!("{updated_by} {by}", updated_by = current_status.as_str(), by = adr_title);
+
+        debug!(get_logger(), "Want add reference - current status [{:?}] - new status [{:?}]", current_status, new_status);
+
+        let new_content = self.content.replace(current_status.as_str(), new_status.as_str());
+        Adr {
+            path: String::from(self.path.as_str()),
+            content: new_content,
+            title: String::from(self.title.as_str()),
+            tags: String::from(self.tags.as_str()),
+            tags_array: self.tags_array.clone(),
+            status: self.status.clone(),
+            state: self.state.clone(),
+        }
+    }
+}
+
+impl Clone for Adr {
+    fn clone(&self) -> Adr {
+        Adr {
+            path: String::from(self.path.as_str()),
+            content: String::from(self.content.as_str()),
+            title: String::from(self.title.as_str()),
+            tags: String::from(self.tags.as_str()),
+            tags_array: self.tags_array.clone(),
+            status: self.state.status.clone(),
+            state: self.state.clone(),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum TransitionStatus {
     DECIDED,
     COMPLETED,
@@ -367,7 +434,7 @@ pub enum TransitionStatus {
     CANCELLED,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Status {
     WIP,
     DECIDED,
@@ -378,6 +445,10 @@ pub enum Status {
     OBSOLETED,
     CANCELLED,
     NONE,
+}
+
+impl Default for Status {
+    fn default() -> Self { Status::WIP }
 }
 
 impl Status {
@@ -424,8 +495,13 @@ pub trait State {
     fn build(status: Status) -> AdrState;
 }
 
+#[derive(Debug, Copy, Clone)]
 pub struct AdrState {
     status: Status,
+}
+
+impl Default for AdrState {
+    fn default() -> Self { AdrState { status: Status::WIP } }
 }
 
 impl State for AdrState {
@@ -537,11 +613,6 @@ impl State for AdrState {
     }
 }
 
-impl std::fmt::Debug for AdrState {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "AdrState {{ status: {:?}}}", self.status)
-    }
-}
 
 impl std::cmp::PartialEq for AdrState {
     fn eq(&self, other: &Self) -> bool {
@@ -552,7 +623,47 @@ impl std::cmp::PartialEq for AdrState {
 #[cfg(test)]
 mod tests {
 
-    use crate::adr_repo::State;
+    use crate::adr_repo::{*};
+
+    #[test]
+    fn test_adr_update_status() {
+        let sut = Adr {
+            path: String::from("/tmp/n/a"),
+            content: String::from("== ADR-MVA-507 Decide about ...\n\n*Status:* {wip} *Date:* 2019-10-28\n\n[cols=\",\",options=..."),
+            title: String::from("String::from(self.title.as_str())"),
+            tags: String::from(""),
+            tags_array: Vec::new(),
+            status: Status::WIP,
+            state: AdrState { status: Status::WIP },
+        };
+
+        let new_adr = sut.update_status(TransitionStatus::DECIDED);
+
+        assert_eq!(new_adr.status, Status::DECIDED);
+        assert_eq!(new_adr.state, AdrState { status: Status::DECIDED } );
+        assert_eq!(new_adr.content.contains(Status::DECIDED.as_str()), true);
+    }
+
+    #[test]
+    fn test_adr_add_reference() {
+            let sut = Adr {
+                path: String::from("/tmp/n/a"),
+                content: String::from("== ADR-MVA-507 Decide about ...\n\n*Status:* {decided} *Date:* 2019-10-28\n\n[cols=\",\",options=\"header\",%autowidth]\n|===\n|role ....."),
+                title: String::from("String::from(self.title.as_str())"),
+                tags: String::from(""),
+                tags_array: Vec::new(),
+                status: Status::DECIDED,
+                state: AdrState { status: Status::DECIDED },
+            };
+
+            let new_adr = sut.add_reference("by adr-num-123");
+
+            assert_eq!(new_adr.status, Status::DECIDED);
+            assert_eq!(new_adr.state, AdrState { status: Status::DECIDED } );
+            
+            let expected_status = "{decided} by adr-num-123 *Date:* 2019-10-28";
+            assert_eq!(new_adr.content.contains(expected_status), true);
+    }
 
     #[test]
     fn test_state_machine() {
