@@ -285,59 +285,64 @@ pub fn transition_to_completed_by(adr_name: &str, by: &str) -> io::Result<bool> 
 
 fn transition_to(transition: TransitionStatus, adr_name: &str, by: &str) -> io::Result<bool> {
     let adr = build_adr_from_path(Path::new(adr_name))?;
+
     let mut state = adr.state;
     let current_status = format!("{{{status}}}", status = state.status.as_str() ); //you escape { with a { and final status is {wip}  o_O
     let has_been_modified = state.transition(transition);
     
     if has_been_modified {
-        let mut new_status = String::from("");
-        let mut updates = String::from("");
-        
-        if by.is_empty() {
-            new_status = format!("{{{status}}}", status = state.status.as_str() );
-        }
-        else {
-            new_status = format!("{{{updated_by}}} {by}", updated_by = state.status.as_str(), by = by);
-            updates = format!("{{{updates}}} {adr_name}", updates = Status::revert(state.status).as_str(), adr_name = adr_name);
-        }
+        let all_status = match by.is_empty() {
+            true => {
+                let new_status = format!("{{{status}}}", status = state.status.as_str() );
+                (new_status, String::from(""))
+            }
+            false => {
+                let new_status = format!("{{{updated_by}}} {by}", updated_by = state.status.as_str(), by = by);
+                let updates = format!("{{{updates}}} {adr_name}", updates = Status::revert(state.status).as_str(), adr_name = adr_name);
+
+                (new_status, updates)
+            }
+        };
 
         //TODO To work on Adr.content directly
-        write_transition_to_file(adr_name, current_status.as_str(), new_status.as_str(), by, updates.as_str())
+        //write_transition_to_file(adr_name, current_status.as_str(), new_status.as_str(), by, updates.as_str())
+
+        let adr_name = adr_name;
+        let current_status = current_status.as_str();
+        let updated_by = all_status.0.as_str();
+        let adr_by = by;
+        let updates = all_status.1.as_str();
+
+        info!(get_logger(), "Want to transition [{}] from [{}] to [{}] - and - [{}] to [{}]", adr_name, current_status, updated_by, adr_by, updates);
+
+        let contains = adr.content.contains(current_status);
+        match contains {
+            true => {
+                //the initial ADR is {update}_by
+                update_adr_file(adr_name, current_status, &updated_by)?;
+                //the new ADR {updates}
+                if ! adr_by.is_empty() {
+                    update_adr_file(adr_by, current_status, &updates)?;
+                    info!(get_logger(), "Decision Record [{}] has been [{}] by [{}]", adr_name, updated_by, adr_by);
+                }
+                else {
+                    info!(get_logger(), "Decision Record [{}] has been [{}]", adr_name, updated_by);
+                }
+            }
+            false => {
+                error!(
+                    get_logger(),
+                    "Decision Record [{}] has certainly not the right status and cannot be updated",
+                    adr_name
+                );
+            }
+        };
+
+        Ok(contains)
     }
     else {
         Ok(false) //not sure about OK(false) btw...
     }
-}
-
-fn write_transition_to_file(adr_name: &str, current_status: &str, updated_by: &str, adr_by: &str, updates: &str) -> io::Result<bool> {
-    info!(get_logger(), "Want to transition [{}] from [{}] to [{}] - and - [{}] to [{}]", adr_name, current_status, updated_by, adr_by, updates);
-    let mut f = File::open(adr_name)?;
-    let mut contents = String::new();
-    f.read_to_string(&mut contents).unwrap();
-    let contains = contents.contains(current_status);
-    match contains {
-        true => {
-            //the initial ADR is {update}_by
-            update_adr_file(adr_name, current_status, &updated_by)?;
-            //the new ADR {updates}
-            if ! adr_by.is_empty() {
-                update_adr_file(adr_by, current_status, &updates)?;
-                info!(get_logger(), "Decision Record [{}] has been [{}] by [{}]", adr_name, updated_by, adr_by);
-            }
-            else {
-                info!(get_logger(), "Decision Record [{}] has been [{}]", adr_name, updated_by);
-            }
-        }
-        false => {
-            error!(
-                get_logger(),
-                "Decision Record [{}] has certainly not the right status and cannot be updated",
-                adr_name
-            );
-        }
-    };
-
-    Ok(contains)
 }
 
 fn update_adr_file(adr_name: &str, old_tag: &str, new_tag: &str) -> io::Result<()> {
