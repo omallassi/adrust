@@ -49,6 +49,9 @@ pub fn create_adr(cfg: AdrToolConfig, title: &str, path_to_template: &Path, src_
         match path_to_template.exists() {
             true => {
                 fs::copy(path_to_template, &target_path)?;
+
+                //TODO shoud rely on fn build_adr(path: String, content: String). like create a new ADR from template.content, update tilte & co then fs::write(...)
+
                 //need to update the title of the ADR with specified name. there is certainly a better way
                 //reading again the file... 
                 let adr_content = fs::read_to_string(&target_path).unwrap();
@@ -117,7 +120,9 @@ fn get_last_seq_id(dir: &Path) -> usize {
     extract_seq_id_from_all(adrs_paths)
 }
 
-pub fn format_decision_name(cfg: AdrToolConfig, name: &str) -> Result<String> {
+
+//TODO likely to be a private method of ADR struct
+fn format_decision_name(cfg: AdrToolConfig, name: &str) -> Result<String> {
     let mut prefix = String::new();
     if cfg.use_id_prefix {
     let last_seq_id = get_last_seq_id(Path::new(cfg.adr_src_dir.as_str()));
@@ -201,6 +206,8 @@ fn build_adr_from_path(file: &Path) -> io::Result<Adr> {
     Ok(adr)
 }
 
+
+//TODO should be adr::new or similar
 fn build_adr(path: String, content: String) -> io::Result<Adr> {
     //get the title
     lazy_static! {
@@ -244,6 +251,7 @@ fn build_adr(path: String, content: String) -> io::Result<Adr> {
     Ok(adr)
 }
 
+//TODO shoud be on ADR struct
 fn get_tags(val: &String) -> (String, Vec<String>) {
     lazy_static! {
         static ref RE_TAGS: Regex = Regex::new(r"(\[tags]\#([^#]+)\#)").unwrap();
@@ -271,85 +279,39 @@ pub fn transition_to_completed_by(adr_name: &str, by: &str) -> io::Result<bool> 
     transition_to(TransitionStatus::COMPLETED, adr_name, by)
 }
 
-fn transition_to(transition: TransitionStatus, adr_name: &str, by: &str) -> io::Result<bool> {
-    let mut adr = build_adr_from_path(Path::new(adr_name))?;
+fn transition_to(transition: TransitionStatus, from: &str, by: &str) -> io::Result<bool> {
+    let adr_from = build_adr_from_path(Path::new(from))?;
+    let updated_adr_from_tuple = adr_from.update_status(transition);
 
+    match by.is_empty() {
+        true => {
+            fs::write(from, updated_adr_from_tuple.0.content)?;
 
-    // THIS IS A TEST - the rest of the method must be refactored to must everythign to ADR object etc....
-    let adr2 = build_adr_from_path(Path::new(adr_name))?;
-    let copied_transition = transition;
-    let copied_adr = adr2.update_status(copied_transition);
-    error!(get_logger(), "Debug Adr [{:?}] -> [{:?}] - content [{:?}]", adr.state, copied_adr.state, copied_adr.content);
+            info!(get_logger(), 
+                "Transitioned [{}] from [{}] to [{}]", 
+                updated_adr_from_tuple.0.path, adr_from.status.as_str(), updated_adr_from_tuple.0.status.as_str());
 
-    let copied_adr = adr2.add_reference("adr_title: &str");
-    error!(get_logger(), "Debug Adr [{:?}] -> [{:?}] - content [{:?}]", adr.state, copied_adr.state, copied_adr.content);
-    // END OF THE TEST
+            Ok(updated_adr_from_tuple.1)
+        }
+        false => {
+            let adr_by = build_adr_from_path(Path::new(by))?;
+            let updated_adr_by_tuple = adr_by.update_status(TransitionStatus::revert(transition));
 
+            let updated_adr_from = updated_adr_from_tuple.0.add_reference(format!("{}", updated_adr_by_tuple.0.path).as_str());
+            let updated_adr_by = updated_adr_by_tuple.0.add_reference(format!("{}", updated_adr_from.path).as_str());
 
-    let mut state = adr.state;
-    let current_status = format!("{{{status}}}", status = state.status.as_str() ); //you escape { with a { and final status is {wip}  o_O
-    let has_been_modified = state.transition(transition);
-    
-    if has_been_modified {
-        let all_status = match by.is_empty() {
-            true => {
-                let new_status = format!("{{{status}}}", status = state.status.as_str() );
-                (new_status, String::from(""))
-            }
-            false => {
-                let new_status = format!("{{{updated_by}}} {by}", updated_by = state.status.as_str(), by = by);
-                let updates = format!("{{{updates}}} {adr_name}", updates = Status::revert(state.status).as_str(), adr_name = adr_name);
+            fs::write(from, updated_adr_from.content)?;
+            fs::write(by, updated_adr_by.content)?;
 
-                (new_status, updates)
-            }
-        };
+            info!(get_logger(), 
+                "Transitioned [{}] from [{}] to [{}]", 
+                from, adr_from.status.as_str(), updated_adr_from_tuple.0.status.as_str());
+            info!(get_logger(), 
+                "Transitioned [{}] from [{}] to [{}]", 
+                by, adr_by.status.as_str(), updated_adr_by_tuple.0.status.as_str());
 
-        let adr_name = adr_name;
-        let current_status = current_status.as_str();
-        let updated_by = all_status.0.as_str();
-        let adr_by = by;
-        let updates = all_status.1.as_str();
-
-        info!(get_logger(), "Want to transition [{}] from [{}] to [{}] - and - [{}] to [{}]", adr_name, current_status, updated_by, adr_by, updates);
-
-        let contains = adr.content.contains(current_status);
-        match contains {
-            true => {
-                //the initial ADR is {update}_by
-                let new_content = adr.content.replace(current_status, updated_by);
-                adr.content = new_content;
-
-                fs::write(adr_name, adr.content)?;
-
-                //the new ADR {updates}
-                if ! adr_by.is_empty() {
-                    let mut adr_by_obj = build_adr_from_path(Path::new(adr_by))?;
-
-                    let new_content = adr_by_obj.content.replace(current_status, updates);
-                    adr_by_obj.content = new_content;
-
-                    fs::write(adr_by, adr_by_obj.content)?;
-
-
-                    info!(get_logger(), "Decision Record [{}] has been [{}] by [{}]", adr_name, updated_by, adr_by);
-                }
-                else {
-                    info!(get_logger(), "Decision Record [{}] has been [{}]", adr_name, updated_by);
-                }
-            }
-            false => {
-                error!(
-                    get_logger(),
-                    "Decision Record [{}] has certainly not the right status and cannot be updated",
-                    adr_name
-                );
-            }
-        };
-
-        Ok(contains)
-    }
-    else {
-        Ok(false) //not sure about OK(false) btw...
+            Ok(updated_adr_from_tuple.1)
+        }
     }
 }
 
@@ -365,7 +327,7 @@ pub struct Adr {
 }
 
 impl Adr {
-    pub fn update_status(&self, transition: TransitionStatus) -> Adr{
+    pub fn update_status(&self, transition: TransitionStatus) -> (Adr, bool) {
         let current_status = format!("{{{status}}}", status = self.status.as_str() ); //you escape { with a { and final status is {wip}  o_O
         let mut state = self.state;
         let has_been_modified = state.transition(transition);
@@ -377,18 +339,20 @@ impl Adr {
             let new_content = self.content.replace(current_status.as_str(), new_status.as_str());
 
             //Todo maybe I it would be better to implement Copy Trait
-            Adr {
-                path: String::from(self.path.as_str()),
-                content: new_content,
-                title: String::from(self.title.as_str()),
-                tags: String::from(self.tags.as_str()),
-                tags_array: self.tags_array.clone(),
-                status: state.status,
-                state: state,
-            }
+            (
+                Adr {
+                    path: String::from(self.path.as_str()),
+                    content: new_content,
+                    title: String::from(self.title.as_str()),
+                    tags: String::from(self.tags.as_str()),
+                    tags_array: self.tags_array.clone(),
+                    status: state.status,
+                    state: state,
+                }, 
+                has_been_modified)
         }
         else {
-            self.clone()
+            (self.clone(), false)
         }
     }
 
@@ -429,9 +393,29 @@ impl Clone for Adr {
 pub enum TransitionStatus {
     DECIDED,
     COMPLETED,
+    COMPLETES,
     OBSOLETED,
+    OBSOLETES,
     SUPERSEDED,
+    SUPERSEDES,
     CANCELLED,
+}
+
+impl TransitionStatus {
+    fn revert(transition: TransitionStatus) -> TransitionStatus {
+        match transition {
+            TransitionStatus::COMPLETED => TransitionStatus::COMPLETES,
+            TransitionStatus::COMPLETES => TransitionStatus::COMPLETED,
+
+            TransitionStatus::SUPERSEDED => TransitionStatus::SUPERSEDES,
+            TransitionStatus::SUPERSEDES => TransitionStatus::SUPERSEDED,
+
+            TransitionStatus::OBSOLETED => TransitionStatus::OBSOLETES,
+            TransitionStatus::OBSOLETES => TransitionStatus::OBSOLETED,
+
+            _ => transition,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -477,14 +461,6 @@ impl Status {
             "obsoleted" => Status::OBSOLETED,
             "cancelled" => Status::CANCELLED,
             _ => Status::NONE,
-        }
-    }
-
-    fn revert(status: Status) -> Status {
-        match status {
-            Status::COMPLETED => Status::COMPLETES,
-            Status::SUPERSEDED => Status::SUPERSEDES,
-            _ => status,
         }
     }
 }
@@ -538,6 +514,10 @@ impl State for AdrState {
                     TransitionStatus::COMPLETED => {
                         self.status = Status::COMPLETED;
                         Status::COMPLETED
+                    },
+                    TransitionStatus::COMPLETES => {
+                        self.status = Status::COMPLETES;
+                        Status::COMPLETES
                     },
                     TransitionStatus::CANCELLED => {
                         self.status = Status::CANCELLED;
@@ -639,9 +619,9 @@ mod tests {
 
         let new_adr = sut.update_status(TransitionStatus::DECIDED);
 
-        assert_eq!(new_adr.status, Status::DECIDED);
-        assert_eq!(new_adr.state, AdrState { status: Status::DECIDED } );
-        assert_eq!(new_adr.content.contains(Status::DECIDED.as_str()), true);
+        assert_eq!(new_adr.0.status, Status::DECIDED);
+        assert_eq!(new_adr.0.state, AdrState { status: Status::DECIDED } );
+        assert_eq!(new_adr.0.content.contains(Status::DECIDED.as_str()), true);
     }
 
     #[test]
