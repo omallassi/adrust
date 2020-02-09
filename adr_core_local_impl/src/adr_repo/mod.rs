@@ -201,70 +201,9 @@ fn list_all_adr_from_path(dir: &Path) -> io::Result<Vec<Adr>> {
 
 fn build_adr_from_path(file: &Path) -> io::Result<Adr> {
     let content = fs::read_to_string(file) ? ;
-    let adr = build_adr(String::from(file.to_str().unwrap()), content) ? ;
+    let adr = Adr::from(String::from(file.to_str().unwrap()), content);
        
     Ok(adr)
-}
-
-
-//TODO should be adr::new or similar
-fn build_adr(path: String, content: String) -> io::Result<Adr> {
-    //get the title
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"= (.+)").unwrap();
-    }
-    let val = String::from(&content);
-    let cap = match RE.captures(&val) {
-        Some(val) => val[1].to_string(),
-        None => {
-            error!(get_logger(), "Unable to get title from [{}]", path);
-            "None".to_string()
-        }
-    };
-
-    //build the tags
-    let tags = get_tags(&val);
-
-    //build the status
-    lazy_static! {
-        static ref RE_STATUS: Regex = Regex::new(r"\{(.+)\}").unwrap();
-    }
-    let status = match RE_STATUS.captures(&val) {
-        Some(val) => val[1].trim().to_string(),
-        None => {
-            debug!(get_logger(), "Unable to get status from [{}]", path);
-            "None".to_string()
-        }
-    };
-
-    //build the returned object
-    let adr: Adr = Adr {
-        path: path,
-        content: content,
-        title: cap,
-        tags: tags.0,
-        tags_array: tags.1,
-        status: Status::from_str(status.clone()),
-        state: AdrState { status: Status::from_str(status.clone()) },
-    };
-
-    Ok(adr)
-}
-
-//TODO shoud be on ADR struct
-fn get_tags(val: &String) -> (String, Vec<String>) {
-    lazy_static! {
-        static ref RE_TAGS: Regex = Regex::new(r"(\[tags]\#([^#]+)\#)").unwrap();
-    }
-
-    let mut tags_str = String::from("");
-    for cap in RE_TAGS.captures_iter(val) {
-        write!(tags_str, "#{} ", &cap[2]).unwrap();
-    }
-
-    let tags = tags_str.split("#").filter(|s| s.len() > 0).map(|s| s.to_string()).collect();
-
-    (tags_str, tags)
 }
 
 pub fn transition_to_decided(adr_name: &str) -> io::Result<bool> {
@@ -327,6 +266,65 @@ pub struct Adr {
 }
 
 impl Adr {
+
+    pub fn from(path: String, content: String) -> Adr {
+        //get the title
+        lazy_static! {
+            static ref RE: Regex = Regex::new(r"= (.+)").unwrap();
+        }
+        let val = String::from(&content);
+        let cap = match RE.captures(&val) {
+            Some(val) => val[1].to_string(),
+            None => {
+                error!(get_logger(), "Unable to get title from [{}]", path);
+                "None".to_string()
+            }
+        };
+
+        //build the tags
+        let tags = Adr::get_tags(&val);
+
+        //build the status
+        lazy_static! {
+            static ref RE_STATUS: Regex = Regex::new(r"\{(.+)\}").unwrap();
+        }
+        let status = match RE_STATUS.captures(&val) {
+            Some(val) => val[1].trim().to_string(),
+            None => {
+                debug!(get_logger(), "Unable to get status from [{}]", path);
+                "None".to_string()
+            }
+        };
+
+        //build the returned object
+        let adr: Adr = Adr {
+            path: path,
+            content: content,
+            title: cap,
+            tags: tags.0,
+            tags_array: tags.1,
+            status: Status::from_str(status.clone()),
+            state: AdrState { status: Status::from_str(status.clone()) },
+        };
+
+        adr
+    }
+
+    fn get_tags(val: &String) -> (String, Vec<String>) {
+        lazy_static! {
+            static ref RE_TAGS: Regex = Regex::new(r"(\[tags]\#([^#]+)\#)").unwrap();
+        }
+
+        let mut tags_str = String::from("");
+        for cap in RE_TAGS.captures_iter(val) {
+            write!(tags_str, "#{} ", &cap[2]).unwrap();
+        }
+
+        let tags = tags_str.split("#").filter(|s| s.len() > 0).map(|s| s.to_string()).collect();
+
+        (tags_str, tags)
+    }
+
     pub fn update_status(&self, transition: TransitionStatus) -> (Adr, bool) {
         let current_status = format!("{{{status}}}", status = self.status.as_str() ); //you escape { with a { and final status is {wip}  o_O
         let mut state = self.state;
@@ -763,7 +761,7 @@ mod tests {
         
         [tags]#deployment view# [tags]#network# [tags]#security#";
 
-        let adr_sut = super::build_adr("a_path".to_string(), content.to_string()).unwrap();
+        let adr_sut = super::Adr::from("a_path".to_string(), content.to_string());
 
         assert_eq!(adr_sut.title, "ADR-MVA-507 Decide about ...");
         assert_eq!(adr_sut.path, "a_path");
@@ -780,7 +778,7 @@ mod tests {
         *Status:* {wip}  *Date:* 2019-10-28
         ....";
 
-        let adr_sut = super::build_adr("a_path".to_string(), content.to_string()).unwrap();
+        let adr_sut = super::Adr::from("a_path".to_string(), content.to_string());
 
         assert_eq!(adr_sut.title, "ADR-MVA-507 Decide about ...");
         assert_eq!(adr_sut.path, "a_path");
