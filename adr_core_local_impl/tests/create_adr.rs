@@ -9,6 +9,7 @@ pub struct AdrNames {
     name: String,
     by: String,
     has_transitioned: bool,
+    base_path: String,
 }
 
 impl cucumber::World for AdrNames {}
@@ -19,6 +20,7 @@ impl std::default::Default for AdrNames {
             name: "default-name".to_string(),
             by: "default-name".to_string(),
             has_transitioned: false,
+            base_path: String::from(""),
         }
     }
 }
@@ -230,21 +232,20 @@ mod check_transitions_and_lifecycle_of_adr {
             let srcdir = PathBuf::from(rep);
 
             for entry in WalkDir::new(srcdir.as_path()).into_iter().filter_map(|e| e.ok() ) {
-                println!("oliv {}", entry.path().display());
-
                 if ! entry.path().is_dir() {
                     let from = entry.path();
                     let file_name = entry.path().file_name().unwrap();
                     let to = project_dirs.cache_dir().join("src").join(file_name);
 
-                        println!("Want to copy file [{:?}] to [{:?}]", from, to);
-                        match fs::copy(from, to.as_path()) {
-                            Ok(_) => (),
-                            Err(why) => panic!(why),
-                        };
+                    println!("[init] Want to copy file [{:?}] to [{:?}]", from, to);
+                    match fs::copy(from, to.as_path()) {
+                        Ok(_) => (),
+                        Err(why) => panic!(why),
+                    };
                 }
             }
-
+            
+            adr.base_path = format!("{}", project_dirs.cache_dir().join("src").display());
             adr.name = format!("{}", project_dirs.cache_dir().join("src").join(status).with_extension("adoc").display());
             println!("The current scenario will use adr path [{}]", adr.name);
         };
@@ -258,7 +259,8 @@ mod check_transitions_and_lifecycle_of_adr {
                         Err(why) => panic!(why)
                     };
                 },
-                false => {
+                false => {            
+                    let by = format!("{}", PathBuf::from(adr.base_path.as_str()).join(by).display());
                     println!("calling transition_to() with [{}] [{}] [{}]", transition, adr.name, by);
                     match adr_core::adr_repo::transition_to(TransitionStatus::from_str(transition), adr.name.as_str(), by.as_str()) {
                         Ok(transitioned) => adr.has_transitioned = transitioned,

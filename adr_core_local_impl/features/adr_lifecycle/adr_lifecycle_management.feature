@@ -30,10 +30,10 @@ Feature: Manage an ADR Lifecycle
             | supersedes    | decided           | false     | supersedes    | n/a                   |
             | obsoleted     | decided           | false     | obsoleted     | n/a                   |
             | wip           | cancelled         | true      | obsoleted     | n/a                   |
-#            | decided       | completed         | true      | completed     | completed-by.adoc     |
-#            | decided       | completes         | true      | completes     | completes.adoc        |
-#            | decided       | cancelled         | true      | obsoleted     | n/a                   |
-#            | decided       | superseded        | true      | superseded    | superseded-by.adoc    |
-#            | decided       | supersedes        | true      | supersedes    | supersedes.adoc       |
+            | decided       | completed         | true      | completed     | completed-by.adoc     |
+            | decided       | completes         | true      | completes     | completes.adoc        |
+            | decided       | cancelled         | true      | obsoleted     | n/a                   |
+            | decided       | superseded        | true      | superseded    | superseded-by.adoc    |
+            | decided       | supersedes        | true      | supersedes    | supersedes.adoc       |
 
 

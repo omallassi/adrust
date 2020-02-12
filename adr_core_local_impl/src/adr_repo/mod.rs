@@ -200,6 +200,8 @@ fn list_all_adr_from_path(dir: &Path) -> io::Result<Vec<Adr>> {
 }
 
 pub fn build_adr_from_path(file: &Path) -> io::Result<Adr> {
+    debug!(get_logger(), "Is created ADR from [{}] ", file.display());
+
     let content = fs::read_to_string(file) ? ;
     let adr = Adr::from(String::from(file.to_str().unwrap()), content);
        
@@ -232,6 +234,7 @@ pub fn transition_to(transition: TransitionStatus, from: &str, by: &str) -> io::
     //if transition has been declined, we can stop here
     match updated_adr_from_tuple.1 {
         true => {
+            debug!(get_logger(), "ADR [{}] has a new status [{}]", updated_adr_from_tuple.0.path, updated_adr_from_tuple.0.status.as_str());
             match by.is_empty() {
                 true => {
                     fs::write(from, updated_adr_from_tuple.0.content)?;
@@ -562,7 +565,7 @@ impl State for AdrState {
                     },
                     TransitionStatus::SUPERSEDES => {
                         self.status = Status::SUPERSEDES;
-                        Status::SUPERSEDED
+                        Status::SUPERSEDES
                     },
                     _ => {
                         has_been_modified = false;
