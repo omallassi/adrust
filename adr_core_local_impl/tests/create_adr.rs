@@ -113,96 +113,6 @@ mod create_already_adr_steps {
     });
 }
 
-// mod update_adr_decided_steps {
-//     use cucumber::steps;
-//     use std::fs;
-//     use std::fs::File;
-//     use std::io::prelude::*;
-
-//     extern crate directories;
-//     use directories::ProjectDirs;
-
-//     extern crate adr_core;
-
-//     steps! (crate::AdrNames => {
-//         given "An existing In Progress Decision" |adr, _step| {
-//             let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool", "test") {
-//                 None => panic!("issue while preparing test"),
-//                 Some(project_dirs) => project_dirs
-//             };
-//             fs::copy("./tests/my-decision-1.adoc", 
-//                 project_dirs.cache_dir().join("src/my-decision-1.adoc").as_path()
-//             ).unwrap();
-
-//             adr.name = String::from(format!("{}", 
-//                 project_dirs.cache_dir().join("src/my-decision-1.adoc").as_path().display())
-//             );
-//         };
-
-//         when "I change its status to decided" |adr, _step| {
-//             let mut f = File::open(&adr.name).unwrap();
-//             let mut content = String::new();
-//             f.read_to_string(&mut content).unwrap();
-
-//             assert_eq!(content.contains("{wip}"), true);
-
-//             let contains = adr_core::adr_repo::transition_to_decided(&adr.name).unwrap();
-//             assert_eq!(contains, true);
-
-
-//         };
-
-//         then "The content of the file is updated to Decided" |adr, _step| {
-//             let mut f = File::open(&adr.name).unwrap();
-//             let mut content = String::new();
-//             f.read_to_string(&mut content).unwrap();
-
-//             assert_eq!(content.contains("{decided}"), true);
-//         };
-//     });
-// }
-
-// mod not_update_adr_decided_steps {
-//     use cucumber::steps;
-//     use std::fs;
-//     use std::fs::File;
-//     use std::io::prelude::*;
-
-//     extern crate directories;
-//     use directories::ProjectDirs;
-
-//     extern crate adr_core;
-
-//     steps! (crate::AdrNames => {
-//         given "An existing not In Progress Decision" |adr, _step| {
-//             let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool", "test") {
-//                 None => panic!("issue while preparing test"),
-//                 Some(project_dirs) => project_dirs
-//             };
-//             fs::copy("./tests/my-wrong-decision-1.adoc", 
-//                 project_dirs.cache_dir().join("src/my-wrong-decision-1.adoc").as_path()
-//             ).unwrap();
-
-//             adr.name = String::from(format!("{}", 
-//                 project_dirs.cache_dir().join("src/my-wrong-decision-1.adoc").as_path().display())
-//             );
-//         };
-
-//         when "I update its status to decided" |adr, _step| {
-//             let contains = adr_core::adr_repo::transition_to_decided(&adr.name).unwrap();
-//             assert_eq!(contains, false);
-//         };
-
-//         then "The content of the file is not changed" |adr, _step| {
-//             let mut f = File::open(&adr.name).unwrap();
-//             let mut content = String::new();
-//             f.read_to_string(&mut content).unwrap();
-
-//             assert_eq!(content.contains("{superseded} /tmp/adr-samples/src/my-decision-2.adoc"), true);
-//         };
-//     });
-// }
-
 mod check_transitions_and_lifecycle_of_adr {
     use cucumber::steps;
     use std::fs;
@@ -275,10 +185,8 @@ mod check_transitions_and_lifecycle_of_adr {
             assert_eq!(has_transition, adr.has_transitioned)
         };
 
-        then regex r"^the new status is (.+)$" (String) |adr, new_status, _step| {
-
-            println!("expected {}", new_status);
-
+        then regex r"^the new status is (.+) by (.+)$" (String, String) |adr, new_status, by, _step| {
+            //TODO manage the by
             let path = Path::new(adr.name.as_str());
             let new_adr = match adr_core::adr_repo::build_adr_from_path(&path) {
                 Ok(adr) => adr,
@@ -289,7 +197,7 @@ mod check_transitions_and_lifecycle_of_adr {
         };
 
         then "the date is updated to today TO BE REMOVED" |_adr, _step| {
-            
+            //TODO manage the date
         };
 
     });

@@ -531,10 +531,6 @@ impl State for AdrState {
                         self.status = Status::DECIDED;
                         Status::DECIDED
                     },
-                    TransitionStatus::COMPLETED => {
-                        self.status = Status::COMPLETED;
-                        Status::COMPLETED
-                    },
                     TransitionStatus::CANCELLED => {
                         self.status = Status::CANCELLED;
                         Status::CANCELLED
@@ -575,11 +571,6 @@ impl State for AdrState {
             },
             Status::COMPLETED => {
                 match transition {
-                    TransitionStatus::DECIDED => {
-                        self.status = Status::DECIDED;
-                        has_been_modified = false;
-                        Status::DECIDED
-                    },
                     TransitionStatus::SUPERSEDED => {
                         self.status = Status::SUPERSEDED;
                         Status::SUPERSEDED
@@ -719,7 +710,7 @@ mod tests {
         let mut state = super::AdrState::build(super::Status::WIP);
         assert_eq!(state, super::AdrState { status: super::Status::WIP});
         state.transition(super::TransitionStatus::COMPLETED);
-        assert_eq!(state, super::AdrState { status: super::Status::COMPLETED});
+        assert_eq!(state, super::AdrState { status: super::Status::WIP});
         state.transition(super::TransitionStatus::DECIDED);
         assert_eq!(state, super::AdrState { status: super::Status::DECIDED});
         state.transition(super::TransitionStatus::SUPERSEDED);

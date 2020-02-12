@@ -17,7 +17,7 @@ Feature: Manage an ADR Lifecycle
         Given a decision with status <status>
         When the decision is transitioned to <transition_status> by <by>
         Then the transition is <accepted>
-        And the new status is <new_status>
+        And the new status is <new_status> by <by>
         And the date is updated to today
 
         Examples:
