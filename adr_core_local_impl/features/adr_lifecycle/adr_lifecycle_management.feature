@@ -24,10 +24,10 @@ Feature: Manage an ADR Lifecycle
             | status        | transition_status | accepted  | new_status    | by                |
             | wip           | decided           | true      | decided       | n/a               |
             | decided       | decided           | false     | decided       | n/a               |
-            | completed-by  | decided           | false     | completed-by  | completes adr     |
+            | completed-by  | decided           | false     | completed     | completes adr     |
             | completes     | decided           | false     | completes     | completed-by adr  |
-            | superseded-by | decided           | false     | superseded-by | supersedes adr    |
+            | superseded-by | decided           | false     | superseded    | supersedes adr    |
             | supersedes    | decided           | false     | supersedes    | superseded-by adr |
-            | cancelled     | decided           | false     | cancelled     | n/a               |
+            | obsoleted     | decided           | false     | obsoleted     | n/a               |
 
 

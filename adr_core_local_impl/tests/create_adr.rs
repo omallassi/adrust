@@ -204,8 +204,7 @@ mod create_already_adr_steps {
 mod check_transitions_and_lifecycle_of_adr {
     use cucumber::steps;
     use std::fs;
-    use std::fs::File;
-    use std::io::prelude::*;
+    use std::path::Path;
 
     extern crate directories;
     use directories::ProjectDirs;
@@ -256,7 +255,20 @@ mod check_transitions_and_lifecycle_of_adr {
             assert_eq!(has_transition, adr.has_transitioned)
         };
 
-        then "the new status is <new_status>" |adr, _step| {
+        then regex r"^the new status is (.+)$" (String) |adr, new_status, _step| {
+
+            println!("expected {}", new_status);
+
+            let path = Path::new(adr.name.as_str());
+            let new_adr = match adr_core::adr_repo::build_adr_from_path(&path) {
+                Ok(adr) => adr,
+                Err(why) => panic!(why),
+            };
+
+            assert_eq!(Status::from_str(new_status), new_adr.status);
+        };
+
+        then "the date is updated to today TO BE REMOVED" |_adr, _step| {
             
         };
 

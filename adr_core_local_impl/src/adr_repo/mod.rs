@@ -199,7 +199,7 @@ fn list_all_adr_from_path(dir: &Path) -> io::Result<Vec<Adr>> {
     Ok(results)
 }
 
-fn build_adr_from_path(file: &Path) -> io::Result<Adr> {
+pub fn build_adr_from_path(file: &Path) -> io::Result<Adr> {
     let content = fs::read_to_string(file) ? ;
     let adr = Adr::from(String::from(file.to_str().unwrap()), content);
        
@@ -472,7 +472,7 @@ impl Status {
             Status::COMPLETES => "completes",
             Status::SUPERSEDED => "superseded",
             Status::SUPERSEDES => "supersedes",
-            Status::CANCELLED => "cancelled",
+            Status::CANCELLED => "obsoleted",
             Status::NONE => "unknown",
         }
     }
@@ -485,7 +485,7 @@ impl Status {
             "completes" => Status::COMPLETES,
             "superseded" => Status::SUPERSEDED,
             "supersedes" => Status::SUPERSEDES,
-            "cancelled" => Status::CANCELLED,
+            "obsoleted" => Status::CANCELLED,
             _ => Status::NONE,
         }
     }
