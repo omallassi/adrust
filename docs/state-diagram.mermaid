@@ -1,20 +1,16 @@
 <div class="mermaid">
 stateDiagram
 	[*] --> wip
-	wip --> decided: is decided
-    decided --> superseded
-    cancelled --> [*]
-
-	decided --> cancelled
-
-	wip --> completed: is completed by
-	decided --> completed
-	completed --> decided: if [wip]
-
+	wip --> decided
 	wip --> cancelled
 
+	decided --> cancelled
+	decided --> completed
+	decided --> superseded
+	
 	completed --> superseded
-
 	completed --> cancelled
+
 	superseded --> cancelled
+	cancelled --> [*]
 </div>

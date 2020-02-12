@@ -76,7 +76,7 @@ pub fn create_adr(cfg: AdrToolConfig, title: &str, path_to_template: &Path, src_
     Ok(!is_target_file)
 }
 
-fn extract_seq_id(name: &str) -> Result<usize> {
+fn get_seq_id_from_name(name: &str) -> Result<usize> {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"(\d+)-{1}").unwrap();
     }
@@ -94,11 +94,11 @@ fn extract_seq_id(name: &str) -> Result<usize> {
     Ok(id)
 }
 
-fn extract_seq_id_from_all(adr_paths: Vec<String>) -> usize {
+fn get_last_seq_id_from_all(adr_paths: Vec<String>) -> usize {
     let mut seq = 0;
     for path in adr_paths.iter(){
         //extract the seq_id
-        let extracted_seq_id = extract_seq_id(path.as_str()).unwrap();
+        let extracted_seq_id = get_seq_id_from_name(path.as_str()).unwrap();
         if extracted_seq_id > seq {
             debug!(get_logger(), "got seq_id {} - compared to {}", extracted_seq_id, seq);
             seq = extracted_seq_id;
@@ -117,7 +117,7 @@ fn get_last_seq_id(dir: &Path) -> usize {
                                     path
                                 }).collect::<Vec<String>>();
 
-    extract_seq_id_from_all(adrs_paths)
+    get_last_seq_id_from_all(adrs_paths)
 }
 
 
@@ -218,38 +218,47 @@ pub fn transition_to_completed_by(adr_name: &str, by: &str) -> io::Result<bool> 
     transition_to(TransitionStatus::COMPLETED, adr_name, by)
 }
 
-fn transition_to(transition: TransitionStatus, from: &str, by: &str) -> io::Result<bool> {
+pub fn transition_to(transition: TransitionStatus, from: &str, by: &str) -> io::Result<bool> {
     let adr_from = build_adr_from_path(Path::new(from))?;
     let updated_adr_from_tuple = adr_from.update_status(transition);
 
-    match by.is_empty() {
+    //if transition has been declined, we can stop here
+    match updated_adr_from_tuple.1 {
         true => {
-            fs::write(from, updated_adr_from_tuple.0.content)?;
-
-            info!(get_logger(), 
-                "Transitioned [{}] from [{}] to [{}]", 
-                updated_adr_from_tuple.0.path, adr_from.status.as_str(), updated_adr_from_tuple.0.status.as_str());
-
-            Ok(updated_adr_from_tuple.1)
+            match by.is_empty() {
+                true => {
+                    fs::write(from, updated_adr_from_tuple.0.content)?;
+        
+                    info!(get_logger(), 
+                        "Transitioned [{}] from [{}] to [{}]", 
+                        updated_adr_from_tuple.0.path, adr_from.status.as_str(), updated_adr_from_tuple.0.status.as_str());
+        
+                    Ok(updated_adr_from_tuple.1)
+                }
+                false => {
+                    let adr_by = build_adr_from_path(Path::new(by))?;
+                    let updated_adr_by_tuple = adr_by.update_status(TransitionStatus::revert(transition));
+        
+                    let updated_adr_from = updated_adr_from_tuple.0.add_reference(format!("{}", updated_adr_by_tuple.0.path).as_str());
+                    let updated_adr_by = updated_adr_by_tuple.0.add_reference(format!("{}", updated_adr_from.path).as_str());
+        
+                    fs::write(from, updated_adr_from.content)?;
+                    fs::write(by, updated_adr_by.content)?;
+        
+                    info!(get_logger(), 
+                        "Transitioned [{}] from [{}] to [{}]", 
+                        from, adr_from.status.as_str(), updated_adr_from_tuple.0.status.as_str());
+                    info!(get_logger(), 
+                        "Transitioned [{}] from [{}] to [{}]", 
+                        by, adr_by.status.as_str(), updated_adr_by_tuple.0.status.as_str());
+        
+                    Ok(updated_adr_from_tuple.1)
+                }
+            }
         }
         false => {
-            let adr_by = build_adr_from_path(Path::new(by))?;
-            let updated_adr_by_tuple = adr_by.update_status(TransitionStatus::revert(transition));
-
-            let updated_adr_from = updated_adr_from_tuple.0.add_reference(format!("{}", updated_adr_by_tuple.0.path).as_str());
-            let updated_adr_by = updated_adr_by_tuple.0.add_reference(format!("{}", updated_adr_from.path).as_str());
-
-            fs::write(from, updated_adr_from.content)?;
-            fs::write(by, updated_adr_by.content)?;
-
-            info!(get_logger(), 
-                "Transitioned [{}] from [{}] to [{}]", 
-                from, adr_from.status.as_str(), updated_adr_from_tuple.0.status.as_str());
-            info!(get_logger(), 
-                "Transitioned [{}] from [{}] to [{}]", 
-                by, adr_by.status.as_str(), updated_adr_by_tuple.0.status.as_str());
-
-            Ok(updated_adr_from_tuple.1)
+            error!(get_logger(), "ADR [{}] cannot be transitioned to [{:?}]", from, transition);
+            Ok(false)
         }
     }
 }
@@ -334,6 +343,7 @@ impl Adr {
         
         if has_been_modified {
             let new_status = format!("{{{status}}}", status = state.status.as_str() );
+            debug!(get_logger(), "Transitioned to [{}]", state.status.as_str());
             let new_content = self.content.replace(current_status.as_str(), new_status.as_str());
 
             //Todo maybe I it would be better to implement Copy Trait
@@ -350,6 +360,7 @@ impl Adr {
                 has_been_modified)
         }
         else {
+            debug!(get_logger(), "Transition has been declined");
             (self.clone(), false)
         }
     }
@@ -392,11 +403,10 @@ pub enum TransitionStatus {
     DECIDED,
     COMPLETED,
     COMPLETES,
-    OBSOLETED,
-    OBSOLETES,
     SUPERSEDED,
     SUPERSEDES,
     CANCELLED,
+    NONE,
 }
 
 impl TransitionStatus {
@@ -408,10 +418,31 @@ impl TransitionStatus {
             TransitionStatus::SUPERSEDED => TransitionStatus::SUPERSEDES,
             TransitionStatus::SUPERSEDES => TransitionStatus::SUPERSEDED,
 
-            TransitionStatus::OBSOLETED => TransitionStatus::OBSOLETES,
-            TransitionStatus::OBSOLETES => TransitionStatus::OBSOLETED,
-
             _ => transition,
+        }
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match *self {
+            TransitionStatus::DECIDED => "decided",
+            TransitionStatus::COMPLETED => "completed",
+            TransitionStatus::COMPLETES => "completes",
+            TransitionStatus::SUPERSEDED => "superseded",
+            TransitionStatus::SUPERSEDES => "supersedes",
+            TransitionStatus::CANCELLED => "cancelled",
+            _ => "none",
+        }
+    }
+
+    pub fn from_str(val: String) -> TransitionStatus {
+        match val.as_str() {
+            "decided" => TransitionStatus::DECIDED,
+            "completed" => TransitionStatus::COMPLETED,
+            "completes" => TransitionStatus::COMPLETES,
+            "superseded" => TransitionStatus::SUPERSEDED,
+            "supersedes" => TransitionStatus::SUPERSEDES,
+            "cancelled" => TransitionStatus::CANCELLED,
+            _ => TransitionStatus::NONE,
         }
     }
 }
@@ -424,7 +455,6 @@ pub enum Status {
     COMPLETES,
     SUPERSEDED,
     SUPERSEDES,
-    OBSOLETED,
     CANCELLED,
     NONE,
 }
@@ -442,7 +472,6 @@ impl Status {
             Status::COMPLETES => "completes",
             Status::SUPERSEDED => "superseded",
             Status::SUPERSEDES => "supersedes",
-            Status::OBSOLETED => "obsoleted",
             Status::CANCELLED => "cancelled",
             Status::NONE => "unknown",
         }
@@ -456,7 +485,6 @@ impl Status {
             "completes" => Status::COMPLETES,
             "superseded" => Status::SUPERSEDED,
             "supersedes" => Status::SUPERSEDES,
-            "obsoleted" => Status::OBSOLETED,
             "cancelled" => Status::CANCELLED,
             _ => Status::NONE,
         }
@@ -511,18 +539,22 @@ impl State for AdrState {
                 match transition {
                     TransitionStatus::COMPLETED => {
                         self.status = Status::COMPLETED;
+                        has_been_modified = false;
                         Status::COMPLETED
                     },
                     TransitionStatus::COMPLETES => {
                         self.status = Status::COMPLETES;
+                        has_been_modified = false;
                         Status::COMPLETES
                     },
                     TransitionStatus::CANCELLED => {
                         self.status = Status::CANCELLED;
+                        has_been_modified = false;
                         Status::CANCELLED
                     },
                     TransitionStatus::SUPERSEDED => {
                         self.status = Status::SUPERSEDED;
+                        has_been_modified = false;
                         Status::SUPERSEDED
                     },
                     _ => {
@@ -535,6 +567,7 @@ impl State for AdrState {
                 match transition {
                     TransitionStatus::DECIDED => {
                         self.status = Status::DECIDED;
+                        has_been_modified = false;
                         Status::DECIDED
                     },
                     TransitionStatus::SUPERSEDED => {
@@ -675,25 +708,25 @@ mod tests {
 
     #[test]
     fn test_get_seq() {
-        let seq = super::extract_seq_id("01-my-decision.adoc").unwrap();
+        let seq = super::get_seq_id_from_name("01-my-decision.adoc").unwrap();
         assert_eq!(seq, 1);
-        let seq = super::extract_seq_id("00000010-my-decision.adoc").unwrap();
+        let seq = super::get_seq_id_from_name("00000010-my-decision.adoc").unwrap();
         assert_eq!(seq, 10);
-        let seq = super::extract_seq_id("mypath/00000001-my-decision.adoc").unwrap();
+        let seq = super::get_seq_id_from_name("mypath/00000001-my-decision.adoc").unwrap();
         assert_eq!(seq, 1);
-        let seq = super::extract_seq_id("mypath/00000001-my-decision-594.adoc").unwrap();
+        let seq = super::get_seq_id_from_name("mypath/00000001-my-decision-594.adoc").unwrap();
         assert_eq!(seq, 1);
-        let seq = super::extract_seq_id("mypath/00000001-my-decision-594-full.adoc").unwrap();
+        let seq = super::get_seq_id_from_name("mypath/00000001-my-decision-594-full.adoc").unwrap();
         assert_eq!(seq, 1);
-        let seq = super::extract_seq_id("00000001-my-decision-594-full.adoc").unwrap();
+        let seq = super::get_seq_id_from_name("00000001-my-decision-594-full.adoc").unwrap();
         assert_eq!(seq, 1);
         let seq =
-            super::extract_seq_id("mypath/00000001/00000002-my-decision-594-full.adoc").unwrap();
+            super::get_seq_id_from_name("mypath/00000001/00000002-my-decision-594-full.adoc").unwrap();
         assert_eq!(seq, 2
         );
 
         let seq =
-        super::extract_seq_id("path/my-decision-full.adoc").unwrap();
+        super::get_seq_id_from_name("path/my-decision-full.adoc").unwrap();
         assert_eq!(seq, 0);
 
         // let result =
@@ -713,7 +746,7 @@ mod tests {
         paths.push(String::from("mypath/00000001/00000002-my-decision-594-full.adoc"));
         paths.push(String::from("path/my-decision-full.adoc"));
 
-        let seq = super::extract_seq_id_from_all(paths);
+        let seq = super::get_last_seq_id_from_all(paths);
         assert_eq!(seq, 10);
     }
 
@@ -729,7 +762,7 @@ mod tests {
         paths.push(String::from(""));
         paths.push(String::from("this-is-a-smple7.adoc"));
 
-        let seq = super::extract_seq_id_from_all(paths);
+        let seq = super::get_last_seq_id_from_all(paths);
         assert_eq!(seq, 0);
     }
 

@@ -8,6 +8,7 @@ use std::fs;
 pub struct AdrNames {
     name: String,
     by: String,
+    has_transitioned: bool,
 }
 
 impl cucumber::World for AdrNames {}
@@ -17,6 +18,7 @@ impl std::default::Default for AdrNames {
         AdrNames {
             name: "default-name".to_string(),
             by: "default-name".to_string(),
+            has_transitioned: false,
         }
     }
 }
@@ -109,7 +111,97 @@ mod create_already_adr_steps {
     });
 }
 
-mod update_adr_decided_steps {
+// mod update_adr_decided_steps {
+//     use cucumber::steps;
+//     use std::fs;
+//     use std::fs::File;
+//     use std::io::prelude::*;
+
+//     extern crate directories;
+//     use directories::ProjectDirs;
+
+//     extern crate adr_core;
+
+//     steps! (crate::AdrNames => {
+//         given "An existing In Progress Decision" |adr, _step| {
+//             let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool", "test") {
+//                 None => panic!("issue while preparing test"),
+//                 Some(project_dirs) => project_dirs
+//             };
+//             fs::copy("./tests/my-decision-1.adoc", 
+//                 project_dirs.cache_dir().join("src/my-decision-1.adoc").as_path()
+//             ).unwrap();
+
+//             adr.name = String::from(format!("{}", 
+//                 project_dirs.cache_dir().join("src/my-decision-1.adoc").as_path().display())
+//             );
+//         };
+
+//         when "I change its status to decided" |adr, _step| {
+//             let mut f = File::open(&adr.name).unwrap();
+//             let mut content = String::new();
+//             f.read_to_string(&mut content).unwrap();
+
+//             assert_eq!(content.contains("{wip}"), true);
+
+//             let contains = adr_core::adr_repo::transition_to_decided(&adr.name).unwrap();
+//             assert_eq!(contains, true);
+
+
+//         };
+
+//         then "The content of the file is updated to Decided" |adr, _step| {
+//             let mut f = File::open(&adr.name).unwrap();
+//             let mut content = String::new();
+//             f.read_to_string(&mut content).unwrap();
+
+//             assert_eq!(content.contains("{decided}"), true);
+//         };
+//     });
+// }
+
+// mod not_update_adr_decided_steps {
+//     use cucumber::steps;
+//     use std::fs;
+//     use std::fs::File;
+//     use std::io::prelude::*;
+
+//     extern crate directories;
+//     use directories::ProjectDirs;
+
+//     extern crate adr_core;
+
+//     steps! (crate::AdrNames => {
+//         given "An existing not In Progress Decision" |adr, _step| {
+//             let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool", "test") {
+//                 None => panic!("issue while preparing test"),
+//                 Some(project_dirs) => project_dirs
+//             };
+//             fs::copy("./tests/my-wrong-decision-1.adoc", 
+//                 project_dirs.cache_dir().join("src/my-wrong-decision-1.adoc").as_path()
+//             ).unwrap();
+
+//             adr.name = String::from(format!("{}", 
+//                 project_dirs.cache_dir().join("src/my-wrong-decision-1.adoc").as_path().display())
+//             );
+//         };
+
+//         when "I update its status to decided" |adr, _step| {
+//             let contains = adr_core::adr_repo::transition_to_decided(&adr.name).unwrap();
+//             assert_eq!(contains, false);
+//         };
+
+//         then "The content of the file is not changed" |adr, _step| {
+//             let mut f = File::open(&adr.name).unwrap();
+//             let mut content = String::new();
+//             f.read_to_string(&mut content).unwrap();
+
+//             assert_eq!(content.contains("{superseded} /tmp/adr-samples/src/my-decision-2.adoc"), true);
+//         };
+//     });
+// }
+
+mod check_transitions_and_lifecycle_of_adr {
     use cucumber::steps;
     use std::fs;
     use std::fs::File;
@@ -119,140 +211,55 @@ mod update_adr_decided_steps {
     use directories::ProjectDirs;
 
     extern crate adr_core;
+    use adr_core::adr_repo::*;
 
     steps! (crate::AdrNames => {
-        given "An existing In Progress Decision" |adr, _step| {
+        given regex r"^a decision with status (.+)$" (String) |adr, status, _step| {
+        
             let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool", "test") {
                 None => panic!("issue while preparing test"),
                 Some(project_dirs) => project_dirs
             };
-            fs::copy("./tests/my-decision-1.adoc", 
-                project_dirs.cache_dir().join("src/my-decision-1.adoc").as_path()
-            ).unwrap();
 
-            adr.name = String::from(format!("{}", 
-                project_dirs.cache_dir().join("src/my-decision-1.adoc").as_path().display())
-            );
-        };
+            let path = format!("./tests/data/{}.adoc", status);
+            let to = project_dirs.cache_dir().join("src").join(status).with_extension("adoc");
+            adr.name = format!("{}", &to.display());
 
-        when "I change its status to decided" |adr, _step| {
-            let mut f = File::open(&adr.name).unwrap();
-            let mut content = String::new();
-            f.read_to_string(&mut content).unwrap();
-
-            assert_eq!(content.contains("{wip}"), true);
-
-            let contains = adr_core::adr_repo::transition_to_decided(&adr.name).unwrap();
-            assert_eq!(contains, true);
-
-
-        };
-
-        then "The content of the file is updated to Decided" |adr, _step| {
-            let mut f = File::open(&adr.name).unwrap();
-            let mut content = String::new();
-            f.read_to_string(&mut content).unwrap();
-
-            assert_eq!(content.contains("{decided}"), true);
-        };
-    });
-}
-
-mod not_update_adr_decided_steps {
-    use cucumber::steps;
-    use std::fs;
-    use std::fs::File;
-    use std::io::prelude::*;
-
-    extern crate directories;
-    use directories::ProjectDirs;
-
-    extern crate adr_core;
-
-    steps! (crate::AdrNames => {
-        given "An existing not In Progress Decision" |adr, _step| {
-            let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool", "test") {
-                None => panic!("issue while preparing test"),
-                Some(project_dirs) => project_dirs
+            println!("Want to copy file [{:?}] to [{:?}]", path, to);
+            match fs::copy(path, to.as_path()) {
+                Ok(_) => (),
+                Err(why) => panic!(why),
             };
-            fs::copy("./tests/my-wrong-decision-1.adoc", 
-                project_dirs.cache_dir().join("src/my-wrong-decision-1.adoc").as_path()
-            ).unwrap();
-
-            adr.name = String::from(format!("{}", 
-                project_dirs.cache_dir().join("src/my-wrong-decision-1.adoc").as_path().display())
-            );
         };
 
-        when "I update its status to decided" |adr, _step| {
-            let contains = adr_core::adr_repo::transition_to_decided(&adr.name).unwrap();
-            assert_eq!(contains, false);
-        };
-
-        then "The content of the file is not changed" |adr, _step| {
-            let mut f = File::open(&adr.name).unwrap();
-            let mut content = String::new();
-            f.read_to_string(&mut content).unwrap();
-
-            assert_eq!(content.contains("{superseded} /tmp/adr-samples/src/my-decision-2.adoc"), true);
-        };
-    });
-}
-
-mod transition_adr_to_completed_steps {
-    use cucumber::steps;
-    use std::fs;
-    use std::fs::File;
-    use std::io::prelude::*;
-
-    extern crate directories;
-    use directories::ProjectDirs;
-
-    extern crate adr_core;
-
-    steps! (crate::AdrNames => {
-        given "A Decided Decision" |adr, _step| {
-            let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool", "test") {
-                None => panic!("issue while preparing test"),
-                Some(project_dirs) => project_dirs
+        when regex r"^the decision is transitioned to (.+) by (.+)$" (String, String) |adr, transition, by, _step| {
+            match "n/a" == by {
+                true => {
+                    println!("calling transition_to() with [{}] [{}] [{}]", transition, adr.name, by);
+                    match adr_core::adr_repo::transition_to(TransitionStatus::from_str(transition), adr.name.as_str(), "") {
+                        Ok(transitioned) => adr.has_transitioned = transitioned,
+                        Err(why) => panic!(why)
+                    };
+                },
+                false => {
+                    println!("calling transition_to() with [{}] [{}] [{}]", transition, adr.name, by);
+                    match adr_core::adr_repo::transition_to(TransitionStatus::from_str(transition), adr.name.as_str(), by.as_str()) {
+                        Ok(transitioned) => adr.has_transitioned = transitioned,
+                        Err(why) => panic!(why)
+                    };
+                },
             };
-            fs::copy("./tests/my-initial-decided-decision.adoc", 
-                project_dirs.cache_dir().join("src/my-initial-decided-decision.adoc").as_path()
-            ).unwrap();
-            fs::copy("./tests/my-new-decided-decision.adoc", 
-                project_dirs.cache_dir().join("src/my-new-decided-decision.adoc").as_path()
-            ).unwrap();
-
-            adr.name = String::from(format!("{}", 
-                project_dirs.cache_dir().join("src/my-initial-decided-decision.adoc").as_path().display())
-            );
-            adr.by = String::from(format!("{}", 
-                project_dirs.cache_dir().join("src/my-new-decided-decision.adoc").as_path().display())
-            );
         };
 
-        when "I update its status to completed-by" |adr, _step| {
-            let contains = adr_core::adr_repo::transition_to_completed_by(&adr.name, &adr.by).unwrap();
-            assert_eq!(contains, true);
+        then regex r"^the transition is (.+)$" (bool) |adr, has_transition, _step| {
+            //compare expected with actual
+            assert_eq!(has_transition, adr.has_transitioned)
         };
 
-        then "The status of the initial decision is completed-by" |adr, _step| {
-            let mut f = File::open(&adr.name).unwrap();
-            let mut content = String::new();
-            f.read_to_string(&mut content).unwrap();
-
-            let expected_value = format!("{{completed}} {}", &adr.by);
-            assert_eq!(content.contains(&expected_value), true);
+        then "the new status is <new_status>" |adr, _step| {
+            
         };
 
-        then "The status of the new decision is completes" |adr, _step| {
-            let mut f = File::open(&adr.by).unwrap();
-            let mut content = String::new();
-            f.read_to_string(&mut content).unwrap();
-
-            let expected_value = format!("{{completes}} {}", &adr.name);
-            assert_eq!(content.contains(&expected_value), true);
-        };
     });
 }
 
@@ -283,9 +290,10 @@ cucumber! {
     steps: &[
         create_new_adr_steps::steps,
         create_already_adr_steps::steps,
-        update_adr_decided_steps::steps,
-        not_update_adr_decided_steps::steps,
-        transition_adr_to_completed_steps::steps,
+        check_transitions_and_lifecycle_of_adr::steps,
+        // update_adr_decided_steps::steps,
+        // not_update_adr_decided_steps::steps,
+        // transition_adr_to_completed_steps::steps,
     ],
     setup: setup,
     before: &[a_before_fn],

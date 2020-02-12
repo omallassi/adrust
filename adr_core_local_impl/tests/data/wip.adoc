@@ -1,0 +1,24 @@
+// Include contents of docinfo.html
+:docinfo1:
+:wip: pass:quotes[[.label.wip]#In Progress#]
+:decided: pass:q[[.label.decided]#Decided#]
+:completed: pass:q[[.label.updated]#Completed By#]
+:completes: pass:q[[.label.updated]#Completes#]
+:supersedes: pass:q[[.label.updated]#Supersedes#]
+:superseded: pass:q[[.label.obsoleted]#Superseded By#]
+:obsoleted: pass:q[[.label.obsoleted]#Obsolete#]
+
+== ADR-WIP a wip decision
+
+*Status:* {wip}  *Date:* 2019-10-28
+
+[cols=",",options="header",%autowidth]
+|===
+|role |people
+|_Decision Makers_ |@John Smith
+|_Experts_ |@John Smith
+|_Stakeholders_ |@John Smith
+|===
+
+=== Context and Problem Statement
+......
