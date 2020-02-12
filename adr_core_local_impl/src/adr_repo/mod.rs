@@ -594,6 +594,22 @@ impl State for AdrState {
                     }
                 }
             },
+            Status::COMPLETES => {
+                match transition {
+                    TransitionStatus::CANCELLED => {
+                        self.status = Status::CANCELLED;
+                        Status::CANCELLED
+                    },
+                    TransitionStatus::SUPERSEDED => {
+                        self.status = Status::SUPERSEDED;
+                        Status::SUPERSEDED
+                    },
+                    _ => {
+                        has_been_modified = false;
+                        Status::COMPLETES
+                    }
+                }
+            },
             Status::SUPERSEDED => {
                 match transition {
                     TransitionStatus::CANCELLED => {
@@ -603,6 +619,18 @@ impl State for AdrState {
                     _ => {
                         has_been_modified = false;
                         Status::SUPERSEDED
+                    }
+                }
+            },
+            Status::SUPERSEDES => {
+                match transition {
+                    TransitionStatus::CANCELLED => {
+                        self.status = Status::CANCELLED;
+                        Status::CANCELLED
+                    },
+                    _ => {
+                        has_been_modified = false;
+                        Status::SUPERSEDES
                     }
                 }
             },

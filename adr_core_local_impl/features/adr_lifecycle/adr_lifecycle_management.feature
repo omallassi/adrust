@@ -35,5 +35,11 @@ Feature: Manage an ADR Lifecycle
             | decided       | cancelled         | true      | obsoleted     | n/a                   |
             | decided       | superseded        | true      | superseded    | superseded-by.adoc    |
             | decided       | supersedes        | true      | supersedes    | supersedes.adoc       |
+            | completed-by  | cancelled         | true      | obsoleted     | n/a                   |
+            | completes     | cancelled         | true      | obsoleted     | n/a                   |
+            | completed-by  | superseded        | true      | superseded    | superseded-by.adoc    |
+            | completes     | superseded        | true      | superseded    | superseded-by.adoc    |
+            | superseded-by | cancelled         | true      | obsoleted     | n/a                   |
+            | supersedes    | cancelled         | true      | obsoleted     | n/a                   |
 
 
