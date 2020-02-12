@@ -219,7 +219,14 @@ pub fn transition_to_completed_by(adr_name: &str, by: &str) -> io::Result<bool> 
 }
 
 pub fn transition_to(transition: TransitionStatus, from: &str, by: &str) -> io::Result<bool> {
-    let adr_from = build_adr_from_path(Path::new(from))?;
+    let adr_from = match build_adr_from_path(Path::new(from)){
+        Ok(adr) => adr,
+        Err(why) => {
+            error!(get_logger(), "Got error [{:?}] while getting ADR [{}]", why, from);
+            panic!();
+        },
+    };
+
     let updated_adr_from_tuple = adr_from.update_status(transition);
 
     //if transition has been declined, we can stop here
@@ -539,22 +546,22 @@ impl State for AdrState {
                 match transition {
                     TransitionStatus::COMPLETED => {
                         self.status = Status::COMPLETED;
-                        has_been_modified = false;
                         Status::COMPLETED
                     },
                     TransitionStatus::COMPLETES => {
                         self.status = Status::COMPLETES;
-                        has_been_modified = false;
                         Status::COMPLETES
                     },
                     TransitionStatus::CANCELLED => {
                         self.status = Status::CANCELLED;
-                        has_been_modified = false;
                         Status::CANCELLED
                     },
                     TransitionStatus::SUPERSEDED => {
                         self.status = Status::SUPERSEDED;
-                        has_been_modified = false;
+                        Status::SUPERSEDED
+                    },
+                    TransitionStatus::SUPERSEDES => {
+                        self.status = Status::SUPERSEDES;
                         Status::SUPERSEDED
                     },
                     _ => {

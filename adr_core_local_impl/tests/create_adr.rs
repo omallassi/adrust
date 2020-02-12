@@ -212,23 +212,41 @@ mod check_transitions_and_lifecycle_of_adr {
     extern crate adr_core;
     use adr_core::adr_repo::*;
 
+    use walkdir::{WalkDir};
+
+    use std::path::PathBuf;
+
     steps! (crate::AdrNames => {
+
         given regex r"^a decision with status (.+)$" (String) |adr, status, _step| {
         
             let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool", "test") {
                 None => panic!("issue while preparing test"),
                 Some(project_dirs) => project_dirs
             };
+            
+            //copy all files to ease the different transitions
+            let rep = "./tests/data/";
+            let srcdir = PathBuf::from(rep);
 
-            let path = format!("./tests/data/{}.adoc", status);
-            let to = project_dirs.cache_dir().join("src").join(status).with_extension("adoc");
-            adr.name = format!("{}", &to.display());
+            for entry in WalkDir::new(srcdir.as_path()).into_iter().filter_map(|e| e.ok() ) {
+                println!("oliv {}", entry.path().display());
 
-            println!("Want to copy file [{:?}] to [{:?}]", path, to);
-            match fs::copy(path, to.as_path()) {
-                Ok(_) => (),
-                Err(why) => panic!(why),
-            };
+                if ! entry.path().is_dir() {
+                    let from = entry.path();
+                    let file_name = entry.path().file_name().unwrap();
+                    let to = project_dirs.cache_dir().join("src").join(file_name);
+
+                        println!("Want to copy file [{:?}] to [{:?}]", from, to);
+                        match fs::copy(from, to.as_path()) {
+                            Ok(_) => (),
+                            Err(why) => panic!(why),
+                        };
+                }
+            }
+
+            adr.name = format!("{}", project_dirs.cache_dir().join("src").join(status).with_extension("adoc").display());
+            println!("The current scenario will use adr path [{}]", adr.name);
         };
 
         when regex r"^the decision is transitioned to (.+) by (.+)$" (String, String) |adr, transition, by, _step| {

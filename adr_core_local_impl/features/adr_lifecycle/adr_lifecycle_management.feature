@@ -21,13 +21,19 @@ Feature: Manage an ADR Lifecycle
         And the date is updated to today
 
         Examples:
-            | status        | transition_status | accepted  | new_status    | by                |
-            | wip           | decided           | true      | decided       | n/a               |
-            | decided       | decided           | false     | decided       | n/a               |
-            | completed-by  | decided           | false     | completed     | completes adr     |
-            | completes     | decided           | false     | completes     | completed-by adr  |
-            | superseded-by | decided           | false     | superseded    | supersedes adr    |
-            | supersedes    | decided           | false     | supersedes    | superseded-by adr |
-            | obsoleted     | decided           | false     | obsoleted     | n/a               |
+            | status        | transition_status | accepted  | new_status    | by                    |
+            | wip           | decided           | true      | decided       | n/a                   |
+            | decided       | decided           | false     | decided       | n/a                   |
+            | completed-by  | decided           | false     | completed     | n/a                   |
+            | completes     | decided           | false     | completes     | n/a                   |
+            | superseded-by | decided           | false     | superseded    | n/a                   |
+            | supersedes    | decided           | false     | supersedes    | n/a                   |
+            | obsoleted     | decided           | false     | obsoleted     | n/a                   |
+            | wip           | cancelled         | true      | obsoleted     | n/a                   |
+#            | decided       | completed         | true      | completed     | completed-by.adoc     |
+#            | decided       | completes         | true      | completes     | completes.adoc        |
+#            | decided       | cancelled         | true      | obsoleted     | n/a                   |
+#            | decided       | superseded        | true      | superseded    | superseded-by.adoc    |
+#            | decided       | supersedes        | true      | supersedes    | supersedes.adoc       |
 
 
