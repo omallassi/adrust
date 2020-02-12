@@ -7,7 +7,6 @@ use std::fs;
 
 pub struct AdrNames {
     name: String,
-    by: String,
     has_transitioned: bool,
     base_path: String,
 }
@@ -18,7 +17,6 @@ impl std::default::Default for AdrNames {
     fn default() -> AdrNames {
         AdrNames {
             name: "default-name".to_string(),
-            by: "default-name".to_string(),
             has_transitioned: false,
             base_path: String::from(""),
         }
@@ -127,6 +125,7 @@ mod check_transitions_and_lifecycle_of_adr {
     use walkdir::{WalkDir};
 
     use std::path::PathBuf;
+    use chrono::prelude::*;
 
     steps! (crate::AdrNames => {
 
@@ -196,8 +195,18 @@ mod check_transitions_and_lifecycle_of_adr {
             assert_eq!(Status::from_str(new_status), new_adr.status);
         };
 
-        then "the date is updated to today TO BE REMOVED" |_adr, _step| {
-            //TODO manage the date
+        then regex r"^the date is updated to today if (.+) is true$" (bool) |adr, is_accepted, _step| {
+            let adr = match adr_core::adr_repo::build_adr_from_path(Path::new(adr.name.as_str())) {
+                Ok(adr) => adr,
+                Err(why) => panic!(why),
+            };
+
+            if is_accepted {
+                assert_eq!(adr.date, Utc::today().format("%Y-%m-%d").to_string());
+            }
+            else {
+                assert_eq!(adr.date, "2019-10-28");
+            }
         };
 
     });

@@ -16,6 +16,8 @@ use walkdir::{DirEntry, WalkDir};
 extern crate adr_config;
 use adr_config::config::AdrToolConfig;
 
+use chrono::prelude::*;
+
 
 fn get_logger() -> slog::Logger {
     let cfg: AdrToolConfig = adr_config::config::get_config();
@@ -278,6 +280,7 @@ pub struct Adr {
     pub path: String,
     pub content: String,
     pub title: String,
+    pub date: String,
     pub status: Status,
     pub state: AdrState,
     pub tags: String,
@@ -315,11 +318,24 @@ impl Adr {
             }
         };
 
+        //get date  
+        lazy_static! {
+            static ref RE_DATE: Regex = Regex::new(r"([0-9]{4}-[0-9]{2}-[0-9]{2})").unwrap();
+        }
+        let date = match RE_DATE.captures(&val) {
+            Some(val) => val[1].trim().to_string(),
+            None => {
+                debug!(get_logger(), "Unable to get date from [{}]", path);
+                "None".to_string()
+            }
+        };
+
         //build the returned object
         let adr: Adr = Adr {
             path: path,
             content: content,
             title: cap,
+            date: date,
             tags: tags.0,
             tags_array: tags.1,
             status: Status::from_str(status.clone()),
@@ -356,18 +372,21 @@ impl Adr {
             debug!(get_logger(), "Transitioned to [{}]", state.status.as_str());
             let new_content = self.content.replace(current_status.as_str(), new_status.as_str());
 
-            //Todo maybe I it would be better to implement Copy Trait
-            (
-                Adr {
+            let returned_adr = Adr {
                     path: String::from(self.path.as_str()),
                     content: new_content,
                     title: String::from(self.title.as_str()),
+                    date: String::from(self.date.as_str()),
                     tags: String::from(self.tags.as_str()),
                     tags_array: self.tags_array.clone(),
                     status: state.status,
                     state: state,
-                }, 
-                has_been_modified)
+                };
+
+            let returned_adr = returned_adr.update_date(Utc::today());
+
+            //Todo maybe I it would be better to implement Copy Trait
+            (returned_adr, has_been_modified)
         }
         else {
             debug!(get_logger(), "Transition has been declined");
@@ -386,6 +405,27 @@ impl Adr {
             path: String::from(self.path.as_str()),
             content: new_content,
             title: String::from(self.title.as_str()),
+            date: String::from(self.date.as_str()),
+            tags: String::from(self.tags.as_str()),
+            tags_array: self.tags_array.clone(),
+            status: self.status.clone(),
+            state: self.state.clone(),
+        }
+    }
+
+    pub fn update_date(&self, today: Date<Utc>) -> Adr {
+        let new_date = today.format("%Y-%m-%d").to_string();
+
+        debug!(get_logger(), "Want to update ADR to date [{}]", new_date);
+
+        let re = Regex::new(r"(\d{4})-(\d{2})-(\d{2})").unwrap();
+        let new_content = re.replace(self.content.as_str(), new_date.as_str()).as_ref().to_owned();
+
+        Adr {
+            path: String::from(self.path.as_str()),
+            content: new_content,
+            title: String::from(self.title.as_str()),
+            date: String::from(new_date.as_str()),
             tags: String::from(self.tags.as_str()),
             tags_array: self.tags_array.clone(),
             status: self.status.clone(),
@@ -400,6 +440,7 @@ impl Clone for Adr {
             path: String::from(self.path.as_str()),
             content: String::from(self.content.as_str()),
             title: String::from(self.title.as_str()),
+            date: String::from(self.date.as_str()),
             tags: String::from(self.tags.as_str()),
             tags_array: self.tags_array.clone(),
             status: self.state.status.clone(),
@@ -671,6 +712,7 @@ mod tests {
             path: String::from("/tmp/n/a"),
             content: String::from("== ADR-MVA-507 Decide about ...\n\n*Status:* {wip} *Date:* 2019-10-28\n\n[cols=\",\",options=..."),
             title: String::from("String::from(self.title.as_str())"),
+            date: String::from("2023-10-28"),
             tags: String::from(""),
             tags_array: Vec::new(),
             status: Status::WIP,
@@ -690,6 +732,7 @@ mod tests {
                 path: String::from("/tmp/n/a"),
                 content: String::from("== ADR-MVA-507 Decide about ...\n\n*Status:* {decided} *Date:* 2019-10-28\n\n[cols=\",\",options=\"header\",%autowidth]\n|===\n|role ....."),
                 title: String::from("String::from(self.title.as_str())"),
+                date: String::from("2023-10-28"),
                 tags: String::from(""),
                 tags_array: Vec::new(),
                 status: Status::DECIDED,
@@ -820,12 +863,13 @@ mod tests {
         
         *Status:* {wip}  *Date:* 2019-10-28
         ....
-        
+        bug there is another date 2119-10-28
         [tags]#deployment view# [tags]#network# [tags]#security#";
 
         let adr_sut = super::Adr::from("a_path".to_string(), content.to_string());
 
         assert_eq!(adr_sut.title, "ADR-MVA-507 Decide about ...");
+        assert_eq!(adr_sut.date, "2019-10-28");
         assert_eq!(adr_sut.path, "a_path");
         assert_eq!(adr_sut.content, content.to_string());
         assert_eq!(adr_sut.tags, "#deployment view #network #security ");
@@ -846,5 +890,28 @@ mod tests {
         assert_eq!(adr_sut.path, "a_path");
         assert_eq!(adr_sut.content, content.to_string());
         assert_eq!(adr_sut.tags, "");
+    }
+
+    #[test]
+    fn test_update_date() {
+        let content = "
+        == ADR-MVA-507 Decide about ...
+        
+        *Status:* {wip}  *Date:* 2019-10-28
+        ....";
+
+        let adr_sut = super::Adr::from("a_path".to_string(), content.to_string());
+
+        assert_eq!(adr_sut.date, "2019-10-28");
+
+        let date = Utc::today();
+        let adr_sut = adr_sut.update_date(date);
+
+        let date = date.format("%Y-%m-%d");
+        assert_eq!(adr_sut.date, date.to_string());
+
+        let contain = format!("*Status:* {{wip}}  *Date:* {}", date);
+        println!("contain {}", contain);
+        assert_eq!(true, adr_sut.content.contains(contain.as_str()));
     }
 }

@@ -18,7 +18,7 @@ Feature: Manage an ADR Lifecycle
         When the decision is transitioned to <transition_status> by <by>
         Then the transition is <accepted>
         And the new status is <new_status> by <by>
-        And the date is updated to today
+        And the date is updated to today if <accepted> is true
 
         Examples:
             | status        | transition_status | accepted  | new_status    | by                    |
@@ -41,5 +41,4 @@ Feature: Manage an ADR Lifecycle
             | completes     | superseded        | true      | superseded    | superseded-by.adoc    |
             | superseded-by | cancelled         | true      | obsoleted     | n/a                   |
             | supersedes    | cancelled         | true      | obsoleted     | n/a                   |
-
 
