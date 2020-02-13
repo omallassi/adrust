@@ -45,7 +45,7 @@ pub fn list_all_adr() -> io::Result<()> {
 
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
-    table.set_titles(row![b -> "Title", b-> "Status", b -> "File", b -> "Tags"]);
+    table.set_titles(row![b -> "Title", b -> "Date", b-> "Status", b -> "File", b -> "Tags"]);
     for entry in adr_core::adr_repo::list_all_adr(&cfg.adr_src_dir)? {
         //table.add_row(row![entry.title, Fg->entry.status, entry.path, entry.tags]);
         let style = match entry.status {
@@ -55,6 +55,7 @@ pub fn list_all_adr() -> io::Result<()> {
         };
         table.add_row(Row::new(vec![
             Cell::new(&entry.title),
+            Cell::new(&entry.date),
             Cell::new(&entry.status.as_str()).style_spec(style),
             Cell::new(&entry.path),
             Cell::new(&entry.tags),
@@ -133,7 +134,7 @@ fn search(query: String) -> Result<()> {
 
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
-    table.set_titles(row![b -> "Title", b -> "File", b -> "Tags"]);
+    table.set_titles(row![b -> "Title", b -> "File", b -> "(Indexed) Tags"]);
 
     let results = match adr_search::search::search(cfg.adr_search_index, query) {
         Ok(e) => e,
@@ -160,6 +161,8 @@ fn init() -> Result<()> {
     adr_config::config::init()
 }
 
+
+//TODO support the cancelled transition
 fn main() {
     let cfg: AdrToolConfig = adr_config::config::get_config();
     //
