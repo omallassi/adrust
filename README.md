@@ -70,7 +70,34 @@ In more details,
 
 ## ADR Template & lifecycle
 
-For now, template should be in _asciidoc_. Look at `./templates/adr-temaplate-v0.1.adoc` (in particularly the header) for more details. ADR lifecycle is managed based on the `*Status:* {...}` information (available in template headers).
+For now, template should be in _asciidoc_. Look at `./templates/adr-temaplate-v0.1.adoc` (in particularly the header) for more details. 
+
+The header of your ADR should be 
+```
+:docinfo1:
+:wip: pass:quotes[[.label.wip]#In Progress#]
+:decided: pass:q[[.label.decided]#Decided#]
+:completed: pass:q[[.label.updated]#Completed By#]
+:completes: pass:q[[.label.updated]#Completes#]
+:supersedes: pass:q[[.label.updated]#Supersedes#]
+:superseded: pass:q[[.label.obsoleted]#Superseded By#]
+:obsoleted: pass:q[[.label.obsoleted]#Obsolete#]
+
+== ADR-the title
+
+*Status:* {decided}  *Date:* 2019-10-28
+
+```
+
+* the `:wip:` are basically the supported states. You can change the labels (e.g. `In Progress etc...` ) but that's it. 
+* the `*Status:* {...` is used to manage the lifecycle of the ADR
+* the `*Date:* ...` is also used to update the date of transitions on an ADR. 
+
+ADRs follow the below lifecycle
+
+[![](https://mermaid.ink/img/eyJjb2RlIjoic3RhdGVEaWFncmFtXG5cdFsqXSAtLT4gd2lwXG5cdHdpcCAtLT4gZGVjaWRlZFxuXHR3aXAgLS0-IGNhbmNlbGxlZFxuXG5cdGRlY2lkZWQgLS0-IGNhbmNlbGxlZFxuXHRkZWNpZGVkIC0tPiBjb21wbGV0ZWRcblx0ZGVjaWRlZCAtLT4gc3VwZXJzZWRlZFxuXHRcblx0Y29tcGxldGVkIC0tPiBzdXBlcnNlZGVkXG5cdGNvbXBsZXRlZCAtLT4gY2FuY2VsbGVkXG5cblx0c3VwZXJzZWRlZCAtLT4gY2FuY2VsbGVkXG5cdGNhbmNlbGxlZCAtLT4gWypdIiwibWVybWFpZCI6eyJ0aGVtZSI6ImRlZmF1bHQifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoic3RhdGVEaWFncmFtXG5cdFsqXSAtLT4gd2lwXG5cdHdpcCAtLT4gZGVjaWRlZFxuXHR3aXAgLS0-IGNhbmNlbGxlZFxuXG5cdGRlY2lkZWQgLS0-IGNhbmNlbGxlZFxuXHRkZWNpZGVkIC0tPiBjb21wbGV0ZWRcblx0ZGVjaWRlZCAtLT4gc3VwZXJzZWRlZFxuXHRcblx0Y29tcGxldGVkIC0tPiBzdXBlcnNlZGVkXG5cdGNvbXBsZXRlZCAtLT4gY2FuY2VsbGVkXG5cblx0c3VwZXJzZWRlZCAtLT4gY2FuY2VsbGVkXG5cdGNhbmNlbGxlZCAtLT4gWypdIiwibWVybWFpZCI6eyJ0aGVtZSI6ImRlZmF1bHQifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0)
+
+
 
 ## Tags
 There is a beta support for tags. These tags, if available, will be used in `adr list` and `adr tags ...`
@@ -98,12 +125,6 @@ To set the log level to Debug `adr config set --name log_level --value 6`
 
 ## Search
 Search is based on [Tantivy Search](https://github.com/tantivy-search/tantivy). You can build your local index via `adr index --build` and search via `adr search --query "word#1 AND word#2"`
-
-## ADR Lifecycle
-
-ADRs follow the below lifecycle
-
-[![](https://mermaid.ink/img/eyJjb2RlIjoic3RhdGVEaWFncmFtXG5cdFsqXSAtLT4gd2lwXG5cdHdpcCAtLT4gZGVjaWRlZFxuXHR3aXAgLS0-IGNhbmNlbGxlZFxuXG5cdGRlY2lkZWQgLS0-IGNhbmNlbGxlZFxuXHRkZWNpZGVkIC0tPiBjb21wbGV0ZWRcblx0ZGVjaWRlZCAtLT4gc3VwZXJzZWRlZFxuXHRcblx0Y29tcGxldGVkIC0tPiBzdXBlcnNlZGVkXG5cdGNvbXBsZXRlZCAtLT4gY2FuY2VsbGVkXG5cblx0c3VwZXJzZWRlZCAtLT4gY2FuY2VsbGVkXG5cdGNhbmNlbGxlZCAtLT4gWypdIiwibWVybWFpZCI6eyJ0aGVtZSI6ImRlZmF1bHQifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0)](https://mermaid-js.github.io/mermaid-live-editor/#/edit/eyJjb2RlIjoic3RhdGVEaWFncmFtXG5cdFsqXSAtLT4gd2lwXG5cdHdpcCAtLT4gZGVjaWRlZFxuXHR3aXAgLS0-IGNhbmNlbGxlZFxuXG5cdGRlY2lkZWQgLS0-IGNhbmNlbGxlZFxuXHRkZWNpZGVkIC0tPiBjb21wbGV0ZWRcblx0ZGVjaWRlZCAtLT4gc3VwZXJzZWRlZFxuXHRcblx0Y29tcGxldGVkIC0tPiBzdXBlcnNlZGVkXG5cdGNvbXBsZXRlZCAtLT4gY2FuY2VsbGVkXG5cblx0c3VwZXJzZWRlZCAtLT4gY2FuY2VsbGVkXG5cdGNhbmNlbGxlZCAtLT4gWypdIiwibWVybWFpZCI6eyJ0aGVtZSI6ImRlZmF1bHQifSwidXBkYXRlRWRpdG9yIjpmYWxzZX0)
 
 ## Trouleshoot
 
