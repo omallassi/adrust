@@ -171,7 +171,7 @@ fn main() {
         .about("A CLI to help you manage your ADR in git")
         .subcommand(
             SubCommand::with_name("new")
-                .about("will create a new Decision Record")
+                .about("Creates a new Decision Record")
                 .version("0.1.0")
                 .arg(
                     Arg::with_name("name")
@@ -228,7 +228,7 @@ fn main() {
         )
         .subcommand(
             App::new("lf")
-                .about("Manage ADRs lifecycle")
+                .about("Manages ADRs lifecycle")
                 .setting(AppSettings::SubcommandRequiredElseHelp)
                 .subcommand(
                     SubCommand::with_name("decided")
@@ -245,7 +245,7 @@ fn main() {
                 )
                 .subcommand(
                     SubCommand::with_name("superseded-by")
-                    .about("update the Status to Decide")
+                    .about("Supersede the decision with another decision")
                     .version("0.1.0")
                     .arg(
                         Arg::with_name("path")
@@ -283,6 +283,19 @@ fn main() {
                                 .takes_value(true)
                                 .required(true)
                                 .help("Give the path of the DR which completes"),
+                        ),
+                )
+                .subcommand(
+                    SubCommand::with_name("obsoleted")
+                        .about("Uodate the Status to Obsoleted")
+                        .version("0.1.0")
+                        .arg(
+                            Arg::with_name("path")
+                                .short("p")
+                                .long("path")
+                                .takes_value(true)
+                                .required(true)
+                                .help("Give the path of your Decision Record"),
                         ),
                 )
         )
@@ -357,6 +370,12 @@ fn main() {
                     .unwrap();
                 }
             }
+            ("obsoleted", Some(set_matches)) => {
+                if set_matches.is_present("path") {
+                    adr_core::adr_repo::transition_to_obsoleted(set_matches.value_of("path").unwrap()).unwrap();
+                }
+            }
+            
             _ => unreachable!(),
         },
         ("config", Some(config_matches)) => match config_matches.subcommand() {

@@ -222,6 +222,10 @@ pub fn transition_to_completed_by(adr_name: &str, by: &str) -> io::Result<bool> 
     transition_to(TransitionStatus::COMPLETED, adr_name, by)
 }
 
+pub fn transition_to_obsoleted(adr_name: &str) -> io::Result<bool> {
+    transition_to(TransitionStatus::CANCELLED, adr_name, "")
+}
+
 pub fn transition_to(transition: TransitionStatus, from: &str, by: &str) -> io::Result<bool> {
     let adr_from = match build_adr_from_path(Path::new(from)){
         Ok(adr) => adr,
