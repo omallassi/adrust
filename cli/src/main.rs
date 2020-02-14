@@ -161,10 +161,9 @@ fn init() -> Result<()> {
     adr_config::config::init()
 }
 
-
-//TODO support the cancelled transition
+///
+/// The main program - start the CLI ...
 fn main() {
-    let cfg: AdrToolConfig = adr_config::config::get_config();
     //
     let _options = App::new("adr")
         .version("0.1.0")
@@ -331,13 +330,7 @@ fn main() {
     match _options.subcommand() {
         ("new", Some(matches)) => {
             if matches.is_present("name") {
-                adr_core::adr_repo::create_adr(
-                    adr_config::config::get_config(),
-                    matches.value_of("name").unwrap(),
-                    Path::new(&cfg.adr_template_dir).join(cfg.adr_template_file).as_path(),
-                    Path::new(&cfg.adr_src_dir),
-                )
-                .unwrap();
+                adr_core::adr_repo::create_adr(adr_config::config::get_config(), matches.value_of("name").unwrap()).unwrap();
             }
         }
         ("list", Some(_matches)) => {

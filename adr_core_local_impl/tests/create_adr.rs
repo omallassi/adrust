@@ -36,14 +36,11 @@ mod helper {
 
         let mut cfg: adr_config::config::AdrToolConfig = adr_config::config::get_config();
         cfg.use_id_prefix = false;
+        cfg.log_level = 6;
+        cfg.adr_template_file = String::from(project_dirs.cache_dir().join("templates/adr-template-v0.1.adoc").as_path().to_str().unwrap());
+        cfg.adr_src_dir = String::from(project_dirs.cache_dir().join("src").as_path().to_str().unwrap());
 
-        Ok(adr_core::adr_repo::create_adr(
-            cfg, 
-            name,
-            project_dirs.cache_dir().join("templates/adr-template-v0.1.adoc").as_path(),
-            project_dirs.cache_dir().join("src").as_path(),
-        )
-        .unwrap())
+        Ok(adr_core::adr_repo::create_adr(cfg, name).unwrap())
     }
 }
 

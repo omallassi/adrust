@@ -35,12 +35,26 @@ fn get_logger() -> slog::Logger {
     log
 }
 
-/// Creates the file (based on template file). Returns true if file is created, false if not
-/// (because target file already exists...)
-/// TODO homogeneize APIs and do something with this method
-pub fn create_adr(cfg: AdrToolConfig, title: &str, path_to_template: &Path, src_dir: &Path) -> io::Result<bool> {
+/// Creates the file (based on template file). Returns true if file is created, false if not (e.g. target file already exists...)
+/// 
+/// # Arguments
+/// 
+/// * `cfg` - The whole config object
+/// * `title`- the title of the ADR (specified by the user)
+/// * 
+/// 
+pub fn create_adr(cfg: AdrToolConfig, title: &str) -> io::Result<bool> {
+    let adr_template_dir = &cfg.adr_template_dir.as_str();
+    let adr_template_file = &cfg.adr_template_file.as_str();
+
+    let path_to_template = Path::new(adr_template_dir);
+    let path_to_template = path_to_template.join(adr_template_file);
+    let path_to_template = path_to_template.as_path();
+
+    let src_dir = Path::new(&cfg.adr_src_dir);
+                    
     //specify last seq_id , the rest of the config (use_prefix and width can be get from the method)
-    let name = match format_decision_name(cfg, title) {
+    let name = match format_decision_name(cfg.clone(), title) {
         Ok(name) => name,
         Err(_why) => panic!(format!("Problem while formatting name [{}]", title)),
     };
@@ -50,16 +64,17 @@ pub fn create_adr(cfg: AdrToolConfig, title: &str, path_to_template: &Path, src_
         match path_to_template.exists() {
             true => {
                 fs::copy(path_to_template, &target_path)?;
+                //build the Adr (and force the parsing)
+                let newly_adr = match build_adr(Path::new(&cfg.adr_root_dir), &target_path) {
+                    Ok(adr) => adr,
+                    Err(why) => {
+                        error!(get_logger(), "Got error [{:?}] while getting ADR [{:?}]", why, target_path);
+                        panic!();
+                    },
+                };
+                let newly_adr = newly_adr.update_title(title);
 
-                //TODO shoud rely on fn build_adr(path: String, content: String). like create a new ADR from template.content, update tilte & co then fs::write(...)
-
-                //need to update the title of the ADR with specified name. there is certainly a better way
-                //reading again the file... 
-                let adr_content = fs::read_to_string(&target_path).unwrap();
-                let mut adoc_title = String::from("== ");
-                adoc_title.push_str(&title);
-                let content = adr_content.replacen("== {%%ADR TITLE%%}", adoc_title.as_str(), 1);
-                fs::write(&target_path, content).unwrap();
+                fs::write(&target_path, newly_adr.content).unwrap();
                 //
                 info!(get_logger(), "New ADR {:?} created", target_path);
             }
@@ -122,7 +137,6 @@ fn get_last_seq_id(dir: &Path) -> usize {
 }
 
 
-//TODO likely to be a private method of ADR struct
 fn format_decision_name(cfg: AdrToolConfig, name: &str) -> Result<String> {
     let mut prefix = String::new();
     if cfg.use_id_prefix {
@@ -480,6 +494,26 @@ impl Adr {
             content: new_content,
             title: String::from(self.title.as_str()),
             date: String::from(new_date.as_str()),
+            tags: String::from(self.tags.as_str()),
+            tags_array: self.tags_array.clone(),
+            status: self.status.clone(),
+            state: self.state.clone(),
+        }
+    }
+
+    pub fn update_title(&self, title: &str) -> Adr {
+        let mut adoc_title = String::from("== ");
+        adoc_title.push_str(&title);
+
+        let new_content = &self.content;
+        let new_content = new_content.replacen("== {%%ADR TITLE%%}", adoc_title.as_str(), 1);
+
+        Adr {
+            file_name: String::from(self.file_name.as_str()),
+            base_path: String::from(self.base_path.as_str()),
+            content: new_content,
+            title: String::from(title),
+            date: String::from(self.date.as_str()),
             tags: String::from(self.tags.as_str()),
             tags_array: self.tags_array.clone(),
             status: self.status.clone(),

@@ -3,7 +3,7 @@ extern crate slog;
 extern crate slog_term;
 use slog::*;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct AdrToolConfig {
     pub log_level: usize,
     pub adr_root_dir: String,
