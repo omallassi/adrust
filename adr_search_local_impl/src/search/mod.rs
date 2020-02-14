@@ -59,10 +59,10 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()>/*R
 
     for adr in adrs {
         index_writer.add_document(doc!(
-            title => adr.title,
-            body => adr.content,
-            tags => adr.tags, //recreate a string from the tags Vec via Debug...
-            path => adr.path,
+            title => String::from(adr.title.as_str()),
+            body => String::from(adr.content.as_str()),
+            tags => String::from(adr.tags.as_str()), //recreate a string from the tags Vec via Debug...
+            path => String::from(adr.path().as_str()),
             ));
     }
 

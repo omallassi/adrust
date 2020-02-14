@@ -46,7 +46,7 @@ pub fn list_all_adr() -> io::Result<()> {
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
     table.set_titles(row![b -> "Title", b -> "Date", b-> "Status", b -> "File", b -> "Tags"]);
-    for entry in adr_core::adr_repo::list_all_adr(&cfg.adr_src_dir)? {
+    for entry in adr_core::adr_repo::list_all_adr(Path::new(&cfg.adr_src_dir))? {
         //table.add_row(row![entry.title, Fg->entry.status, entry.path, entry.tags]);
         let style = match entry.status {
             Status::WIP => "Fy",
@@ -57,7 +57,7 @@ pub fn list_all_adr() -> io::Result<()> {
             Cell::new(&entry.title),
             Cell::new(&entry.date),
             Cell::new(&entry.status.as_str()).style_spec(style),
-            Cell::new(&entry.path),
+            Cell::new(&entry.path()),
             Cell::new(&entry.tags),
         ]));
     }
@@ -106,7 +106,7 @@ fn list_all_tags() -> Result<()> {
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
     table.set_titles(row![b -> "Tags", b -> "Popularity"]);
 
-    let popularity = adr_core::adr_repo::get_tags_popularity(&cfg.adr_src_dir)?;
+    let popularity = adr_core::adr_repo::get_tags_popularity(Path::new(&cfg.adr_src_dir))?;
 
     for (key, val) in popularity.iter() {
         table.add_row(row![key, val]);
@@ -120,7 +120,7 @@ fn list_all_tags() -> Result<()> {
 
 fn build_index() -> Result<()> {
     let cfg: AdrToolConfig = adr_config::config::get_config();
-    let adrs = match adr_core::adr_repo::list_all_adr(&cfg.adr_src_dir) {
+    let adrs = match adr_core::adr_repo::list_all_adr(Path::new(&cfg.adr_src_dir)) {
         Ok(e) => e,
         Err(why) => panic!(format!("{:?}", why)),
     };
@@ -349,30 +349,41 @@ fn main() {
         ("lf", Some(matches)) => match matches.subcommand() {
             ("decided", Some(set_matches)) => {
                 if set_matches.is_present("path") {
-                    adr_core::adr_repo::transition_to_decided(set_matches.value_of("path").unwrap()).unwrap();
+                    let file_path = set_matches.value_of("path").unwrap();
+                    let cfg: AdrToolConfig = adr_config::config::get_config();
+                    let base_path = Path::new(&cfg.adr_src_dir);
+
+                    adr_core::adr_repo::transition_to_decided(base_path, file_path).unwrap();
                 }
             }
             ("completed-by", Some(set_matches)) => {
                 if set_matches.is_present("path") && set_matches.is_present("by") {
-                    adr_core::adr_repo::transition_to_completed_by(
-                        set_matches.value_of("path").unwrap(),
-                        set_matches.value_of("by").unwrap(),
-                    )
-                    .unwrap();
+                    let cfg: AdrToolConfig = adr_config::config::get_config();
+                    let base_path = Path::new(&cfg.adr_src_dir);
+                    let file_path = set_matches.value_of("path").unwrap();
+                    let by_path = set_matches.value_of("by").unwrap();
+
+                    adr_core::adr_repo::transition_to_completed_by(base_path, file_path, by_path).unwrap();
                 }
             }
             ("superseded-by", Some(set_matches)) => {
                 if set_matches.is_present("path") && set_matches.is_present("by") {
-                    adr_core::adr_repo::transition_to_superseded_by(
-                        set_matches.value_of("path").unwrap(),
-                        set_matches.value_of("by").unwrap(),
-                    )
-                    .unwrap();
+
+                    let cfg: AdrToolConfig = adr_config::config::get_config();
+                    let base_path = Path::new(&cfg.adr_src_dir);
+                    let file_path = set_matches.value_of("path").unwrap();
+                    let by_path = set_matches.value_of("by").unwrap();
+
+                    adr_core::adr_repo::transition_to_superseded_by(base_path, file_path, by_path).unwrap();
                 }
             }
             ("obsoleted", Some(set_matches)) => {
                 if set_matches.is_present("path") {
-                    adr_core::adr_repo::transition_to_obsoleted(set_matches.value_of("path").unwrap()).unwrap();
+                    let cfg: AdrToolConfig = adr_config::config::get_config();
+                    let base_path = Path::new(&cfg.adr_src_dir);
+                    let file_path = set_matches.value_of("path").unwrap();
+
+                    adr_core::adr_repo::transition_to_obsoleted(base_path, file_path).unwrap();
                 }
             }
             

@@ -163,7 +163,7 @@ mod check_transitions_and_lifecycle_of_adr {
             match "n/a" == by {
                 true => {
                     println!("calling transition_to() with [{}] [{}] [{}]", transition, adr.name, by);
-                    match adr_core::adr_repo::transition_to(TransitionStatus::from_str(transition), adr.name.as_str(), "") {
+                    match adr_core::adr_repo::transition_to(TransitionStatus::from_str(transition), Path::new(&adr.base_path), adr.name.as_str(), "") {
                         Ok(transitioned) => adr.has_transitioned = transitioned,
                         Err(why) => panic!(why)
                     };
@@ -171,7 +171,7 @@ mod check_transitions_and_lifecycle_of_adr {
                 false => {            
                     let by = format!("{}", PathBuf::from(adr.base_path.as_str()).join(by).display());
                     println!("calling transition_to() with [{}] [{}] [{}]", transition, adr.name, by);
-                    match adr_core::adr_repo::transition_to(TransitionStatus::from_str(transition), adr.name.as_str(), by.as_str()) {
+                    match adr_core::adr_repo::transition_to(TransitionStatus::from_str(transition), Path::new(&adr.base_path), adr.name.as_str(), by.as_str()) {
                         Ok(transitioned) => adr.has_transitioned = transitioned,
                         Err(why) => panic!(why)
                     };
@@ -185,18 +185,20 @@ mod check_transitions_and_lifecycle_of_adr {
         };
 
         then regex r"^the new status is (.+) by (.+)$" (String, String) |adr, new_status, by, _step| {
-            //TODO manage the by
-            let path = Path::new(adr.name.as_str());
-            let new_adr = match adr_core::adr_repo::build_adr_from_path(&path) {
+            let new_adr = match adr_core::adr_repo::build_adr(Path::new(&adr.base_path), Path::new(adr.name.as_str())) {
                 Ok(adr) => adr,
                 Err(why) => panic!(why),
             };
 
             assert_eq!(Status::from_str(new_status), new_adr.status);
+            if "n/a" != by {
+                let by = format!("}} {}", by);
+                assert_eq!(true, new_adr.content.contains(&by));
+            }
         };
 
         then regex r"^the date is updated to today if (.+) is true$" (bool) |adr, is_accepted, _step| {
-            let adr = match adr_core::adr_repo::build_adr_from_path(Path::new(adr.name.as_str())) {
+            let adr = match adr_core::adr_repo::build_adr(Path::new(&adr.base_path), Path::new(adr.name.as_str())) {
                 Ok(adr) => adr,
                 Err(why) => panic!(why),
             };

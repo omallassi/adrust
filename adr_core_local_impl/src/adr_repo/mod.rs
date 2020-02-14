@@ -18,7 +18,6 @@ use adr_config::config::AdrToolConfig;
 
 use chrono::prelude::*;
 
-
 fn get_logger() -> slog::Logger {
     let cfg: AdrToolConfig = adr_config::config::get_config();
 
@@ -36,9 +35,9 @@ fn get_logger() -> slog::Logger {
     log
 }
 
-///
 /// Creates the file (based on template file). Returns true if file is created, false if not
 /// (because target file already exists...)
+/// TODO homogeneize APIs and do something with this method
 pub fn create_adr(cfg: AdrToolConfig, title: &str, path_to_template: &Path, src_dir: &Path) -> io::Result<bool> {
     //specify last seq_id , the rest of the config (use_prefix and width can be get from the method)
     let name = match format_decision_name(cfg, title) {
@@ -113,9 +112,9 @@ fn get_last_seq_id_from_all(adr_paths: Vec<String>) -> usize {
 }
 
 fn get_last_seq_id(dir: &Path) -> usize {
-    let adrs: Vec<Adr> = list_all_adr_from_path(dir).unwrap();
+    let adrs: Vec<Adr> = list_all_adr(dir).unwrap();
     let adrs_paths = adrs.iter().map(|adr| {
-                                    let path = adr.path.clone();
+                                    let path = adr.path().clone();
                                     path
                                 }).collect::<Vec<String>>();
 
@@ -159,15 +158,9 @@ fn is_ok(entry: &DirEntry) -> bool {
     (is_dir && !is_hidden) || (is_adoc && !is_hidden)
 }
 
-pub fn list_all_adr(dir: &str) -> io::Result<Vec<Adr>> {
-    let dir_path = Path::new(dir);
-
-    list_all_adr_from_path(dir_path)    
-}
-
-pub fn get_tags_popularity(dir: &str) -> Result<HashMap<String, u32>> {
+pub fn get_tags_popularity(base_path: &Path) -> Result<HashMap<String, u32>> {
     let mut popularity: HashMap<String, u32> = HashMap::new();
-    for adr in list_all_adr(&dir)? {
+    for adr in list_all_adr(base_path)? {
             for tag in adr.tags_array.iter() {
                 popularity.entry(tag.to_string()).and_modify(|e| { *e += 1 }).or_insert(1);
             }    
@@ -176,7 +169,7 @@ pub fn get_tags_popularity(dir: &str) -> Result<HashMap<String, u32>> {
     Ok(popularity)
 }
 
-fn list_all_adr_from_path(dir: &Path) -> io::Result<Vec<Adr>> {
+pub fn list_all_adr(dir: &Path) -> io::Result<Vec<Adr>> {
     let mut results = std::vec::Vec::new();
     
     if dir.is_dir() {
@@ -186,7 +179,7 @@ fn list_all_adr_from_path(dir: &Path) -> io::Result<Vec<Adr>> {
             debug!(get_logger(), "got file [{:?}]", entry.path());
             let metadata = entry.metadata().unwrap();
             if metadata.is_file() {
-                match build_adr_from_path(entry.path()) {
+                match build_adr(dir, entry.path()) {
                     Ok(adr) => {
                         results.push(adr);
                     },
@@ -201,33 +194,77 @@ fn list_all_adr_from_path(dir: &Path) -> io::Result<Vec<Adr>> {
     Ok(results)
 }
 
-pub fn build_adr_from_path(file: &Path) -> io::Result<Adr> {
-    debug!(get_logger(), "Is created ADR from [{}] ", file.display());
+/// Given a complete `file_path`, returns the difference compared to `base_path`. 
+/// 
+/// # Arguments
+/// 
+/// * `base_path` - The root directory where are all the ADRs. This is typically AdrToolConfig.adr_root_dir
+/// * `file_path` - The full path of the file
+/// 
+/// # Example
+///
+/// ```
+/// use adr_core::adr_repo::split_path;
+/// 
+/// let adr = split_path(std::path::Path::new("/tmp/adrs/"), std::path::Path::new("/tmp/adrs/my-sub-dir/my-decision.adoc"));
+/// assert_eq!(adr.0, std::path::Path::new("/tmp/adrs/"));
+/// assert_eq!(adr.1, std::path::Path::new("my-sub-dir/my-decision.adoc"));
+/// ```
+/// 
+pub fn split_path<'a>(base_path: &'a Path, file_path: &'a Path) -> (&'a Path, &'a Path) {
+    debug!(get_logger(), "Want to split_path[{:?}] and [{:?}] ", base_path, file_path);
+    match file_path.starts_with(base_path) {
+        true => {
+            (base_path, file_path.strip_prefix(base_path).unwrap_or(file_path))
+        },
+        false => {
+            (base_path, file_path)
+        },
+    }
+}
 
-    let content = fs::read_to_string(file) ? ;
-    let adr = Adr::from(String::from(file.to_str().unwrap()), content);
+/// Build an ADR object given the provided arguments. Inside the ADR struct `file_path` will be splitted into `file_name` and `base_path`
+///
+/// # Arguments
+///
+/// * `base_path` - The root directory where are all the ADRs. This is typically AdrToolConfig.adr_root_dir
+/// * `file_path` - The full path of the file
+///
+/// # Example
+///
+/// ```
+/// use adr_core::adr_repo::build_adr;
+/// let adr = build_adr(std::path::Path::new("/tmp/adrs/"), std::path::Path::new("/tmp/adrs/my-sub-dir/my-decision.adoc"));
+/// ```
+pub fn build_adr(base_path: &Path, file_path: &Path) -> io::Result<Adr> {
+    debug!(get_logger(), "Want to create ADR from [{}] ", file_path.display());
+    let content = fs::read_to_string(file_path) ? ;
+
+    //build the adr
+    let splitted_file_path = split_path(base_path, file_path);
+    let adr = Adr::from(String::from(splitted_file_path.0.to_str().unwrap()), String::from(splitted_file_path.1.to_str().unwrap()), content);
        
     Ok(adr)
 }
 
-pub fn transition_to_decided(adr_name: &str) -> io::Result<bool> {
-    transition_to(TransitionStatus::DECIDED, adr_name, "")
+pub fn transition_to_decided(base_path: &Path, file_name: &str) -> io::Result<bool> {
+    transition_to(TransitionStatus::DECIDED, base_path, file_name, "")
 }
 
-pub fn transition_to_superseded_by(adr_name: &str, by: &str) -> io::Result<bool> {
-    transition_to(TransitionStatus::SUPERSEDED, adr_name, by)
+pub fn transition_to_superseded_by(base_path: &Path, file_name: &str, by: &str) -> io::Result<bool> {
+    transition_to(TransitionStatus::SUPERSEDED, base_path, file_name, by)
 }
 
-pub fn transition_to_completed_by(adr_name: &str, by: &str) -> io::Result<bool> {
-    transition_to(TransitionStatus::COMPLETED, adr_name, by)
+pub fn transition_to_completed_by(base_path: &Path, file_name: &str, by: &str) -> io::Result<bool> {
+    transition_to(TransitionStatus::COMPLETED, base_path, file_name, by)
 }
 
-pub fn transition_to_obsoleted(adr_name: &str) -> io::Result<bool> {
-    transition_to(TransitionStatus::CANCELLED, adr_name, "")
+pub fn transition_to_obsoleted(base_path: &Path, file_name: &str) -> io::Result<bool> {
+    transition_to(TransitionStatus::CANCELLED, base_path, file_name, "")
 }
 
-pub fn transition_to(transition: TransitionStatus, from: &str, by: &str) -> io::Result<bool> {
-    let adr_from = match build_adr_from_path(Path::new(from)){
+pub fn transition_to(transition: TransitionStatus, base_path: &Path, from: &str, by: &str) -> io::Result<bool> {
+    let adr_from = match build_adr(base_path, Path::new(from)){
         Ok(adr) => adr,
         Err(why) => {
             error!(get_logger(), "Got error [{:?}] while getting ADR [{}]", why, from);
@@ -240,23 +277,24 @@ pub fn transition_to(transition: TransitionStatus, from: &str, by: &str) -> io::
     //if transition has been declined, we can stop here
     match updated_adr_from_tuple.1 {
         true => {
-            debug!(get_logger(), "ADR [{}] has a new status [{}]", updated_adr_from_tuple.0.path, updated_adr_from_tuple.0.status.as_str());
+            debug!(get_logger(), "ADR [{}] has a new status [{}]", updated_adr_from_tuple.0.path().as_str(), updated_adr_from_tuple.0.status.as_str());
             match by.is_empty() {
                 true => {
-                    fs::write(from, updated_adr_from_tuple.0.content)?;
+                    let content = &updated_adr_from_tuple.0.content;
+                    fs::write(from, content)?;
         
                     info!(get_logger(), 
                         "Transitioned [{}] from [{}] to [{}]", 
-                        updated_adr_from_tuple.0.path, adr_from.status.as_str(), updated_adr_from_tuple.0.status.as_str());
+                        updated_adr_from_tuple.0.path().as_str(), adr_from.status.as_str(), updated_adr_from_tuple.0.status.as_str());
         
                     Ok(updated_adr_from_tuple.1)
                 }
                 false => {
-                    let adr_by = build_adr_from_path(Path::new(by))?;
+                    let adr_by = build_adr(base_path, Path::new(by))?;
                     let updated_adr_by_tuple = adr_by.update_status(TransitionStatus::revert(transition));
         
-                    let updated_adr_from = updated_adr_from_tuple.0.add_reference(format!("{}", updated_adr_by_tuple.0.path).as_str());
-                    let updated_adr_by = updated_adr_by_tuple.0.add_reference(format!("{}", updated_adr_from.path).as_str());
+                    let updated_adr_from = updated_adr_from_tuple.0.add_reference(format!("{}", updated_adr_by_tuple.0.file_name).as_str());
+                    let updated_adr_by = updated_adr_by_tuple.0.add_reference(format!("{}", updated_adr_from.file_name).as_str());
         
                     fs::write(from, updated_adr_from.content)?;
                     fs::write(by, updated_adr_by.content)?;
@@ -281,7 +319,9 @@ pub fn transition_to(transition: TransitionStatus, from: &str, by: &str) -> io::
 
 #[derive(Debug, Default)]
 pub struct Adr {
-    pub path: String,
+    //pub path: String, //the path from config.adr_root_dir (which is user dependant)
+    pub file_name: String, 
+    pub base_path: String, 
     pub content: String,
     pub title: String,
     pub date: String,
@@ -293,7 +333,7 @@ pub struct Adr {
 
 impl Adr {
 
-    pub fn from(path: String, content: String) -> Adr {
+    pub fn from(base_path: String, file_name: String, content: String) -> Adr {
         //get the title
         lazy_static! {
             static ref RE: Regex = Regex::new(r"= (.+)").unwrap();
@@ -302,7 +342,7 @@ impl Adr {
         let cap = match RE.captures(&val) {
             Some(val) => val[1].to_string(),
             None => {
-                error!(get_logger(), "Unable to get title from [{}]", path);
+                error!(get_logger(), "Unable to get title from base_path [{}] and file_name [{}]", base_path, file_name);
                 "None".to_string()
             }
         };
@@ -317,7 +357,7 @@ impl Adr {
         let status = match RE_STATUS.captures(&val) {
             Some(val) => val[1].trim().to_string(),
             None => {
-                debug!(get_logger(), "Unable to get status from [{}]", path);
+                debug!(get_logger(), "Unable to get status from base_path [{}] and file_name [{}]", base_path, file_name);
                 "None".to_string()
             }
         };
@@ -329,14 +369,15 @@ impl Adr {
         let date = match RE_DATE.captures(&val) {
             Some(val) => val[1].trim().to_string(),
             None => {
-                debug!(get_logger(), "Unable to get date from [{}]", path);
+                debug!(get_logger(), "Unable to get date from base_path [{}] and file_name [{}]", base_path, file_name);
                 "None".to_string()
             }
         };
 
         //build the returned object
         let adr: Adr = Adr {
-            path: path,
+            file_name: file_name,
+            base_path: base_path,
             content: content,
             title: cap,
             date: date,
@@ -349,7 +390,13 @@ impl Adr {
         adr
     }
 
-    fn get_tags(val: &String) -> (String, Vec<String>) {
+    pub fn path(&self) -> String {
+        let full_path = Path::new(self.base_path.as_str()).join(self.file_name.as_str());
+
+        return format!("{}", full_path.display());
+    }
+
+    pub fn get_tags(val: &String) -> (String, Vec<String>) {
         lazy_static! {
             static ref RE_TAGS: Regex = Regex::new(r"(\[tags]\#([^#]+)\#)").unwrap();
         }
@@ -377,7 +424,8 @@ impl Adr {
             let new_content = self.content.replace(current_status.as_str(), new_status.as_str());
 
             let returned_adr = Adr {
-                    path: String::from(self.path.as_str()),
+                    file_name: String::from(self.file_name.as_str()),
+                    base_path: String::from(self.base_path.as_str()),
                     content: new_content,
                     title: String::from(self.title.as_str()),
                     date: String::from(self.date.as_str()),
@@ -402,11 +450,12 @@ impl Adr {
         let current_status = format!("{{{status}}}", status = self.status.as_str() ); //you escape { with a { and final status is {wip}  o_O
         let new_status = format!("{updated_by} {by}", updated_by = current_status.as_str(), by = adr_title);
 
-        debug!(get_logger(), "Want add reference - current status [{:?}] - new status [{:?}]", current_status, new_status);
+        debug!(get_logger(), "Want to add reference - current status [{:?}] - new status [{:?}]", current_status, new_status);
 
         let new_content = self.content.replace(current_status.as_str(), new_status.as_str());
         Adr {
-            path: String::from(self.path.as_str()),
+            file_name: String::from(self.file_name.as_str()),
+            base_path: String::from(self.base_path.as_str()),
             content: new_content,
             title: String::from(self.title.as_str()),
             date: String::from(self.date.as_str()),
@@ -426,7 +475,8 @@ impl Adr {
         let new_content = re.replace(self.content.as_str(), new_date.as_str()).as_ref().to_owned();
 
         Adr {
-            path: String::from(self.path.as_str()),
+            file_name: String::from(self.file_name.as_str()),
+            base_path: String::from(self.base_path.as_str()),
             content: new_content,
             title: String::from(self.title.as_str()),
             date: String::from(new_date.as_str()),
@@ -441,7 +491,8 @@ impl Adr {
 impl Clone for Adr {
     fn clone(&self) -> Adr {
         Adr {
-            path: String::from(self.path.as_str()),
+            file_name: String::from(self.file_name.as_str()),
+            base_path: String::from(self.base_path.as_str()),
             content: String::from(self.content.as_str()),
             title: String::from(self.title.as_str()),
             date: String::from(self.date.as_str()),
@@ -713,7 +764,8 @@ mod tests {
     #[test]
     fn test_adr_update_status() {
         let sut = Adr {
-            path: String::from("/tmp/n/a"),
+            base_path: String::from("/tmp/n"),
+            file_name: String::from("/a"),
             content: String::from("== ADR-MVA-507 Decide about ...\n\n*Status:* {wip} *Date:* 2019-10-28\n\n[cols=\",\",options=..."),
             title: String::from("String::from(self.title.as_str())"),
             date: String::from("2023-10-28"),
@@ -733,7 +785,8 @@ mod tests {
     #[test]
     fn test_adr_add_reference() {
             let sut = Adr {
-                path: String::from("/tmp/n/a"),
+                base_path: String::from("/tmp/n"),
+                file_name: String::from("/a"),
                 content: String::from("== ADR-MVA-507 Decide about ...\n\n*Status:* {decided} *Date:* 2019-10-28\n\n[cols=\",\",options=\"header\",%autowidth]\n|===\n|role ....."),
                 title: String::from("String::from(self.title.as_str())"),
                 date: String::from("2023-10-28"),
@@ -870,11 +923,12 @@ mod tests {
         bug there is another date 2119-10-28
         [tags]#deployment view# [tags]#network# [tags]#security#";
 
-        let adr_sut = super::Adr::from("a_path".to_string(), content.to_string());
+        let adr_sut = super::Adr::from("base_path".to_string(), "a_path".to_string(), content.to_string());
 
         assert_eq!(adr_sut.title, "ADR-MVA-507 Decide about ...");
         assert_eq!(adr_sut.date, "2019-10-28");
-        assert_eq!(adr_sut.path, "a_path");
+        assert_eq!(adr_sut.base_path, "base_path");
+        assert_eq!(adr_sut.file_name, "a_path");
         assert_eq!(adr_sut.content, content.to_string());
         assert_eq!(adr_sut.tags, "#deployment view #network #security ");
         assert_eq!(adr_sut.status, super::Status::WIP);
@@ -888,10 +942,11 @@ mod tests {
         *Status:* {wip}  *Date:* 2019-10-28
         ....";
 
-        let adr_sut = super::Adr::from("a_path".to_string(), content.to_string());
+        let adr_sut = super::Adr::from("base_path".to_string(), "a_path".to_string(), content.to_string());
 
         assert_eq!(adr_sut.title, "ADR-MVA-507 Decide about ...");
-        assert_eq!(adr_sut.path, "a_path");
+        assert_eq!(adr_sut.base_path, "base_path");
+        assert_eq!(adr_sut.file_name, "a_path");
         assert_eq!(adr_sut.content, content.to_string());
         assert_eq!(adr_sut.tags, "");
     }
@@ -904,7 +959,7 @@ mod tests {
         *Status:* {wip}  *Date:* 2019-10-28
         ....";
 
-        let adr_sut = super::Adr::from("a_path".to_string(), content.to_string());
+        let adr_sut = super::Adr::from("base_path".to_string(), "a_path".to_string(), content.to_string());
 
         assert_eq!(adr_sut.date, "2019-10-28");
 
@@ -917,5 +972,30 @@ mod tests {
         let contain = format!("*Status:* {{wip}}  *Date:* {}", date);
         println!("contain {}", contain);
         assert_eq!(true, adr_sut.content.contains(contain.as_str()));
+    }
+
+    #[test]
+    fn test_split_path() {
+        let base_path = Path::new("/tmp/adr-samples/src");
+        let file_path = Path::new("/tmp/adr-samples/src/my-decision.adoc");
+
+        let values = split_path(base_path, file_path);
+        assert_eq!(Path::new("/tmp/adr-samples/src"), values.0);
+        assert_eq!(Path::new("my-decision.adoc"), values.1);
+
+        //
+        let base_path = Path::new("/tmp/adr-samples/src");
+        let file_path = Path::new("/tmp/adr-samples/src/sub-folder/dir/my-decision.adoc");
+
+        let values = split_path(base_path, file_path);
+        assert_eq!(Path::new("/tmp/adr-samples/src"), values.0);
+        assert_eq!(Path::new("sub-folder/dir/my-decision.adoc"), values.1);
+        //
+        let base_path = Path::new("/tmp/adr-samples/src");
+        let file_path = Path::new("/another-folder/sub-folder/dir/my-decision.adoc");
+
+        let values = split_path(base_path, file_path);
+        assert_eq!(Path::new("/tmp/adr-samples/src"), values.0);
+        assert_eq!(Path::new("/another-folder/sub-folder/dir/my-decision.adoc"), values.1);
     }
 }
