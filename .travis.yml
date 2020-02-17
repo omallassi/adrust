@@ -24,10 +24,10 @@ rust:
   - 1.41.0
 
 before_script:
-  - export PATH=$HOME/.cargo/bin:$PATH
-  - cargo install cargo-update || echo "cargo-update already installed"
-  - cargo install cargo-travis || echo "cargo-travis already installed"
-  - cargo install-update -a # update outdated cached binaries
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PATH=$HOME/.cargo/bin:$PATH; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cargo install cargo-update || echo "cargo-update already installed"; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cargo install cargo-travis || echo "cargo-travis already installed"; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cargo install-update -a; fi # update outdated cached binaries
 
 script:
   - cargo build --verbose --all
@@ -35,4 +35,4 @@ script:
 
 after_success:
 # measure code coverage and upload to coveralls.io
-  - cargo coveralls
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cargo coveralls; fi
