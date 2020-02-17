@@ -211,6 +211,41 @@ mod check_transitions_and_lifecycle_of_adr {
     });
 }
 
+mod check_tags_management {
+    use cucumber::steps;
+    extern crate adr_core;
+    use std::path::Path;
+
+    steps! (crate::AdrNames => {
+        given regex r"^the decision (.+)$" (String) |adr, decision_name, _step| {
+            adr.name = decision_name;
+        };
+
+        when "I list all the tags" |_adr, _step| {
+            //nothing to do really
+        };
+
+        then regex r"^I got (.+), (.+), (.+) tags$" (String, String, String) |adr, tag_1, tag_2, tag_3, _step| {
+            let file_path = Path::new(adr.name.as_str());
+            let decision = adr_core::adr_repo::build_adr(Path::new(""), file_path).unwrap();
+            {
+                println!("oliv {:?}", decision);
+            }
+
+
+            if decision.tags_array.len() == 1 {
+                assert_eq!(decision.tags_array[0].trim(), tag_1);
+            }
+            if decision.tags_array.len() == 2 {
+                assert_eq!(decision.tags_array[1].trim(), tag_2);
+            }
+            if decision.tags_array.len() == 3 {
+                assert_eq!(decision.tags_array[2].trim(), tag_3);
+            }
+        };        
+    });
+}
+
 before!(a_before_fn => |_scenario| {
     let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool", "test") {
         None => panic!("issue while preparing test"),
@@ -239,6 +274,7 @@ cucumber! {
         create_new_adr_steps::steps,
         create_already_adr_steps::steps,
         check_transitions_and_lifecycle_of_adr::steps,
+        check_tags_management::steps,
         // update_adr_decided_steps::steps,
         // not_update_adr_decided_steps::steps,
         // transition_adr_to_completed_steps::steps,
