@@ -219,11 +219,11 @@ mod tests {
         println!("Want to delete folders [{:?}]", name);
         //delete confy files
         if let Some(dir) = ProjectDirs::from("rs", name, "") {
-            println!("deleting test folders [{:?}]", dir);
             if dir.config_dir().exists() {
-                match fs::remove_dir_all(dir.config_dir().to_str().unwrap()) {
+                let dir = dir.config_dir().to_str().unwrap_or_default();
+                match fs::remove_dir_all(dir) {
                     Ok(_val) => {
-
+                        println!("deleted test folders [{:?}]", dir);
                     },
                     Err(_why) => {
                         println!("Problem while deleting test folder");
