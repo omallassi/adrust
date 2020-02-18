@@ -15,11 +15,11 @@ addons:
 
 os:
   - linux
-  - osx
-  - windows
+  # - osx
+  # - windows
 rust:
   - 1.40.0
-  - 1.41.0
+  # - 1.41.0
 
 script:
   - cargo build --verbose --all
