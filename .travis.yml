@@ -26,6 +26,9 @@ script:
   - cargo test --verbose --all -- --nocapture
 
 after_success: |
+    [ $TRAVIS_BRANCH = master ] &&
+    [ $TRAVIS_PULL_REQUEST = false ] &&
+    [ "$TRAVIS_OS_NAME" = "linux" ] &&
     wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
     tar xzf master.tar.gz &&
     cd kcov-master &&
@@ -39,9 +42,6 @@ after_success: |
     for file in target/debug/deps/*adr*; do [ -x "${file}" ] || continue; mkdir -p "target/cov/$(basename $file)"; ./kcov-build/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
     bash <(curl -s https://codecov.io/bash) &&
     echo "Uploaded code coverage" && 
-    [ $TRAVIS_BRANCH = master ] &&
-    [ $TRAVIS_PULL_REQUEST = false ] &&
-    [ "$TRAVIS_OS_NAME" = "linux" ] &&
     wget https://github.com/SimonKagstrom/kcov/archive/master.zip &&
     unzip master.zip && mv kcov-master kcov && mkdir kcov/build && cd kcov/build &&
     cmake .. && make && make install DESTDIR=../built && cd ../.. &&
