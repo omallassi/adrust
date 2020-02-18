@@ -501,7 +501,7 @@ impl Adr {
         adoc_title.push_str(&title);
 
         let new_content = &self.content;
-        let new_content = new_content.replacen("== {%%ADR TITLE%%}", adoc_title.as_str(), 1);
+        let new_content = new_content.replacen(self.title.as_str(), adoc_title.as_str(), 1);
 
         Adr {
             file_name: String::from(self.file_name.as_str()),
@@ -999,8 +999,26 @@ mod tests {
         assert_eq!(adr_sut.date, date.to_string());
 
         let contain = format!("*Status:* {{wip}}  *Date:* {}", date);
-        println!("contain {}", contain);
         assert_eq!(true, adr_sut.content.contains(contain.as_str()));
+    }
+
+    #[test]
+    fn test_update_title() {
+        let content = "
+        == ADR-MVA-507 Decide about ...
+        
+        *Status:* {wip}  *Date:* 2019-10-28
+        ....";
+
+        let adr_sut = super::Adr::from("base_path".to_string(), "a_path".to_string(), content.to_string());
+
+        assert_eq!(adr_sut.title, "ADR-MVA-507 Decide about ...");
+        let adr_sut = adr_sut.update_title("This is a new completly amazing title");
+
+println!("oliv {:?}", adr_sut);
+
+        assert_eq!(adr_sut.title, "This is a new completly amazing title");
+        assert_eq!(true, adr_sut.content.contains("== This is a new completly amazing title"));
     }
 
     #[test]
