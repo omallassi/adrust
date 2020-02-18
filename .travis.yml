@@ -8,17 +8,10 @@ addons:
       - libcurl4-openssl-dev
       - libelf-dev
       - libdw-dev
-      - binutils-dev
-      - cmake # also required for cargo-update
-      - libcurl4-openssl-dev
-      - libelf-dev
-      - libdw-dev
       - cmake
       - gcc
       - binutils-dev
       - libiberty-dev
-    sources:
-      - kalakris-cmake
 
 os:
   - linux
@@ -39,7 +32,7 @@ script:
   - cargo test --verbose --all -- --nocapture
 
 after_success: |
-  wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
+  if [ "$TRAVIS_OS_NAME" = "linux" ]; then wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
   tar xzf master.tar.gz &&
   cd kcov-master &&
   mkdir build &&
@@ -51,4 +44,5 @@ after_success: |
   rm -rf kcov-master &&
   for file in target/debug/adr-*; do [ -x "${file}" ] || continue; mkdir -p "target/cov/$(basename $file)"; ./kcov-build/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
   bash <(curl -s https://codecov.io/bash) &&
-  echo "Uploaded code coverage"
+  echo "Uploaded code coverage"; fi
+  
