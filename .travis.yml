@@ -15,11 +15,11 @@ addons:
 
 os:
   - linux
-  # - osx
-  # - windows
+  - osx
+  - windows
 rust:
   - 1.40.0
-  # - 1.41.0
+  - 1.41.0
 
 script:
   - cargo build --verbose --all
@@ -36,5 +36,5 @@ after_success: |
   make install DESTDIR=../../kcov-build &&
   cd ../.. &&
   rm -rf kcov-master;
-  ./kcov-build/usr/local/bin/kcov --verify --coveralls-id=$TRAVIS_JOB_ID --exclude-pattern=/.cargo target/kcov $(find target/debug -maxdepth 1 -executable -name adr-\*);
+  ./kcov-build/usr/local/bin/kcov --debug=15 --verify --coveralls-id=$TRAVIS_JOB_ID --include-pattern=adr --exclude-pattern=/.cargo target/kcov $(find target/debug -maxdepth 1 -executable -name adr-\*);
   echo "Uploaded code coverage to coveralls" ; fi
