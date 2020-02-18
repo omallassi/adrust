@@ -1,4 +1,3 @@
-sudo: required
 language: rust
 
 cache: cargo
@@ -19,8 +18,6 @@ os:
   - osx
   - windows
 rust:
-  - 1.39.0
-  - 1.40.0
   - 1.41.0
 
 before_script:

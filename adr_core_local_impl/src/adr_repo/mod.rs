@@ -30,9 +30,7 @@ fn get_logger() -> slog::Logger {
     )
     .fuse();
 
-    let log = slog::Logger::root(drain, o!());
-
-    log
+    slog::Logger::root(drain, o!())
 }
 
 /// Creates the file (based on template file). Returns true if file is created, false if not (e.g. target file already exists...)
@@ -61,26 +59,24 @@ pub fn create_adr(cfg: AdrToolConfig, title: &str) -> io::Result<bool> {
     let target_path = src_dir.join(format!("{}.adoc", name));
     let is_target_file = target_path.is_file();
     if !is_target_file {
-        match path_to_template.exists() {
-            true => {
-                fs::copy(path_to_template, &target_path)?;
-                //build the Adr (and force the parsing)
-                let newly_adr = match build_adr(Path::new(&cfg.adr_root_dir), &target_path) {
-                    Ok(adr) => adr,
-                    Err(why) => {
-                        error!(get_logger(), "Got error [{:?}] while getting ADR [{:?}]", why, target_path);
-                        panic!();
-                    },
-                };
-                let newly_adr = newly_adr.update_title(title);
+        if path_to_template.exists() {
+            fs::copy(path_to_template, &target_path)?;
+            //build the Adr (and force the parsing)
+            let newly_adr = match build_adr(Path::new(&cfg.adr_root_dir), &target_path) {
+                Ok(adr) => adr,
+                Err(why) => {
+                    error!(get_logger(), "Got error [{:?}] while getting ADR [{:?}]", why, target_path);
+                    panic!();
+                },
+            };
+            let newly_adr = newly_adr.update_title(title);
 
-                fs::write(&target_path, newly_adr.content).unwrap();
-                //
-                info!(get_logger(), "New ADR {:?} created", target_path);
-            }
-            false => {
-                error!(get_logger(), "[{}] was not found", path_to_template.to_string_lossy());
-            }
+            fs::write(&target_path, newly_adr.content).unwrap();
+            //
+            info!(get_logger(), "New ADR {:?} created", target_path);
+        }
+        else {
+            error!(get_logger(), "[{}] was not found", path_to_template.to_string_lossy());
         }
     } else {
         error!(
@@ -102,8 +98,7 @@ fn get_seq_id_from_name(name: &str) -> Result<usize> {
         debug!(get_logger(), "found first match [{}]", cap[1].to_string());
         id = cap[1].to_string().parse().unwrap();
     }
-    else
-    {
+    else {
         debug!(get_logger(), "Unable to extract_seq_id from [{}]", name);
     }
 
@@ -420,7 +415,7 @@ impl Adr {
             write!(tags_str, "#{} ", &cap[2]).unwrap();
         }
 
-        let tags = tags_str.split("#").filter(|s| s.len() > 0).map(|s| s.to_string()).collect();
+        let tags = tags_str.split('#').filter(|s| s.len() > 0).map(|s| s.to_string()).collect();
 
         (tags_str, tags)
     }

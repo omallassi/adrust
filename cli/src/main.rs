@@ -35,9 +35,7 @@ fn get_logger() -> slog::Logger {
     )
     .fuse();
 
-    let log = slog::Logger::root(drain, o!());
-
-    log
+    slog::Logger::root(drain, o!())
 }
 
 pub fn list_all_adr() -> io::Result<()> {

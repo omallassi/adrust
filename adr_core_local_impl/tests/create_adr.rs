@@ -81,6 +81,7 @@ mod create_new_adr_steps {
             let content: String = fs::read_to_string(expected_path).unwrap();
             assert!(content.contains("{wip}"));
         };
+        
     });
 }
 
@@ -228,10 +229,6 @@ mod check_tags_management {
         then regex r"^I got (.+), (.+), (.+) tags$" (String, String, String) |adr, tag_1, tag_2, tag_3, _step| {
             let file_path = Path::new(adr.name.as_str());
             let decision = adr_core::adr_repo::build_adr(Path::new(""), file_path).unwrap();
-            {
-                println!("oliv {:?}", decision);
-            }
-
 
             if decision.tags_array.len() == 1 {
                 assert_eq!(decision.tags_array[0].trim(), tag_1);

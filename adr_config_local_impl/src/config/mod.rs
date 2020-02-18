@@ -51,22 +51,20 @@ fn get_logger() -> slog::Logger {
     )
     .fuse();
 
-    let log = slog::Logger::root(drain, o!());
-
-    log
+    slog::Logger::root(drain, o!())
 }
 
 pub fn init() -> Result<()> {
     let cfg: AdrToolConfig = get_config();
-    let path = String::from(cfg.adr_root_dir);
+    let path = cfg.adr_root_dir;
     fs::create_dir_all(&path)?;
     info!(get_logger(), "[{}] created]", path);
 
-    let path = String::from(cfg.adr_src_dir);
+    let path = cfg.adr_src_dir;
     fs::create_dir_all(&path)?;
     info!(get_logger(), "[{}] created]", path);
 
-    let path = String::from(cfg.adr_template_dir);
+    let path = cfg.adr_template_dir;
     fs::create_dir_all(&path)?;
     info!(get_logger(), "[{}] created]", &path);
 
@@ -82,7 +80,7 @@ pub fn init() -> Result<()> {
         }
     };
 
-    let path = String::from(cfg.adr_search_index);
+    let path = cfg.adr_search_index;
     fs::create_dir_all(&path)?;
     info!(get_logger(), "[{}] created]", &path);
 

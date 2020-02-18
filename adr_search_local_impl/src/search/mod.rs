@@ -30,9 +30,7 @@ fn get_logger() -> slog::Logger {
     )
     .fuse();
 
-    let log = slog::Logger::root(drain, o!());
-
-    log
+    slog::Logger::root(drain, o!())
 }
 
 pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()>/*Result<(), ()>*/ {
