@@ -41,4 +41,4 @@ after_success: |
   echo "Uploaded code coverage to codecov" && 
   for file in target/debug/adr-*; do [ -x "${file}" ] || continue; mkdir -p "target/cov/$(basename $file)"; ./kcov-build/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --verify --exclude-pattern=/.cargo,$PWD/target/debug/build,$PWD/tests ./target/kcov ${file}; done;
   ./kcov-build/usr/local/bin/kcov --coveralls-id=${TRAVIS_JOB_ID} --merge ./target/kcov-merge ./target/kcov;
-  echo "Uploaded code coverage to coveralls" && ; fi
+  echo "Uploaded code coverage to coveralls" ; fi
