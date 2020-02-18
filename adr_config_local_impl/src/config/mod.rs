@@ -3,7 +3,7 @@ extern crate slog;
 extern crate slog_term;
 use slog::*;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AdrToolConfig {
     pub log_level: usize,
     pub adr_root_dir: String,
@@ -55,7 +55,11 @@ fn get_logger() -> slog::Logger {
 }
 
 pub fn init() -> Result<()> {
-    let cfg: AdrToolConfig = get_config();
+    init_from_name("adrust-tools")
+}
+
+pub fn init_from_name(config_name: &str) -> Result<()> {
+    let cfg: AdrToolConfig = get_config_from_name(config_name);
     let path = cfg.adr_root_dir;
     fs::create_dir_all(&path)?;
     info!(get_logger(), "[{}] created]", path);
@@ -95,7 +99,7 @@ pub fn get_config() -> AdrToolConfig {
     get_config_from_name("adrust-tools")
 }
 
-fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()> {
+pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()> {
     if ADR_ROOT_DIR == name {
         let cfg: AdrToolConfig = get_config();
         let mut adr_src_dir = String::from(value);
@@ -151,7 +155,7 @@ fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()> {
     Ok(())
 }
 
-fn get_config_from_name(config: &str) -> AdrToolConfig {
+pub fn get_config_from_name(config: &str) -> AdrToolConfig {
     let cfg: AdrToolConfig = match confy::load(config) {
         Err(_why) => {
             warn!(get_logger(), "Returning default configuration file");
@@ -212,8 +216,9 @@ mod tests {
     }
 
     fn teardown(name: &str) {
+        println!("Want to delete folders [{:?}]", name);
         //delete confy files
-        if let Some(dir) = ProjectDirs::from("rs", name, name) {
+        if let Some(dir) = ProjectDirs::from("rs", name, "") {
             println!("deleting test folders [{:?}]", dir);
             if dir.config_dir().exists() {
                 fs::remove_dir_all(dir.config_dir().to_str().unwrap()).unwrap();
@@ -282,6 +287,28 @@ mod tests {
         assert_eq!(cfg.adr_template_dir, "/tmp/adr-samples/templates");
 
         teardown(config);
+    }
+
+    #[test]
+    fn test_init(){
+        let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool-unit", "") {
+            None => panic!("issue while preparing test"),
+            Some(project_dirs) => project_dirs
+        };
+
+        let config = "adrust-tool-unit";
+
+        match super::set_config_from_name(config, super::ADR_ROOT_DIR, format!("{}", project_dirs.cache_dir().display()).as_str() ) {
+            Ok(_r) => {
+                let _void = super::init_from_name(config);
+            },
+            Err(why) => {
+                panic!(why);
+            }
+        }
+        //
+
+       teardown(config);
     }
 
 }

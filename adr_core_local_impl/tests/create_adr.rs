@@ -28,7 +28,7 @@ mod helper {
     extern crate directories;
     use directories::ProjectDirs;
 
-    pub fn create_decision(name: &str) -> io::Result<(bool)> {
+    pub fn create_decision(name: &str) -> io::Result<bool> {
         let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool", "test") {
             None => panic!("issue while preparing test"),
             Some(project_dirs) => project_dirs,
