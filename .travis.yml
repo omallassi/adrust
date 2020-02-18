@@ -45,4 +45,6 @@ after_success: |
     wget https://github.com/SimonKagstrom/kcov/archive/master.zip &&
     unzip master.zip && mv kcov-master kcov && mkdir kcov/build && cd kcov/build &&
     cmake .. && make && make install DESTDIR=../built && cd ../.. &&
-    ./kcov/built/usr/local/bin/kcov --verify --coveralls-id=$TRAVIS_JOB_ID --exclude-pattern=/.cargo target/kcov $(find target/debug/deps -maxdepth 1 -executable -name *adr\*)
+    ./kcov/built/usr/local/bin/kcov --verify --coveralls-id=$TRAVIS_JOB_ID --exclude-pattern=/.cargo target/kcov $(find target/debug/deps -maxdepth 1 -executable -name '*adr*') &&
+    ./kcov/built/usr/local/bin/kcov --coveralls-id=${TRAVIS_JOB_ID} --merge ./target/kcov-merge ./target/kcov && 
+    echo "Uploaded code coveralls"
