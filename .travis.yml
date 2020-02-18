@@ -1,6 +1,6 @@
 language: rust
 
-cache: cargo
+# cache: cargo
 
 addons:
   apt:
@@ -18,6 +18,7 @@ os:
   - osx
   - windows
 rust:
+  - 1.40.0
   - 1.41.0
 
 before_script:
