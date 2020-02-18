@@ -21,12 +21,6 @@ rust:
   - 1.40.0
   - 1.41.0
 
-before_script:
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PATH=$HOME/.cargo/bin:$PATH; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cargo install cargo-update || echo "cargo-update already installed"; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cargo install cargo-travis || echo "cargo-travis already installed"; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cargo install-update -a; fi # update outdated cached binaries
-
 script:
   - cargo build --verbose --all
   - cargo test --verbose --all -- --nocapture
@@ -45,4 +39,3 @@ after_success: |
   for file in target/debug/adr-*; do [ -x "${file}" ] || continue; mkdir -p "target/cov/$(basename $file)"; ./kcov-build/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
   bash <(curl -s https://codecov.io/bash) &&
   echo "Uploaded code coverage"; fi
-  
