@@ -33,4 +33,5 @@ script:
 
 after_success:
 # measure code coverage and upload to coveralls.io
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cargo coverage --verbose && bash <(curl -s https://codecov.io/bash) -s target/kcov; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cargo coveralls; fi
