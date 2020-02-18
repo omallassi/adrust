@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/omallassi/adrust.svg?branch=master)](https://travis-ci.org/omallassi/adrust)  [![Build Status](https://github.com/omallassi/adrust/workflows/Rust/badge.svg)](https://github.com/omallassi/adrust/workflows/Rust/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/omallassi/adrust/badge.svg?branch=master)](https://coveralls.io/github/omallassi/adrust?branch=master)
+[![Build Status](https://travis-ci.org/omallassi/adrust.svg?branch=master)](https://travis-ci.org/omallassi/adrust)  [![Build Status](https://github.com/omallassi/adrust/workflows/Rust/badge.svg)](https://github.com/omallassi/adrust/workflows/Rust/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/omallassi/adrust/badge.svg)](https://coveralls.io/github/omallassi/adrust)
 
 # ADRust : adr-tools in Rust
 
