@@ -221,7 +221,14 @@ mod tests {
         if let Some(dir) = ProjectDirs::from("rs", name, "") {
             println!("deleting test folders [{:?}]", dir);
             if dir.config_dir().exists() {
-                fs::remove_dir_all(dir.config_dir().to_str().unwrap()).unwrap();
+                match fs::remove_dir_all(dir.config_dir().to_str().unwrap()) {
+                    Ok(_val) => {
+
+                    },
+                    Err(_why) => {
+                        println!("Problem while deleting test folder");
+                    },
+                }
             }
             else {
                 println!("Unable to delete folder [{:?}]", dir.config_dir());
