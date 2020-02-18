@@ -35,10 +35,6 @@ after_success: |
   make &&
   make install DESTDIR=../../kcov-build &&
   cd ../.. &&
-  rm -rf kcov-master &&
-  for file in target/debug/adr-*; do [ -x "${file}" ] || continue; mkdir -p "target/cov/$(basename $file)"; ./kcov-build/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
-  bash <(curl -s https://codecov.io/bash) &&
-  echo "Uploaded code coverage to codecov" && 
-  for file in target/debug/adr-*; do [ -x "${file}" ] || continue; mkdir -p "target/cov/$(basename $file)"; ./kcov-build/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --verify --exclude-pattern=/.cargo,$PWD/target/debug/build,$PWD/tests ./target/kcov ${file}; done;
-  ./kcov-build/usr/local/bin/kcov --coveralls-id=${TRAVIS_JOB_ID} --merge ./target/kcov-merge ./target/kcov;
+  rm -rf kcov-master;
+  kcov --verify --coveralls-id=$TRAVIS_JOB_ID --exclude-pattern=/.cargo target/kcov $(find target/debug -maxdepth 1 -executable -name adr-\*);
   echo "Uploaded code coverage to coveralls" ; fi
