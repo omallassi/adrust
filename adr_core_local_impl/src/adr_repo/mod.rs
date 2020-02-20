@@ -1066,6 +1066,61 @@ mod tests {
     }
 
     #[test]
+    fn test_create_adr_w_prefix(){
+        let env = match TempDir::new("my_temp_folder") {
+            Ok(env) => {
+                println!("Working with env dir [{}]", env.path().display());
+                env
+            }, 
+            Err(why) => {
+                println!("Unable to get env dir [{}]", why);
+                panic!(why);
+            }
+        };
+        //set config
+        let config = AdrToolConfig {
+            log_level: 6,
+            adr_root_dir: format!("{}", env.path().display()),
+            adr_src_dir: format!("{}", env.path().display()),
+            adr_template_dir: format!("{}", env.path().display()),
+            adr_template_file: String::from("template.adoc"),
+            adr_search_index: format!("{}", env.path().display()),
+            use_id_prefix: true,
+            id_prefix_width: 3,
+        };
+
+        //set template
+        let template = ":docinfo1:
+        :wip: pass:quotes[[.label.wip]#In Progress#]
+        :decided: pass:q[[.label.decided]#Decided#]
+        :completed: pass:q[[.label.updated]#Completed By#]
+        :completes: pass:q[[.label.updated]#Completes#]
+        :supersedes: pass:q[[.label.updated]#Supersedes#]
+        :superseded: pass:q[[.label.obsoleted]#Superseded By#]
+        :obsoleted: pass:q[[.label.obsoleted]#Obsolete#]
+        
+        = short title of solved problem and solution
+        
+        *Status:* {wip} *Date:* 2019-10-28
+        ...";
+        let to = PathBuf::from(env.path()).join("template.adoc");
+        fs::write(to.as_path(), template).unwrap();
+
+        //set a couple of already present files 
+        let to = PathBuf::from(env.path()).join("001-ADR-1.adoc");
+        fs::write(to.as_path(), template).unwrap();
+        let to = PathBuf::from(env.path()).join("003-ADR-2.adoc");
+        fs::write(to.as_path(), template).unwrap();
+
+        //test
+        let created = super::create_adr(config, "title of the ADR");
+        //
+        assert!(created.unwrap());
+        assert_eq!(true, env.path().exists());
+        assert_eq!(true, env.path().join("004-title-of-the-adr.adoc").exists());
+    }
+
+    #[test]
     fn test_build_adr_wo_tags() {
         let content = "
         == ADR-MVA-507 Decide about ...
