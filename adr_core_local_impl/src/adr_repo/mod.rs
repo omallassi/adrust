@@ -2,7 +2,6 @@ extern crate slog;
 extern crate slog_term;
 use slog::*;
 
-use std::fmt::Write;
 use std::fs::{self};
 use std::io::{self};
 use std::path::Path;
@@ -51,7 +50,7 @@ pub fn create_adr(cfg: AdrToolConfig, title: &str) -> io::Result<bool> {
 
     let src_dir = Path::new(&cfg.adr_src_dir);
                     
-    //specify last seq_id , the rest of the config (use_prefix and width can be get from the method)
+    //specify lcargo buildast seq_id , the rest of the config (use_prefix and width can be get from the method)
     let name = match format_decision_name(cfg.clone(), title) {
         Ok(name) => name,
         Err(_why) => panic!(format!("Problem while formatting name [{}]", title)),
@@ -60,7 +59,10 @@ pub fn create_adr(cfg: AdrToolConfig, title: &str) -> io::Result<bool> {
     let is_target_file = target_path.is_file();
     if !is_target_file {
         if path_to_template.exists() {
-            fs::copy(path_to_template, &target_path)?;
+            match fs::copy(path_to_template, &target_path) {
+                Ok(_val) => debug!(get_logger(), "Copy template file from [{:?}] to [{:?}]", &path_to_template, &target_path), 
+                Err(_why) => error!(get_logger(), "Unable to copy template from [{:?}] to [{:?}]", &path_to_template, &target_path), 
+            };
             //build the Adr (and force the parsing)
             let newly_adr = match build_adr(Path::new(&cfg.adr_root_dir), &target_path) {
                 Ok(adr) => adr,
@@ -70,10 +72,15 @@ pub fn create_adr(cfg: AdrToolConfig, title: &str) -> io::Result<bool> {
                 },
             };
             let newly_adr = newly_adr.update_title(title);
-
-            fs::write(&target_path, newly_adr.content).unwrap();
+            debug!(get_logger(), "Want to create ADR {:?}", &target_path);
+            match fs::write(&target_path, newly_adr.content) {
+                Ok(_val) => info!(get_logger(), "New ADR [{:?}] created", target_path), 
+                Err(why) => {
+                    error!(get_logger(), "Unable to create ADR [{:?}] - error [{:?}]", target_path, why);
+                }
+            };
             //
-            info!(get_logger(), "New ADR {:?} created", target_path);
+            
         }
         else {
             error!(get_logger(), "[{}] was not found", path_to_template.to_string_lossy());
@@ -412,6 +419,7 @@ impl Adr {
 
         let mut tags_str = String::from("");
         for cap in RE_TAGS.captures_iter(val) {
+            use std::fmt::Write;
             write!(tags_str, "#{} ", &cap[2]).unwrap();
         }
 
@@ -787,8 +795,9 @@ impl std::cmp::PartialEq for AdrState {
 
 #[cfg(test)]
 mod tests {
+    extern crate tempdir;
     use std::path::PathBuf;
-    use std::env;
+    use tempdir::TempDir;
 
     use crate::adr_repo::{*};
 
@@ -968,7 +977,7 @@ mod tests {
 
     #[test]
     fn test_build_adr(){
-        let env = match env::current_dir() {
+        let env = match TempDir::new("my_temp_folder") {
             Ok(env) => env, 
             Err(why) => {
                 println!("Unable to get env dir [{}]", why);
@@ -993,18 +1002,67 @@ mod tests {
         === Context and Problem Statement
         ......";
 
-        let to = PathBuf::from(&env).join("decided.adoc");
+        let to = PathBuf::from(env.path()).join("decided.adoc");
         fs::write(to.as_path(), content).unwrap();
 
         println!("Want to work with [{}]", to.display());
 
-        let adr = super::build_adr(env.as_path(), to.as_path()).unwrap();
+        let adr = super::build_adr(env.path(), to.as_path()).unwrap();
         assert_eq!(Status::DECIDED, adr.status);
         assert_eq!("ADR-WIP a wip decision", adr.title);
         assert_eq!("2019-10-28", adr.date);
-        assert_eq!(format!("{}", env.as_path().display()), adr.base_path);
+        assert_eq!(format!("{}", env.path().display()), adr.base_path);
         assert_eq!("decided.adoc", adr.file_name);
         assert_eq!("", adr.tags);
+    }
+
+    #[test]
+    fn test_create_adr_wo_prefix(){
+        let env = match TempDir::new("my_temp_folder") {
+            Ok(env) => {
+                println!("Working with env dir [{}]", env.path().display());
+                env
+            }, 
+            Err(why) => {
+                println!("Unable to get env dir [{}]", why);
+                panic!(why);
+            }
+        };
+        //set config
+        let config = AdrToolConfig {
+            log_level: 6,
+            adr_root_dir: format!("{}", env.path().display()),
+            adr_src_dir: format!("{}", env.path().display()),
+            adr_template_dir: format!("{}", env.path().display()),
+            adr_template_file: String::from("template.adoc"),
+            adr_search_index: format!("{}", env.path().display()),
+            use_id_prefix: false,
+            id_prefix_width: 3,
+        };
+
+        //set template
+        let template = ":docinfo1:
+        :wip: pass:quotes[[.label.wip]#In Progress#]
+        :decided: pass:q[[.label.decided]#Decided#]
+        :completed: pass:q[[.label.updated]#Completed By#]
+        :completes: pass:q[[.label.updated]#Completes#]
+        :supersedes: pass:q[[.label.updated]#Supersedes#]
+        :superseded: pass:q[[.label.obsoleted]#Superseded By#]
+        :obsoleted: pass:q[[.label.obsoleted]#Obsolete#]
+        
+        = short title of solved problem and solution
+        
+        *Status:* {wip} *Date:* 2019-10-28
+        ...";
+        let to = PathBuf::from(env.path()).join("template.adoc");
+        fs::write(to.as_path(), template).unwrap();
+
+        //test
+        let created = super::create_adr(config, "title of the ADR");
+        //
+        assert!(created.unwrap());
+        assert_eq!(true, env.path().exists());
+        assert_eq!(true, env.path().join("title-of-the-adr.adoc").exists());
     }
 
     #[test]

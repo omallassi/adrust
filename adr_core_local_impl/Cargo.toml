@@ -26,3 +26,4 @@ harness = false
 cucumber = {package = "cucumber_rust", version = "^0.6.0" }
 directories = "2.0.2"
 uuid = { version = "0.8.1", features = ["v4"] }
+tempdir = "0.3"
