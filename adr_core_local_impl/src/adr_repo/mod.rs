@@ -987,14 +987,19 @@ mod tests {
         let to = project_dirs.cache_dir().join("decided.adoc");
 
         fs::create_dir(project_dirs.cache_dir()).unwrap();
-        println!("Want to copy from [{}] to [{}] - current dir [{}]", from.display(), to.display(), env.display());
-        match fs::copy(from, to.as_path()) {
-            Ok(_) => (),
-            Err(why) => {
-                println!("Copy failed");
-                panic!(why)
-            },
-        };
+        if ! to.exists() {
+            println!("Want to copy from [{}] to [{}] - current dir [{}]", from.display(), to.display(), env.display());
+            match fs::copy(from, to.as_path()) {
+                Ok(_) => (),
+                Err(why) => {
+                    println!("Copy failed");
+                    panic!(why)
+                },
+            };
+        }
+        else {
+            println!("File [{}] already exists", to.display());
+        }
 
         let adr = super::build_adr(project_dirs.cache_dir(), to.as_path()).unwrap();
         assert_eq!(Status::DECIDED, adr.status);
