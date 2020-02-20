@@ -787,9 +787,6 @@ impl std::cmp::PartialEq for AdrState {
 
 #[cfg(test)]
 mod tests {
-    //use directories::ProjectDirs;
-    //use uuid::*;
-    //use std::fs::{self};
     use std::path::PathBuf;
     use std::env;
 
@@ -971,40 +968,16 @@ mod tests {
 
     #[test]
     fn test_build_adr(){
-        //truth is that I am not sure about how to mock Path...
-        // let uuid = Uuid::new_v4();
-        // let name = format!("adrust-tool-unit-{}", uuid);
-        // let config = name.as_str();
-
-        // let project_dirs: ProjectDirs = match ProjectDirs::from("murex", config, "") {
-        //     None => panic!("issue while preparing test"),
-        //     Some(project_dirs) => project_dirs
-        // };
-        // //copy a .adoc file to temp folder
-        // let env = env::current_dir().unwrap();
-        // let from = PathBuf::from(&env).join("tests/data/decided.adoc");
-        // let to = project_dirs.cache_dir().join("decided.adoc");
-
-        // if ! project_dirs.cache_dir().exists() {
-        //     fs::create_dir(project_dirs.cache_dir()).unwrap();
-        //     println!("Created Folder [{}]", project_dirs.cache_dir().display());
-        // }
-        // if ! to.exists() {
-        //     println!("Want to copy from [{}] to [{}] - current dir [{}]", from.display(), to.display(), env.display());
-        //     match fs::copy(from, to.as_path()) {
-        //         Ok(_) => (),
-        //         Err(why) => {
-        //             println!("Copy failed [{:?}]", why);
-        //             panic!(why);
-        //         },
-        //     };
-        // }
-        // else {
-        //     println!("File [{}] already exists", to.display());
-        // }
-
-        let env = env::current_dir().unwrap();
+        let env = match env::current_dir() {
+            Ok(env) => env, 
+            Err(why) => {
+                println!("Unable to get dir [{}]", why);
+                panic!(why);
+            }
+        };
         let from = PathBuf::from(&env).join("tests/data/decided.adoc");
+
+        println!("Want to work with [{}] - current dir [{}]", from.display(), env.display());
 
         let adr = super::build_adr(env.as_path(), from.as_path()).unwrap();
         assert_eq!(Status::DECIDED, adr.status);
@@ -1014,29 +987,7 @@ mod tests {
         assert_eq!("tests/data/decided.adoc", adr.file_name);
         assert_eq!("", adr.tags);
 
-        //teardown(config);
     }
-
-    // fn teardown(name: &str) {
-    //     println!("Want to delete folders [{:?}]", name);
-    //     //delete confy files
-    //     if let Some(dir) = ProjectDirs::from("murex", name, "") {
-    //         if dir.cache_dir().exists() {
-    //             let dir = dir.cache_dir().to_str().unwrap_or_default();
-    //             match fs::remove_dir_all(dir) {
-    //                 Ok(_val) => {
-    //                     println!("deleted test folders [{:?}]", dir);
-    //                 },
-    //                 Err(_why) => {
-    //                     println!("Problem while deleting test folder");
-    //                 },
-    //             }
-    //         }
-    //         else {
-    //             println!("Unable to delete folder [{:?}]", dir.cache_dir());
-    //         }
-    //     }
-    // }
 
     #[test]
     fn test_build_adr_wo_tags() {
