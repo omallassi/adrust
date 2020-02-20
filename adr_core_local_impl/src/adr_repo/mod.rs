@@ -971,22 +971,40 @@ mod tests {
         let env = match env::current_dir() {
             Ok(env) => env, 
             Err(why) => {
-                println!("Unable to get dir [{}]", why);
+                println!("Unable to get env dir [{}]", why);
                 panic!(why);
             }
         };
-        let from = PathBuf::from(&env).join("tests/data/decided.adoc");
 
-        println!("Want to work with [{}] - current dir [{}]", from.display(), env.display());
+        let content = "// Include contents of docinfo.html
+        :docinfo1:
+        :wip: pass:quotes[[.label.wip]#In Progress#]
+        :decided: pass:q[[.label.decided]#Decided#]
+        :completed: pass:q[[.label.updated]#Completed By#]
+        :completes: pass:q[[.label.updated]#Completes#]
+        :supersedes: pass:q[[.label.updated]#Supersedes#]
+        :superseded: pass:q[[.label.obsoleted]#Superseded By#]
+        :obsoleted: pass:q[[.label.obsoleted]#Obsolete#]
+        
+        == ADR-WIP a wip decision
+        
+        *Status:* {decided}  *Date:* 2019-10-28
+        
+        === Context and Problem Statement
+        ......";
 
-        let adr = super::build_adr(env.as_path(), from.as_path()).unwrap();
+        let to = PathBuf::from(&env).join("decided.adoc");
+        fs::write(to.as_path(), content).unwrap();
+
+        println!("Want to work with [{}]", to.display());
+
+        let adr = super::build_adr(env.as_path(), to.as_path()).unwrap();
         assert_eq!(Status::DECIDED, adr.status);
         assert_eq!("ADR-WIP a wip decision", adr.title);
         assert_eq!("2019-10-28", adr.date);
         assert_eq!(format!("{}", env.as_path().display()), adr.base_path);
-        assert_eq!("tests/data/decided.adoc", adr.file_name);
+        assert_eq!("decided.adoc", adr.file_name);
         assert_eq!("", adr.tags);
-
     }
 
     #[test]
