@@ -972,7 +972,6 @@ mod tests {
     #[test]
     fn test_build_adr(){
         //truth is that I am not sure about how to mock Path...
-
         let uuid = Uuid::new_v4();
         let name = format!("adrust-tool-unit-{}", uuid);
         let config = name.as_str();
@@ -986,7 +985,10 @@ mod tests {
         let from = PathBuf::from(&env).join("tests/data/decided.adoc");
         let to = project_dirs.cache_dir().join("decided.adoc");
 
-        fs::create_dir(project_dirs.cache_dir()).unwrap();
+        if ! project_dirs.cache_dir().exists() {
+            fs::create_dir(project_dirs.cache_dir()).unwrap();
+            println!("Created Folder [{}]", project_dirs.cache_dir().display());
+        }
         if ! to.exists() {
             println!("Want to copy from [{}] to [{}] - current dir [{}]", from.display(), to.display(), env.display());
             match fs::copy(from, to.as_path()) {
