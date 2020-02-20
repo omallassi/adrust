@@ -994,8 +994,8 @@ mod tests {
             match fs::copy(from, to.as_path()) {
                 Ok(_) => (),
                 Err(why) => {
-                    println!("Copy failed");
-                    panic!(why)
+                    println!("Copy failed [{:?}]", why);
+                    panic!(why);
                 },
             };
         }
