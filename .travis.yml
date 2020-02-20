@@ -36,8 +36,8 @@ after_success: |
     ./kcov/built/usr/local/bin/kcov --coveralls-id=${TRAVIS_JOB_ID} --merge ./target/kcov-merge ./target/kcov &&
     echo "Uploaded code coveralls" &&
     sudo apt-get install cmake g++ pkg-config jq &&
-    cargo kcov --print-install-kcov-sh | sh &&
     cargo install --force cargo-kcov &&
+    cargo kcov --print-install-kcov-sh | sh &&
     cargo kcov -vV &&
     cargo kcov --verbose --coveralls --all --no-clean-rebuild &&
     echo "Uploaded code coveralls via cargo-kcov"
