@@ -787,6 +787,11 @@ impl std::cmp::PartialEq for AdrState {
 
 #[cfg(test)]
 mod tests {
+    use directories::ProjectDirs;
+    use std::fs::{self};
+    use uuid::*;
+    use std::path::PathBuf;
+    use std::env;
 
     use crate::adr_repo::{*};
 
@@ -943,7 +948,7 @@ mod tests {
     }
 
     #[test]
-    fn test_build_adr() {
+    fn test_build_adr_from_adr_constructor() {
         let content = "
         == ADR-MVA-507 Decide about ...
         
@@ -961,6 +966,66 @@ mod tests {
         assert_eq!(adr_sut.content, content.to_string());
         assert_eq!(adr_sut.tags, "#deployment view #network #security ");
         assert_eq!(adr_sut.status, super::Status::WIP);
+    }
+
+
+    #[test]
+    fn test_build_adr(){
+        //truth is that I am not sure about how to mock Path...
+
+        let uuid = Uuid::new_v4();
+        let name = format!("adrust-tool-unit-{}", uuid);
+        let config = name.as_str();
+
+        let project_dirs: ProjectDirs = match ProjectDirs::from("murex", config, "") {
+            None => panic!("issue while preparing test"),
+            Some(project_dirs) => project_dirs
+        };
+        //copy a .adoc file to temp folder
+        let env = env::current_dir().unwrap();
+        let from = PathBuf::from(&env).join("tests/data/decided.adoc");
+        let to = project_dirs.cache_dir().join("decided.adoc");
+
+        fs::create_dir(project_dirs.cache_dir()).unwrap();
+        println!("Want to copy from [{}] to [{}] - current dir [{}]", from.display(), to.display(), env.display());
+        match fs::copy(from, to.as_path()) {
+            Ok(_) => (),
+            Err(why) => {
+                println!("Copy failed");
+                panic!(why)
+            },
+        };
+
+        let adr = super::build_adr(project_dirs.cache_dir(), to.as_path()).unwrap();
+        assert_eq!(Status::DECIDED, adr.status);
+        assert_eq!("ADR-WIP a wip decision", adr.title);
+        assert_eq!("2019-10-28", adr.date);
+        assert_eq!(format!("{}", project_dirs.cache_dir().display()), adr.base_path);
+        assert_eq!("decided.adoc", adr.file_name);
+        assert_eq!("", adr.tags);
+
+        teardown(config);
+    }
+
+    fn teardown(name: &str) {
+        println!("Want to delete folders [{:?}]", name);
+        //delete confy files
+        if let Some(dir) = ProjectDirs::from("murex", name, "") {
+            if dir.cache_dir().exists() {
+                let dir = dir.cache_dir().to_str().unwrap_or_default();
+                match fs::remove_dir_all(dir) {
+                    Ok(_val) => {
+                        println!("deleted test folders [{:?}]", dir);
+                    },
+                    Err(_why) => {
+                        println!("Problem while deleting test folder");
+                    },
+                }
+            }
+            else {
+                println!("Unable to delete folder [{:?}]", dir.cache_dir());
+            }
+        }
     }
 
     #[test]
@@ -1014,8 +1079,6 @@ mod tests {
 
         assert_eq!(adr_sut.title, "ADR-MVA-507 Decide about ...");
         let adr_sut = adr_sut.update_title("This is a new completly amazing title");
-
-println!("oliv {:?}", adr_sut);
 
         assert_eq!(adr_sut.title, "This is a new completly amazing title");
         assert_eq!(true, adr_sut.content.contains("== This is a new completly amazing title"));
