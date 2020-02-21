@@ -1257,4 +1257,23 @@ mod tests {
         assert_eq!(Path::new("/tmp/adr-samples/src"), values.0);
         assert_eq!(Path::new("/another-folder/sub-folder/dir/my-decision.adoc"), values.1);
     }
+
+    #[test]
+    fn test_transition_status_from_str(){
+        assert_eq!(TransitionStatus::DECIDED, TransitionStatus::from_str(String::from("decided")));
+        assert_eq!(TransitionStatus::COMPLETED, TransitionStatus::from_str(String::from("completed")));
+        assert_eq!(TransitionStatus::COMPLETES, TransitionStatus::from_str(String::from("completes")));
+        assert_eq!(TransitionStatus::SUPERSEDED, TransitionStatus::from_str(String::from("superseded")));
+        assert_eq!(TransitionStatus::SUPERSEDES, TransitionStatus::from_str(String::from("supersedes")));
+        assert_eq!(TransitionStatus::CANCELLED, TransitionStatus::from_str(String::from("cancelled")));
+        assert_eq!(TransitionStatus::NONE, TransitionStatus::from_str(String::from("N/A")));
+    }
+
+    #[test]
+    fn test_transition_status_revert(){
+        assert_eq!(TransitionStatus::COMPLETES, TransitionStatus::revert(TransitionStatus::COMPLETED));
+        assert_eq!(TransitionStatus::COMPLETED, TransitionStatus::revert(TransitionStatus::COMPLETES));
+        assert_eq!(TransitionStatus::SUPERSEDES, TransitionStatus::revert(TransitionStatus::SUPERSEDED));
+        assert_eq!(TransitionStatus::SUPERSEDED, TransitionStatus::revert(TransitionStatus::SUPERSEDES));
+    }
 }

@@ -167,19 +167,6 @@ fn main() {
         .version("0.1.0")
         .about("A CLI to help you manage your ADR in git")
         .subcommand(
-            SubCommand::with_name("new")
-                .about("Creates a new Decision Record")
-                .version("0.1.0")
-                .arg(
-                    Arg::with_name("name")
-                        .short("n")
-                        .long("name")
-                        .takes_value(true)
-                        .required(true)
-                        .help("Give the name of your Decision Record"),
-                ),
-        )
-        .subcommand(
             SubCommand::with_name("list")
                 .about("Lists all Decision Records")
                 .version("0.1.0"),
@@ -227,6 +214,19 @@ fn main() {
             App::new("lf")
                 .about("Manages ADRs lifecycle")
                 .setting(AppSettings::SubcommandRequiredElseHelp)
+                .subcommand(
+                    SubCommand::with_name("new")
+                        .about("Creates a new Decision Record")
+                        .version("0.1.0")
+                        .arg(
+                            Arg::with_name("name")
+                                .short("n")
+                                .long("name")
+                                .takes_value(true)
+                                .required(true)
+                                .help("Give the name of your Decision Record"),
+                        ),
+                )
                 .subcommand(
                     SubCommand::with_name("decided")
                         .about("update the Status to Decide")
@@ -326,11 +326,6 @@ fn main() {
 
     //
     match _options.subcommand() {
-        ("new", Some(matches)) => {
-            if matches.is_present("name") {
-                adr_core::adr_repo::create_adr(adr_config::config::get_config(), matches.value_of("name").unwrap()).unwrap();
-            }
-        }
         ("list", Some(_matches)) => {
             list_all_adr().unwrap();
         }
@@ -338,6 +333,11 @@ fn main() {
             init().unwrap();
         }
         ("lf", Some(matches)) => match matches.subcommand() {
+            ("new", Some(matches)) => {
+                if matches.is_present("name") {
+                    adr_core::adr_repo::create_adr(adr_config::config::get_config(), matches.value_of("name").unwrap()).unwrap();
+                }
+            }
             ("decided", Some(set_matches)) => {
                 if set_matches.is_present("path") {
                     let file_path = set_matches.value_of("path").unwrap();
