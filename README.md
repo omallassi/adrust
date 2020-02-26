@@ -42,12 +42,10 @@ FLAGS:
 SUBCOMMANDS:
     config    Manage Configuration Items
     help      Prints this message or the help of the given subcommand(s)
-    index     Index all available ADRs
     init      Init ADRust based on config
     lf        Manage ADRs lifecycle
     list      Lists all Decision Records
-    new       will create a new Decision Record
-    search    Search across all ADRs
+    search    Search across all ADRs or build index
     tags      Manage Tags
 ```
 
@@ -59,11 +57,11 @@ In more details,
 | `adr list`      | will list all the Decision Record, Title and Tags |
 | `adr config list`     | will list the configuration. Configuration is stored in [config_dir](https://docs.rs/directories/2.0.2/directories/struct.ProjectDirs.html#method.config_dir)`/rs.adrust-tools.adrust-tools/` (so on MacOs `$HOME/Library/Preferences/rs.adrust-tools.adrust-tools/`)
 | `adr config set --name prop --value val`      | will set the configuration property |
-| `adr new --name my-decision`      | will create a new decision  |
+| `adr lf new --name "my decision"`      | will create a new decision  |
 | `adr lf decided --path my-decision.md`      | will transition an ADR to decided |
 | `adr lf superseded-by --path my-decision.md --by my-new-decision.md`      | will supersed an ADR `by` the specified one |
 | `adr tags list`      | List all the tags whatever the Decision Record |
-| `adr index --build`      | Build the index (not incrementally for now) in the folder defined in `adr config list`|
+| `adr search --build-index`      | Build the index (not incrementally for now) in the folder defined in `adr config list`|
 | `adr search --query "my search"`      | Search across indexed ADRs |
 
 ## ADR Template & lifecycle

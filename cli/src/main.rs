@@ -300,28 +300,23 @@ fn main() {
             SubCommand::with_name("search")
                 .about("Search across all ADRs")
                 .version("0.1.0")
-                .arg(
+                .args(&[
                     Arg::with_name("query")
                         .short("q")
                         .long("query")
                         .takes_value(true)
                         .required(true)
+                        .conflicts_with("build-index")
                         .help("Provide your search query"),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("index")
-                .about("Index all available ADRs")
-                .version("0.1.0")
-                .arg(
-                    Arg::with_name("build")
-                    .short("build")
-                    .long("build")
+                    Arg::with_name("build-index")
+                    .short("b")
+                    .long("build-index")
                     .takes_value(false)
                     .required(true)
+                    .conflicts_with("query")
                     .help("Build the index based on available ADRs.")
-                ),
-        )
+                    ])
+            )
         .get_matches();
 
     //
@@ -400,13 +395,13 @@ fn main() {
             _ => unreachable!(),
         },
         ("search", Some(search_matches)) => {
-            let query = search_matches.value_of("query").unwrap().to_string();
-            search(query).unwrap();
-        }
-        ("index", Some(_matches)) => {
-            if _matches.is_present("build")  {
+            if search_matches.is_present("query")  {
+                let query = search_matches.value_of("query").unwrap().to_string();
+                search(query).unwrap();
+            }
+            if search_matches.is_present("build-index")  {
                 build_index().unwrap();
-            }   
+            }
         },
 
         ("", None) => println!("No subcommand was used"), // If no subcommand was usd it'll match the tuple ("", None)
