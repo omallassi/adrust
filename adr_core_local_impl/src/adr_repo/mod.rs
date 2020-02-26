@@ -64,7 +64,7 @@ pub fn create_adr(cfg: AdrToolConfig, title: &str) -> io::Result<bool> {
                 Err(_why) => error!(get_logger(), "Unable to copy template from [{:?}] to [{:?}]", &path_to_template, &target_path), 
             };
             //build the Adr (and force the parsing)
-            let newly_adr = match build_adr(Path::new(&cfg.adr_root_dir), &target_path) {
+            let newly_adr = match build_adr(Path::new(&cfg.adr_src_dir), &target_path) {
                 Ok(adr) => adr,
                 Err(why) => {
                     error!(get_logger(), "Got error [{:?}] while getting ADR [{:?}]", why, target_path);
@@ -1031,7 +1031,7 @@ mod tests {
         //set config
         let config = AdrToolConfig {
             log_level: 6,
-            adr_root_dir: format!("{}", env.path().display()),
+            //adr_root_dir: format!("{}", env.path().display()),
             adr_src_dir: format!("{}", env.path().display()),
             adr_template_dir: format!("{}", env.path().display()),
             adr_template_file: String::from("template.adoc"),
@@ -1080,7 +1080,7 @@ mod tests {
         //set config
         let config = AdrToolConfig {
             log_level: 6,
-            adr_root_dir: format!("{}", env.path().display()),
+            //adr_root_dir: format!("{}", env.path().display()),
             adr_src_dir: format!("{}", env.path().display()),
             adr_template_dir: format!("{}", env.path().display()),
             adr_template_file: String::from("template.adoc"),
@@ -1135,7 +1135,7 @@ mod tests {
         //set config
         let config = AdrToolConfig {
             log_level: 6,
-            adr_root_dir: format!("{}", env.path().display()),
+            //adr_root_dir: format!("{}", env.path().display()),
             adr_src_dir: format!("{}", env.path().display()),
             adr_template_dir: format!("{}", env.path().display()),
             adr_template_file: String::from("template.adoc"),
