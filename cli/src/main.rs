@@ -49,6 +49,8 @@ pub fn list_all_adr() -> io::Result<()> {
         let style = match entry.status {
             Status::WIP => "Fy",
             Status::DECIDED => "Fg",
+            Status::COMPLETED => "Fg",
+            Status::COMPLETES => "Fg",
             _ => "Fr",
         };
         table.add_row(Row::new(vec![
