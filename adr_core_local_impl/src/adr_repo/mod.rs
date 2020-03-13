@@ -876,6 +876,70 @@ mod tests {
     }
 
     #[test]
+    fn test_state_machine_wip_to_cancelled() {
+        let mut state = super::AdrState::build(super::Status::WIP);
+        assert_eq!(state, super::AdrState { status: super::Status::WIP});
+        state.transition(super::TransitionStatus::CANCELLED);
+        assert_eq!(state, super::AdrState { status: super::Status::CANCELLED});
+    }
+
+    #[test]
+    fn test_state_machine_decided_to_cancelled() {
+        let mut state = super::AdrState::build(super::Status::DECIDED);
+        assert_eq!(state, super::AdrState { status: super::Status::DECIDED});
+        state.transition(super::TransitionStatus::CANCELLED);
+        assert_eq!(state, super::AdrState { status: super::Status::CANCELLED});
+    }
+
+    #[test]
+    fn test_state_machine_decided_to_completes() {
+        let mut state = super::AdrState::build(super::Status::DECIDED);
+        assert_eq!(state, super::AdrState { status: super::Status::DECIDED});
+        state.transition(super::TransitionStatus::COMPLETES);
+        assert_eq!(state, super::AdrState { status: super::Status::COMPLETES});
+    }
+
+    #[test]
+    fn test_state_machine_decided_to_supersedes() {
+        let mut state = super::AdrState::build(super::Status::DECIDED);
+        assert_eq!(state, super::AdrState { status: super::Status::DECIDED});
+        state.transition(super::TransitionStatus::SUPERSEDES);
+        assert_eq!(state, super::AdrState { status: super::Status::SUPERSEDES});
+    }
+
+    #[test]
+    fn test_state_machine_decided_to_fail() {
+        let mut state = super::AdrState::build(super::Status::DECIDED);
+        assert_eq!(state, super::AdrState { status: super::Status::DECIDED});
+        state.transition(super::TransitionStatus::NONE);
+        assert_eq!(state, super::AdrState { status: super::Status::DECIDED});
+    }
+
+    #[test]
+    fn test_state_machine_completed_to_cancelled() {
+        let mut state = super::AdrState::build(super::Status::COMPLETED);
+        assert_eq!(state, super::AdrState { status: super::Status::COMPLETED});
+        state.transition(super::TransitionStatus::CANCELLED);
+        assert_eq!(state, super::AdrState { status: super::Status::CANCELLED});
+    }
+
+    #[test]
+    fn test_state_machine_superseded_to_fail() {
+        let mut state = super::AdrState::build(super::Status::SUPERSEDED);
+        assert_eq!(state, super::AdrState { status: super::Status::SUPERSEDED});
+        state.transition(super::TransitionStatus::DECIDED);
+        assert_eq!(state, super::AdrState { status: super::Status::SUPERSEDED});
+    }
+
+    #[test]
+    fn test_state_machine_cancelled_to_cancelled() {
+        let mut state = super::AdrState::build(super::Status::CANCELLED);
+        assert_eq!(state, super::AdrState { status: super::Status::CANCELLED});
+        state.transition(super::TransitionStatus::DECIDED);
+        assert_eq!(state, super::AdrState { status: super::Status::CANCELLED});
+    }
+
+    #[test]
     fn test_get_seq() {
         let seq = super::get_seq_id_from_name("01-my-decision.adoc").unwrap();
         assert_eq!(seq, 1);
