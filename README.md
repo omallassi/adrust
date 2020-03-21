@@ -11,7 +11,6 @@ Here are the main features:
 * [done] an `init` command
 * [done] Support Tags
 * [done] Support search across title, content and tags 
-* [not started yet] Integrate with Git
 * [not started yet] Support different types of templates
 * [not started yet] Why not integrate with Microsoft Teams
 
@@ -97,6 +96,29 @@ ADRs follow the below lifecycle
 
 
 
+
+## Overall process
+`ADRust`only help in managing the lifecycle of the ADRs by trying to provide a productivity tool to ease day-to-day work. It is not in itself a full process of managing, reviewing, publishing your decisions. 
+
+`ADRust`works only with files (available on your machines) as this is certainly the easiest storage to integrate with any source control tools (_e.g._ git etc...). Which mean, you may end up with a process like the one below, up to you: 
+
+```
++----------------+        +--------------+                  +----------------+
+|                |        |              |                  |                |
+|    ADRust      |        |    git       |   git pull/push  |      git       |
+|    (CLI)       |        |    (CLI)     +------------------>     (Repo)     +-----+
+|                |        |              |                  |                |     |
++-+--------------+        +------------+-+                  +----------+-----+     |
+  |                                    |                               ^           |
+  |                                    |                               |           |
+  |       +-----------------------+    |git commit                     +-----------+
+  |       |Local File System      |    |                                   Pull Requests / Reviews
+  |       |(All ADRs)             |    |
+  +------>+                       +<---+
+          +-----------------------+
+```
+
+
 ## Tags
 There is a beta support for tags. These tags, if available, will be used in `adr list` and `adr tags ...`
 
@@ -124,6 +146,6 @@ To set the log level to Debug `adr config set --name log_level --value 6`
 ## Search
 Search is based on [Tantivy Search](https://github.com/tantivy-search/tantivy). You can build your local index via `adr index --build` and search via `adr search --query "word#1 AND word#2"`
 
-## Trouleshoot
+## Trouleshoot & Known Issues
 
 * it may happen that `config`object evolves between commits and create issues. The usual symptoms are to get a `panic`when running `adr config list`or `adr init`, specifying that property `adr_....`cannot be found. In this case, the easiest is to run `rm $HOME/Library/Preferences/rs.adrust-tools.adrust-tools/adrust-tools.toml`. This will yet fallback to default values...
