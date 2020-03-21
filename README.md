@@ -1,8 +1,10 @@
 [![Build Status](https://travis-ci.org/omallassi/adrust.svg?branch=master)](https://travis-ci.org/omallassi/adrust)  [![Build Status](https://github.com/omallassi/adrust/workflows/Rust/badge.svg)](https://github.com/omallassi/adrust/workflows/Rust/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/omallassi/adrust/badge.svg)](https://coveralls.io/github/omallassi/adrust)
 
-# ADRust: a tool in Rust to manage (Architecture) Decision Records
+# ADRust: a CLI in Rust to manage (Architecture) Decision Records
 
 The idea is to provide a cli to managed ADR. One more? yes...reality is that was mostly an excuse to play with `Rust`. 
+
+![screen](docs/screen.png)
 
 Here are the main features: 
 * [wip] Manage ADR lifecycle (create, obsoletes...). ADR should be written in _asciidoc_ (this is a long story...). Look at `./template` folder for more details. 
