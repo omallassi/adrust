@@ -30,15 +30,24 @@ Feature: Manage an ADR Lifecycle
             | supersedes    | decided           | false     | supersedes    | n/a                   |
             | obsoleted     | decided           | false     | obsoleted     | n/a                   |
             | wip           | cancelled         | true      | obsoleted     | n/a                   |
-            | decided       | completed         | true      | completed     | completed-by.adoc     |
-            | decided       | completes         | true      | completes     | completes.adoc        |
+            | wip           | completed         | false     | wip           | n/a                   |
+            | decided       | completed         | true      | completed     | decided-by.adoc       |
+            | decided       | completes         | true      | completes     | decided-by.adoc       |
             | decided       | cancelled         | true      | obsoleted     | n/a                   |
-            | decided       | superseded        | true      | superseded    | superseded-by.adoc    |
-            | decided       | supersedes        | true      | supersedes    | supersedes.adoc       |
+            | decided       | superseded        | true      | superseded    | decided-by.adoc       |
+            | decided       | supersedes        | true      | supersedes    | decided-by.adoc       |
             | completed-by  | cancelled         | true      | obsoleted     | n/a                   |
             | completes     | cancelled         | true      | obsoleted     | n/a                   |
-            | completed-by  | superseded        | true      | superseded    | superseded-by.adoc    |
-            | completes     | superseded        | true      | superseded    | superseded-by.adoc    |
             | superseded-by | cancelled         | true      | obsoleted     | n/a                   |
             | supersedes    | cancelled         | true      | obsoleted     | n/a                   |
+            | completed-by  | superseded        | true      | superseded    | decided-by.adoc       |
+            | completes     | superseded        | true      | superseded    | decided-by.adoc       |
+            # the following cases should not transition because *-by.adoc files do not have the right status
+            | decided       | completed         | false     | decided       | completed-by.adoc     |
+            | decided       | completes         | false     | decided       | completes.adoc        |
+            | decided       | superseded        | false     | decided       | superseded-by.adoc    |
+            | decided       | supersedes        | false     | decided       | supersedes.adoc       |
+            | completed-by  | superseded        | false     | completed     | superseded-by.adoc    |
+            | completes     | superseded        | false     | completes     | superseded-by.adoc    |
+
 

@@ -308,21 +308,30 @@ pub fn transition_to(transition: TransitionStatus, base_path: &Path, from: &str,
                 false => {
                     let adr_by = build_adr(base_path, Path::new(by))?;
                     let updated_adr_by_tuple = adr_by.update_status(TransitionStatus::revert(transition));
-        
-                    let updated_adr_from = updated_adr_from_tuple.0.add_reference(format!("{}", updated_adr_by_tuple.0.file_name).as_str());
-                    let updated_adr_by = updated_adr_by_tuple.0.add_reference(format!("{}", updated_adr_from.file_name).as_str());
-        
-                    fs::write(from, updated_adr_from.content)?;
-                    fs::write(by, updated_adr_by.content)?;
-        
-                    info!(get_logger(), 
-                        "Transitioned [{}] from [{}] to [{}]", 
-                        from, adr_from.status.as_str(), updated_adr_from_tuple.0.status.as_str());
-                    info!(get_logger(), 
-                        "Transitioned [{}] from [{}] to [{}]", 
-                        by, adr_by.status.as_str(), updated_adr_by_tuple.0.status.as_str());
-        
-                    Ok(updated_adr_from_tuple.1)
+
+                    //if status has been accepted
+                    match updated_adr_by_tuple.1 {
+                        true => {
+                            let updated_adr_from = updated_adr_from_tuple.0.add_reference(format!("{}", updated_adr_by_tuple.0.file_name).as_str());
+                            let updated_adr_by = updated_adr_by_tuple.0.add_reference(format!("{}", updated_adr_from.file_name).as_str());
+                
+                            fs::write(from, updated_adr_from.content)?;
+                            fs::write(by, updated_adr_by.content)?;
+                
+                            info!(get_logger(), 
+                                "Transitioned [{}] from [{}] to [{}]", 
+                                from, adr_from.status.as_str(), updated_adr_from_tuple.0.status.as_str());
+                            info!(get_logger(), 
+                                "Transitioned [{}] from [{}] to [{}]", 
+                                by, adr_by.status.as_str(), updated_adr_by_tuple.0.status.as_str());
+                
+                            Ok(true)
+                        }
+                        false => {
+                            error!(get_logger(), "ADR [{}] cannot be transitioned to [{:?}] - Status of [{:?}] is not [{:?}]", from, transition, by, TransitionStatus::DECIDED);
+                            Ok(false)
+                        }
+                    }
                 }
             }
         }

@@ -189,7 +189,7 @@ mod check_transitions_and_lifecycle_of_adr {
             };
 
             assert_eq!(Status::from_str(new_status), new_adr.status);
-            if "n/a" != by {
+            if "n/a" != by && adr.has_transitioned {
                 let by = format!("}} {}", by);
                 assert_eq!(true, new_adr.content.contains(&by));
             }
