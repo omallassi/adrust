@@ -104,22 +104,7 @@ ADRs follow the below lifecycle
 
 `ADRust`works only with files (available on your machines) as this is certainly the easiest storage to integrate with any source control tools (_e.g._ git etc...). Which mean, you may end up with a process like the one below, up to you: 
 
-```
-+----------------+        +--------------+                  +----------------+
-|                |        |              |                  |                |
-|    ADRust      |        |    git       |   git pull/push  |      git       |
-|    (CLI)       |        |    (CLI)     +------------------>     (Repo)     +-----+
-|                |        |              |                  |                |     |
-+-+--------------+        +------------+-+                  +----------+-----+     |
-  |                                    |                               ^           |
-  |                                    |                               |           |
-  |       +-----------------------+    |git commit                     +-----------+
-  |       |Local File System      |    |                                   Pull Requests / Reviews
-  |       |(All ADRs)             |    |
-  +------>+                       +<---+
-          +-----------------------+
-```
-
+![](./assets/overview.png)
 
 ## Tags
 There is a beta support for tags. These tags, if available, will be used in `adr list` and `adr tags ...`
