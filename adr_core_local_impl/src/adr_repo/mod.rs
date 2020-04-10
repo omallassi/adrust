@@ -207,6 +207,8 @@ pub fn list_all_adr(dir: &Path) -> io::Result<Vec<Adr>> {
         }
     }
 
+    results.sort_by(|a, b| b.title.cmp(&a.title));
+
     Ok(results)
 }
 
