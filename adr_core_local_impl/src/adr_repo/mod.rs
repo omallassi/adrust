@@ -71,7 +71,9 @@ pub fn create_adr(cfg: AdrToolConfig, title: &str) -> io::Result<bool> {
                     panic!();
                 },
             };
+
             let newly_adr = newly_adr.update_title(title);
+
             debug!(get_logger(), "Want to create ADR {:?}", &target_path);
             match fs::write(&target_path, newly_adr.content) {
                 Ok(_val) => info!(get_logger(), "New ADR [{:?}] created", target_path), 
@@ -516,7 +518,7 @@ impl Adr {
     }
 
     pub fn update_title(&self, title: &str) -> Adr {
-        let mut adoc_title = String::from("== ");
+        let mut adoc_title = String::from("");
         adoc_title.push_str(&title);
 
         let new_content = &self.content;
