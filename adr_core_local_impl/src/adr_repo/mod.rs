@@ -114,22 +114,6 @@ fn get_seq_id_from_name(name: &str) -> Result<usize> {
     Ok(id)
 }
 
-fn get_last_seq_id_from_all(adr_paths: Vec<String>) -> usize {
-    let mut seq = 0;
-    for path in adr_paths.iter(){
-        //extract the seq_id
-        let extracted_seq_id = get_seq_id_from_name(path.as_str()).unwrap();
-        if extracted_seq_id > seq {
-            debug!(get_logger(), "got seq_id {} - compared to {}", extracted_seq_id, seq);
-            seq = extracted_seq_id;
-        }
-    }
-
-    debug!(get_logger(), "returned seq_id [{}]", seq);
-
-    seq
-}
-
 fn get_last_seq_id(dir: &Path) -> usize {
     let adrs: Vec<Adr> = list_all_adr(dir).unwrap();
     let adrs_paths = adrs.iter().map(|adr| {
@@ -137,7 +121,7 @@ fn get_last_seq_id(dir: &Path) -> usize {
                                     path
                                 }).collect::<Vec<String>>();
 
-    get_last_seq_id_from_all(adrs_paths)
+    get_seq_id_from_name(&adrs_paths[0]).unwrap()
 }
 
 
