@@ -99,7 +99,7 @@ pub fn create_adr(cfg: AdrToolConfig, title: &str) -> io::Result<bool> {
 
 fn get_seq_id_from_name(name: &str) -> Result<usize> {
     lazy_static! {
-        static ref RE: Regex = Regex::new(r"(\d+)-{1}").unwrap();
+        static ref RE: Regex = Regex::new(r"^(\d+)-{1}").unwrap();
     }
 
     let mut id: usize = 0;
@@ -920,21 +920,21 @@ mod tests {
         assert_eq!(seq, 1);
         let seq = super::get_seq_id_from_name("00000010-my-decision.adoc").unwrap();
         assert_eq!(seq, 10);
-        let seq = super::get_seq_id_from_name("mypath/00000001-my-decision.adoc").unwrap();
+        let seq = super::get_seq_id_from_name("00000001-my-decision.adoc").unwrap();
         assert_eq!(seq, 1);
-        let seq = super::get_seq_id_from_name("mypath/00000001-my-decision-594.adoc").unwrap();
+        let seq = super::get_seq_id_from_name("00000001-my-decision-594.adoc").unwrap();
         assert_eq!(seq, 1);
-        let seq = super::get_seq_id_from_name("mypath/00000001-my-decision-594-full.adoc").unwrap();
+        let seq = super::get_seq_id_from_name("00000001-my-decision-594-full.adoc").unwrap();
         assert_eq!(seq, 1);
         let seq = super::get_seq_id_from_name("00000001-my-decision-594-full.adoc").unwrap();
         assert_eq!(seq, 1);
         let seq =
-            super::get_seq_id_from_name("mypath/00000001/00000002-my-decision-594-full.adoc").unwrap();
+            super::get_seq_id_from_name("00000002-my-decision-594-full.adoc").unwrap();
         assert_eq!(seq, 2
         );
 
         let seq =
-        super::get_seq_id_from_name("path/my-decision-full.adoc").unwrap();
+        super::get_seq_id_from_name("my-decision-full.adoc").unwrap();
         assert_eq!(seq, 0);
 
         // let result =
@@ -953,6 +953,7 @@ mod tests {
         paths.push(String::from("00000001-my-decision-594-full.adoc"));
         paths.push(String::from("mypath/00000001/00000002-my-decision-594-full.adoc"));
         paths.push(String::from("path/my-decision-full.adoc"));
+        paths.push(String::from("path/my-decision-543-0.adoc"));
 
         let mut adr_vec = Vec::new();
         for adr in paths.into_iter() {
