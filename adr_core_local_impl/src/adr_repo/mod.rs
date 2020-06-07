@@ -439,7 +439,6 @@ impl Adr {
             self.content = self.content.replace(current_status.as_str(), new_status.as_str());
             self.status = state.status;
             self.state = state;
-            // NEED TO TEST
             self.update_date(Utc::today());
             has_been_modified
         }
