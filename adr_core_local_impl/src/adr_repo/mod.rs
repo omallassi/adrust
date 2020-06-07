@@ -267,45 +267,50 @@ pub fn transition_to_obsoleted(base_path: &Path, file_path: &str) -> io::Result<
 }
 
 pub fn transition_to(transition: TransitionStatus, base_path: &Path, from_path: &str, by_path: &str) -> io::Result<bool> {
-    let origin = match build_adr(base_path, Path::new(from_path)){
+    let mut from_adr = match build_adr(base_path, Path::new(from_path)){
         Ok(adr) => adr,
         Err(why) => {
             error!(get_logger(), "Got error [{:?}] while getting ADR [{}]", why, from_path);
             panic!();
         },
     };
-
-    let mut new_adr = origin.clone();
-    let update_status = new_adr.update_status(transition);
+    let from_old_status = from_adr.status.as_str();
 
     //if transition has been declined, we can stop here
-    match update_status {
+    match from_adr.update_status(transition) {
         true => {
-            let transition_adr = |adr: &Adr, path: &str| -> io::Result<bool> {
-                let content = &adr.content;
-                fs::write(path, content)?;    
-                Ok(update_status)
+            debug!(get_logger(), "ADR [{}] has a new status [{}]", from_adr.path().as_str(), from_adr.status.as_str());
+            let transition_adr = |adr: &Adr, path: &str, old_status: &str| -> io::Result<bool> {
+                match fs::write(path, &adr.content) {
+                    Ok(_) => {
+                        info!(get_logger(), "Transitioned [{}] from [{}] to [{}]", 
+                            adr.path().as_str(), old_status, adr.status.as_str()); 
+                        Ok(true) }
+                    Err(_) => { Ok(false) }
+                }    
             };
-            debug!(get_logger(), "ADR [{}] has a new status [{}]", new_adr.path().as_str(), new_adr.status.as_str());
             match by_path.is_empty() {
                 true => {
-                    let return_value = transition_adr(&new_adr, from_path);
-                    info!(get_logger(), 
-                        "Transitioned [{}] from [{}] to [{}]", 
-                        origin.path().as_str(), origin.status.as_str(), new_adr.status.as_str());
-                    return_value
+                    transition_adr(&from_adr, from_path, from_old_status)
                 }
                 false => {
-                    let update_true = transition_to(TransitionStatus::revert(transition), base_path, by_path, "").unwrap();
-                    if !update_true {
-                        error!(get_logger(), "ADR [{}] cannot be transitioned to [{:?}] - Status of [{:?}] is not [{:?}]", from_path, transition, by_path, TransitionStatus::DECIDED);
-                        return Ok(false)
-                    };
-                    let return_value = transition_adr(&new_adr, from_path);
-                    info!(get_logger(), 
-                        "Transitioned [{}] from [{}] to [{}]", 
-                        origin.path().as_str(), origin.status.as_str(), new_adr.status.as_str());
-                    return_value
+                    let mut by_adr = build_adr(base_path, Path::new(by_path))?;
+                    let by_old_status = by_adr.status.as_str();
+                    //if transition has been declined, we can stop here
+                    match by_adr.update_status(TransitionStatus::revert(transition)) {
+                        true => { 
+                            from_adr.add_reference(format!("{}", by_adr.file_name).as_str());
+                            by_adr.add_reference(format!("{}", from_adr.file_name).as_str());
+                            Ok(
+                                transition_adr(&from_adr, from_path, from_old_status)? == 
+                                transition_adr(&by_adr, by_path, by_old_status)?
+                            ) 
+                        }
+                        false => {
+                            error!(get_logger(), "ADR [{}] cannot be transitioned to [{:?}] - Status of [{:?}] is not [{:?}]", from_path, transition, by_path, TransitionStatus::DECIDED); 
+                            Ok(false) 
+                        }
+                    }
                 }
             }
         }
@@ -1255,3 +1260,5 @@ mod tests {
         assert_eq!(TransitionStatus::SUPERSEDED, TransitionStatus::revert(TransitionStatus::SUPERSEDES));
     }
 }
+
+
