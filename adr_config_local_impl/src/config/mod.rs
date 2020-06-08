@@ -29,13 +29,13 @@ impl ::std::default::Default for AdrToolConfig {
     fn default() -> Self {
         AdrToolConfig {
             //adr_root_dir: "/tmp/adr-samples".to_string(),//irrelevant ? following murex convention, it seems more natural to keep adr_root_dir than adr_scr_dir (cf. adr_template_dir)
-            adr_src_dir: "/tmp/adr-samples/src".to_string(),//"npryce convention :  doc/adr; murex convention : docs/adr"
-            adr_template_dir: "/tmp/adr-samples/templates".to_string(),//"npryce convention : src; murex convention : docs/adr/templates"
-            adr_template_file: "adr-template-v0.1.adoc".to_string(),//"npryce convention : template.md; murex convention : template.adoc"
+            adr_src_dir: "/tmp/adr-samples/src".to_string(), //"npryce convention :  doc/adr; murex convention : docs/adr"
+            adr_template_dir: "/tmp/adr-samples/templates".to_string(), //"npryce convention : src; murex convention : docs/adr/templates"
+            adr_template_file: "adr-template-v0.1.adoc".to_string(), //"npryce convention : template.md; murex convention : template.adoc"
             adr_search_index: "/tmp/adr-samples/.index".to_string(),
             log_level: 4, //info
-            use_id_prefix : true,            
-            id_prefix_width : 6,
+            use_id_prefix: true,
+            id_prefix_width: 6,
         }
     }
 }
@@ -78,10 +78,18 @@ pub fn init_from_name(config_name: &str) -> Result<()> {
         format!("{0}/{1}", &path, cfg.adr_template_file),
     ) {
         Err(_why) => {
-            warn!(get_logger(), "Unable to create [{}]", format!("{0}/{1}", &path, cfg.adr_template_file));
+            warn!(
+                get_logger(),
+                "Unable to create [{}]",
+                format!("{0}/{1}", &path, cfg.adr_template_file)
+            );
         }
         Ok(_val) => {
-            info!(get_logger(), "[{}] created]",format!("{0}/{1}", &path, cfg.adr_template_file));
+            info!(
+                get_logger(),
+                "[{}] created]",
+                format!("{0}/{1}", &path, cfg.adr_template_file)
+            );
         }
     };
 
@@ -96,14 +104,14 @@ pub fn set_config(name: &str, value: &str) -> Result<()> {
     set_config_from_name("adrust-tools", name, value)
 }
 
-pub fn get_config() ->  AdrToolConfig {
+pub fn get_config() -> AdrToolConfig {
     get_config_from_name("adrust-tools")
 }
 
 pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()> {
-
-    if ADR_ROOT_DIR == name {//for now keep it to apply standard murex convention 
-        let cfg: AdrToolConfig = get_config_from_name(config);   
+    if ADR_ROOT_DIR == name {
+        //for now keep it to apply standard murex convention
+        let cfg: AdrToolConfig = get_config_from_name(config);
         let adr_src_dir = String::from(value);
         //adr_src_dir.push_str("/src");
 
@@ -125,34 +133,34 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
         confy::store(config, new_cfg).unwrap();
     }
     if ADR_SRC_DIR == name {
-        let mut cfg: AdrToolConfig = get_config_from_name(config);   
-        cfg.adr_src_dir = String::from(value);      
+        let mut cfg: AdrToolConfig = get_config_from_name(config);
+        cfg.adr_src_dir = String::from(value);
         confy::store(config, cfg).unwrap();
     }
     if ADR_TEMPLATE_DIR == name {
-        let mut cfg: AdrToolConfig = get_config_from_name(config);   
-        cfg.adr_template_dir = String::from(value);      
+        let mut cfg: AdrToolConfig = get_config_from_name(config);
+        cfg.adr_template_dir = String::from(value);
         confy::store(config, cfg).unwrap();
     }
     if ADR_TEMPLATE_FILE == name {
-        let mut cfg: AdrToolConfig = get_config_from_name(config);   
-        cfg.adr_template_file = String::from(value);      
+        let mut cfg: AdrToolConfig = get_config_from_name(config);
+        cfg.adr_template_file = String::from(value);
         confy::store(config, cfg).unwrap();
     }
     if LOG_LEVEL == name {
-        let mut cfg: AdrToolConfig = get_config_from_name(config);   
-        cfg.log_level = value.parse().unwrap();      
+        let mut cfg: AdrToolConfig = get_config_from_name(config);
+        cfg.log_level = value.parse().unwrap();
         confy::store(config, cfg).unwrap();
     }
 
     if USE_ID_PREFIX == name {
-        let mut cfg: AdrToolConfig = get_config_from_name(config);   
+        let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.use_id_prefix = value.parse().unwrap();
         confy::store(config, cfg).unwrap();
     }
 
-    if ID_PREFIX_WIDTH ==name {
-        let mut cfg: AdrToolConfig = get_config_from_name(config);   
+    if ID_PREFIX_WIDTH == name {
+        let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.id_prefix_width = value.parse().unwrap();
         confy::store(config, cfg).unwrap();
     }
@@ -165,7 +173,7 @@ pub fn get_config_from_name(config: &str) -> AdrToolConfig {
         Err(_why) => {
             warn!(get_logger(), "Returning default configuration file");
             AdrToolConfig::default()
-        },
+        }
         Ok(e) => e,
     };
 
@@ -176,8 +184,8 @@ pub fn get_config_from_name(config: &str) -> AdrToolConfig {
 mod tests {
     use directories::ProjectDirs;
     use std::fs::{self};
-    use uuid::*;
     use std::path::Path;
+    use uuid::*;
 
     #[test]
     fn test_set_config_log_level() {
@@ -230,13 +238,12 @@ mod tests {
                 match fs::remove_dir_all(dir) {
                     Ok(_val) => {
                         println!("deleted test folders [{:?}]", dir);
-                    },
+                    }
                     Err(_why) => {
                         println!("Problem while deleting test folder");
-                    },
+                    }
                 }
-            }
-            else {
+            } else {
                 println!("Unable to delete folder [{:?}]", dir.config_dir());
             }
         }
@@ -248,11 +255,11 @@ mod tests {
         let name = format!("adrust-tools-4-tests-{}", uuid);
         let config = name.as_str();
 
-        match super::set_config_from_name(config, "adr_root_dir", "/tmp/adr-samples-4-tests"){
+        match super::set_config_from_name(config, "adr_root_dir", "/tmp/adr-samples-4-tests") {
             Ok(e) => e,
             Err(why) => {
                 eprintln!("error in test : {}", why);
-            },
+            }
         };
         let cfg = super::get_config_from_name(config);
         //assert_eq!(cfg.adr_root_dir, "/tmp/adr-samples-4-tests");
@@ -261,7 +268,6 @@ mod tests {
         let template_dir_path = Path::new("/tmp/adr-samples-4-tests/templates");
         assert_eq!(Path::new(cfg.adr_template_dir.as_str()), template_dir_path);
         assert_eq!(cfg.adr_template_file, "adr-template-v0.1.adoc");
-
 
         teardown(config);
     }
@@ -276,7 +282,7 @@ mod tests {
             Ok(e) => e,
             Err(why) => {
                 eprintln!("error in test : {}", why);
-            },
+            }
         }
         let cfg = super::get_config_from_name(config);
         assert_eq!(cfg.adr_template_file, "new-template.adoc");
@@ -294,38 +300,44 @@ mod tests {
             Ok(e) => e,
             Err(why) => {
                 eprintln!("error in test : {}", why);
-            },
+            }
         }
         let cfg = super::get_config_from_name(config);
         let target_src_dir = Path::new("/tmp/does-not-exists/src");
         assert_eq!(Path::new(cfg.adr_src_dir.as_str()), target_src_dir);
         assert_eq!(cfg.adr_template_file, "adr-template-v0.1.adoc");
         let target_template_dir = Path::new("/tmp/adr-samples/templates");
-        assert_eq!(Path::new(cfg.adr_template_dir.as_str()), target_template_dir);
+        assert_eq!(
+            Path::new(cfg.adr_template_dir.as_str()),
+            target_template_dir
+        );
 
         teardown(config);
     }
 
     #[test]
-    fn test_init(){
+    fn test_init() {
         let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool-unit", "") {
             None => panic!("issue while preparing test"),
-            Some(project_dirs) => project_dirs
+            Some(project_dirs) => project_dirs,
         };
 
         let config = "adrust-tool-unit";
 
-        match super::set_config_from_name(config, super::ADR_ROOT_DIR, format!("{}", project_dirs.cache_dir().display()).as_str() ) {
+        match super::set_config_from_name(
+            config,
+            super::ADR_ROOT_DIR,
+            format!("{}", project_dirs.cache_dir().display()).as_str(),
+        ) {
             Ok(_r) => {
                 let _void = super::init_from_name(config);
-            },
+            }
             Err(why) => {
                 panic!(why);
             }
         }
         //
 
-       teardown(config);
+        teardown(config);
     }
-
 }

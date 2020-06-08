@@ -1,12 +1,12 @@
 use tantivy::collector::TopDocs;
+use tantivy::directory::MmapDirectory;
 use tantivy::query::QueryParser;
 use tantivy::schema::*;
 use tantivy::Index;
 use tantivy::ReloadPolicy;
-use tantivy::directory::MmapDirectory;
 
 use std::path::Path;
-use std::time::{Instant};
+use std::time::Instant;
 
 extern crate slog;
 extern crate slog_term;
@@ -33,7 +33,7 @@ fn get_logger() -> slog::Logger {
     slog::Logger::root(drain, o!())
 }
 
-pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()>/*Result<(), ()>*/ {
+pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> /*Result<(), ()>*/ {
     info!(get_logger(), "Building Index in folder [{}]", index_path);
 
     let now = Instant::now();
@@ -57,20 +57,23 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()>/*R
 
     for adr in adrs {
         index_writer.add_document(doc!(
-            title => String::from(adr.title.as_str()),
-            body => String::from(adr.content.as_str()),
-            tags => String::from(adr.tags.as_str()), //recreate a string from the tags Vec via Debug...
-            path => String::from(adr.path().as_str()),
-            ));
+        title => String::from(adr.title.as_str()),
+        body => String::from(adr.content.as_str()),
+        tags => String::from(adr.tags.as_str()), //recreate a string from the tags Vec via Debug...
+        path => String::from(adr.path().as_str()),
+        ));
     }
 
     index_writer.commit()?;
 
-    info!(get_logger(), "Indexing Time [{}] milli seconds", now.elapsed().as_millis());
+    info!(
+        get_logger(),
+        "Indexing Time [{}] milli seconds",
+        now.elapsed().as_millis()
+    );
 
     Ok(())
 }
-
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SearchResult {
@@ -79,8 +82,12 @@ pub struct SearchResult {
     pub path: [String; 1],
 }
 
-pub fn search(index_path: String, query_as_string: String) -> tantivy::Result<Vec<SearchResult>>/*Result<()>*/ {
-    debug!(get_logger(), "Searching [{}] based on Index in folder [{}]", query_as_string, index_path);
+pub fn search(index_path: String, query_as_string: String) -> tantivy::Result<Vec<SearchResult>> /*Result<()>*/
+{
+    debug!(
+        get_logger(),
+        "Searching [{}] based on Index in folder [{}]", query_as_string, index_path
+    );
 
     let index_path = Path::new(&index_path);
     let mmap_directory = MmapDirectory::open(index_path)?;
@@ -116,7 +123,11 @@ pub fn search(index_path: String, query_as_string: String) -> tantivy::Result<Ve
     let mut results = std::vec::Vec::new();
     for (_score, doc_address) in top_docs {
         let retrieved_doc = searcher.doc(doc_address)?;
-        debug!(get_logger(), "Found doc [{}]", schema.to_json(&retrieved_doc));
+        debug!(
+            get_logger(),
+            "Found doc [{}]",
+            schema.to_json(&retrieved_doc)
+        );
 
         let doc_as_json = schema.to_json(&retrieved_doc);
         let search_result: SearchResult = serde_json::from_str(&doc_as_json).unwrap();

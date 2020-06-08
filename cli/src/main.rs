@@ -86,12 +86,32 @@ fn list_all_config() -> Result<()> {
     table.set_titles(row![b -> "Property", b -> "Value", b -> "Modifiable"]);
     //table.add_row(row![adr_config::config::ADR_ROOT_DIR, cfg.adr_root_dir, "Y"]);
     table.add_row(row![adr_config::config::ADR_SRC_DIR, cfg.adr_src_dir, "Y"]);
-    table.add_row(row![adr_config::config::ADR_TEMPLATE_DIR, cfg.adr_template_dir, "Y"]);
-    table.add_row(row![adr_config::config::ADR_TEMPLATE_FILE, cfg.adr_template_file, "Y"]);
-    table.add_row(row![adr_config::config::ADR_SEARCH_INDEX, cfg.adr_search_index, "N"]);
+    table.add_row(row![
+        adr_config::config::ADR_TEMPLATE_DIR,
+        cfg.adr_template_dir,
+        "Y"
+    ]);
+    table.add_row(row![
+        adr_config::config::ADR_TEMPLATE_FILE,
+        cfg.adr_template_file,
+        "Y"
+    ]);
+    table.add_row(row![
+        adr_config::config::ADR_SEARCH_INDEX,
+        cfg.adr_search_index,
+        "N"
+    ]);
     table.add_row(row![adr_config::config::LOG_LEVEL, cfg.log_level, "Y"]);
-    table.add_row(row![adr_config::config::USE_ID_PREFIX, cfg.use_id_prefix, "Y"]);
-    table.add_row(row![adr_config::config::ID_PREFIX_WIDTH, cfg.id_prefix_width, "Y"]);
+    table.add_row(row![
+        adr_config::config::USE_ID_PREFIX,
+        cfg.use_id_prefix,
+        "Y"
+    ]);
+    table.add_row(row![
+        adr_config::config::ID_PREFIX_WIDTH,
+        cfg.id_prefix_width,
+        "Y"
+    ]);
 
     // Print the table to stdout
     table.printstd();
@@ -124,7 +144,7 @@ fn build_index() -> Result<()> {
         Ok(e) => e,
         Err(why) => panic!(format!("{:?}", why)),
     };
-    adr_search::search::build_index(cfg.adr_search_index, adrs).unwrap();    
+    adr_search::search::build_index(cfg.adr_search_index, adrs).unwrap();
 
     Ok(())
 }
@@ -141,7 +161,7 @@ fn search(query: String) -> Result<()> {
         Err(why) => panic!(format!("{:?}", why)),
     };
 
-    for entry in  results{
+    for entry in results {
         table.add_row(Row::new(vec![
             Cell::new(&entry.title[0]),
             Cell::new(&entry.path[0]),
@@ -244,24 +264,24 @@ fn main() {
                 )
                 .subcommand(
                     SubCommand::with_name("superseded-by")
-                    .about("Supersede the decision with another decision")
-                    .version("0.1.0")
-                    .arg(
-                        Arg::with_name("path")
-                            .short("p")
-                            .long("path")
-                            .takes_value(true)
-                            .required(true)
-                            .help("Give the path of your Decision Record"),
-                    )
-                    .arg(
-                        Arg::with_name("by")
-                            .short("b")
-                            .long("by")
-                            .takes_value(true)
-                            .required(true)
-                            .help("Give the path of your Decision Record"),
-                    ),
+                        .about("Supersede the decision with another decision")
+                        .version("0.1.0")
+                        .arg(
+                            Arg::with_name("path")
+                                .short("p")
+                                .long("path")
+                                .takes_value(true)
+                                .required(true)
+                                .help("Give the path of your Decision Record"),
+                        )
+                        .arg(
+                            Arg::with_name("by")
+                                .short("b")
+                                .long("by")
+                                .takes_value(true)
+                                .required(true)
+                                .help("Give the path of your Decision Record"),
+                        ),
                 )
                 .subcommand(
                     SubCommand::with_name("completed-by")
@@ -296,7 +316,7 @@ fn main() {
                                 .required(true)
                                 .help("Give the path of your Decision Record"),
                         ),
-                )
+                ),
         )
         .subcommand(
             SubCommand::with_name("search")
@@ -311,14 +331,14 @@ fn main() {
                         .conflicts_with("build-index")
                         .help("Provide your search query"),
                     Arg::with_name("build-index")
-                    .short("b")
-                    .long("build-index")
-                    .takes_value(false)
-                    .required(true)
-                    .conflicts_with("query")
-                    .help("Build the index based on available ADRs.")
-                    ])
-            )
+                        .short("b")
+                        .long("build-index")
+                        .takes_value(false)
+                        .required(true)
+                        .conflicts_with("query")
+                        .help("Build the index based on available ADRs."),
+                ]),
+        )
         .get_matches();
 
     //
@@ -332,7 +352,11 @@ fn main() {
         ("lf", Some(matches)) => match matches.subcommand() {
             ("new", Some(matches)) => {
                 if matches.is_present("name") {
-                    adr_core::adr_repo::create_adr(adr_config::config::get_config(), matches.value_of("name").unwrap()).unwrap();
+                    adr_core::adr_repo::create_adr(
+                        adr_config::config::get_config(),
+                        matches.value_of("name").unwrap(),
+                    )
+                    .unwrap();
                 }
             }
             ("decided", Some(set_matches)) => {
@@ -351,18 +375,19 @@ fn main() {
                     let file_path = set_matches.value_of("path").unwrap();
                     let by_path = set_matches.value_of("by").unwrap();
 
-                    adr_core::adr_repo::transition_to_completed_by(base_path, file_path, by_path).unwrap();
+                    adr_core::adr_repo::transition_to_completed_by(base_path, file_path, by_path)
+                        .unwrap();
                 }
             }
             ("superseded-by", Some(set_matches)) => {
                 if set_matches.is_present("path") && set_matches.is_present("by") {
-
                     let cfg: AdrToolConfig = adr_config::config::get_config();
                     let base_path = Path::new(&cfg.adr_src_dir);
                     let file_path = set_matches.value_of("path").unwrap();
                     let by_path = set_matches.value_of("by").unwrap();
 
-                    adr_core::adr_repo::transition_to_superseded_by(base_path, file_path, by_path).unwrap();
+                    adr_core::adr_repo::transition_to_superseded_by(base_path, file_path, by_path)
+                        .unwrap();
                 }
             }
             ("obsoleted", Some(set_matches)) => {
@@ -374,7 +399,7 @@ fn main() {
                     adr_core::adr_repo::transition_to_obsoleted(base_path, file_path).unwrap();
                 }
             }
-            
+
             _ => unreachable!(),
         },
         ("config", Some(config_matches)) => match config_matches.subcommand() {
@@ -397,14 +422,14 @@ fn main() {
             _ => unreachable!(),
         },
         ("search", Some(search_matches)) => {
-            if search_matches.is_present("query")  {
+            if search_matches.is_present("query") {
                 let query = search_matches.value_of("query").unwrap().to_string();
                 search(query).unwrap();
             }
-            if search_matches.is_present("build-index")  {
+            if search_matches.is_present("build-index") {
                 build_index().unwrap();
             }
-        },
+        }
 
         ("", None) => println!("No subcommand was used"), // If no subcommand was usd it'll match the tuple ("", None)
         _ => unreachable!(), // If all subcommands are defined above, anything else is unreachabe!()

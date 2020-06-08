@@ -37,8 +37,22 @@ mod helper {
         let mut cfg: adr_config::config::AdrToolConfig = adr_config::config::get_config();
         cfg.use_id_prefix = false;
         cfg.log_level = 6;
-        cfg.adr_template_file = String::from(project_dirs.cache_dir().join("templates/adr-template-v0.1.adoc").as_path().to_str().unwrap());
-        cfg.adr_src_dir = String::from(project_dirs.cache_dir().join("src").as_path().to_str().unwrap());
+        cfg.adr_template_file = String::from(
+            project_dirs
+                .cache_dir()
+                .join("templates/adr-template-v0.1.adoc")
+                .as_path()
+                .to_str()
+                .unwrap(),
+        );
+        cfg.adr_src_dir = String::from(
+            project_dirs
+                .cache_dir()
+                .join("src")
+                .as_path()
+                .to_str()
+                .unwrap(),
+        );
 
         Ok(adr_core::adr_repo::create_adr(cfg, name).unwrap())
     }
@@ -62,10 +76,10 @@ mod create_new_adr_steps {
 
         };
 
-        then regex r"A new file named (.+) is created$" (String) |adr, name, _step| {   
+        then regex r"A new file named (.+) is created$" (String) |adr, name, _step| {
             let is_created = helper::create_decision(&adr.name).unwrap();
             assert_eq!(is_created, true);
-            
+
             // TODO there is certainly a way to return project_dir as part of create_decision
             let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool", "test") {
                 None => panic!("issue while preparing test"),
@@ -81,7 +95,7 @@ mod create_new_adr_steps {
             let content: String = fs::read_to_string(expected_path).unwrap();
             assert!(content.contains("{wip}"));
         };
-        
+
     });
 }
 
@@ -93,16 +107,16 @@ mod create_already_adr_steps {
     steps! (crate::AdrNames => {
         given regex r"^A new decision (.+) that already exists$" (String) |adr, name, _step| {
             adr.name = name.to_string();
-            //the decision should already exist so we create it. 
+            //the decision should already exist so we create it.
             helper::create_decision(&adr.name).unwrap();
         };
 
         when "I create a new ADR" |_adr, _step| {
-            
+
         };
 
         then "The creation fails" | adr, _step | {
-            //create the same file 
+            //create the same file
             let is_created = helper::create_decision(&adr.name).unwrap();
             assert_eq!(is_created, false);
         };
@@ -120,20 +134,20 @@ mod check_transitions_and_lifecycle_of_adr {
     extern crate adr_core;
     use adr_core::adr_repo::*;
 
-    use walkdir::{WalkDir};
+    use walkdir::WalkDir;
 
-    use std::path::PathBuf;
     use chrono::prelude::*;
+    use std::path::PathBuf;
 
     steps! (crate::AdrNames => {
 
         given regex r"^a decision with status (.+)$" (String) |adr, status, _step| {
-        
+
             let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool", "test") {
                 None => panic!("issue while preparing test"),
                 Some(project_dirs) => project_dirs
             };
-            
+
             //copy all files to ease the different transitions
             let rep = "./tests/data/";
             let srcdir = PathBuf::from(rep);
@@ -151,7 +165,7 @@ mod check_transitions_and_lifecycle_of_adr {
                     };
                 }
             }
-            
+
             adr.base_path = format!("{}", project_dirs.cache_dir().join("src").display());
             adr.name = format!("{}", project_dirs.cache_dir().join("src").join(status).with_extension("adoc").display());
             println!("The current scenario will use adr path [{}]", adr.name);
@@ -166,7 +180,7 @@ mod check_transitions_and_lifecycle_of_adr {
                         Err(why) => panic!(why)
                     };
                 },
-                false => {            
+                false => {
                     let by = format!("{}", PathBuf::from(adr.base_path.as_str()).join(by).display());
                     println!("calling transition_to() with [{}] [{}] [{}]", transition, adr.name, by);
                     match adr_core::adr_repo::transition_to(TransitionStatus::from_str(transition), Path::new(&adr.base_path), adr.name.as_str(), by.as_str()) {
@@ -239,7 +253,7 @@ mod check_tags_management {
             if decision.tags_array.len() == 3 {
                 assert_eq!(decision.tags_array[2].trim(), tag_3);
             }
-        };        
+        };
     });
 }
 
