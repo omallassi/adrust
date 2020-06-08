@@ -130,11 +130,11 @@ fn get_seq_id_from_name(name: &str) -> Result<usize> {
 }
 
 fn get_last_seq_id(adrs: Vec<Adr>) -> usize {
-    get_seq_id_from_name(&adrs[0].file_name).unwrap()
+    get_seq_id_from_name(&adrs[adrs.len() - 1].file_name).unwrap()
 }
 
 fn sort_by_id(mut adrs: Vec<Adr>) -> Vec<Adr> {
-    adrs.sort_by(|a, b| b.file_id.cmp(&a.file_id));
+    adrs.sort_by(|a, b| a.file_id.cmp(&b.file_id));
     adrs
 }
 
@@ -848,9 +848,9 @@ mod tests {
     :supersedes: pass:q[[.label.updated]#Supersedes#]
     :superseded: pass:q[[.label.obsoleted]#Superseded By#]
     :obsoleted: pass:q[[.label.obsoleted]#Obsolete#]
-    
+
     = short title of solved problem and solution
-    
+
     *Status:* {decided} *Date:* 2019-10-28
     ...";
 
@@ -862,9 +862,9 @@ mod tests {
     :supersedes: pass:q[[.label.updated]#Supersedes#]
     :superseded: pass:q[[.label.obsoleted]#Superseded By#]
     :obsoleted: pass:q[[.label.obsoleted]#Obsolete#]
-    
+
     = short title of solved problem and solution
-    
+
     *Status:* {wip} *Date:* 2019-10-28
 
     [tags]#tag1# [tags]#tag2# [tags]#tag3#
@@ -1250,7 +1250,7 @@ mod tests {
     fn test_build_adr_from_adr_constructor() {
         let content = "
         == ADR-MVA-507 Decide about ...
-        
+
         *Status:* {wip}  *Date:* 2019-10-28
         ....
         bug there is another date 2119-10-28
@@ -1406,7 +1406,7 @@ mod tests {
     fn test_build_adr_wo_tags() {
         let content = "
         == ADR-MVA-507 Decide about ...
-        
+
         *Status:* {wip}  *Date:* 2019-10-28
         ....";
 
@@ -1427,7 +1427,7 @@ mod tests {
     fn test_update_date() {
         let content = "
         == ADR-MVA-507 Decide about ...
-        
+
         *Status:* {wip}  *Date:* 2019-10-28
         ....";
 
@@ -1453,7 +1453,7 @@ mod tests {
     fn test_update_title() {
         let content = "
         == ADR-MVA-507 Decide about ...
-        
+
         *Status:* {wip}  *Date:* 2019-10-28
         ....";
 
