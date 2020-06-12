@@ -54,7 +54,7 @@ mod helper {
                 .unwrap(),
         );
 
-        Ok(adr_core::adr_repo::create_adr(cfg, name).unwrap())
+        Ok(adr_core::adr_repo::create_adr(cfg, None, name).unwrap())
     }
 }
 

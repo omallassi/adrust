@@ -244,12 +244,20 @@ fn main() {
                         .about("Creates a new Decision Record")
                         .version("0.1.0")
                         .arg(
-                            Arg::with_name("name")
-                                .short("n")
-                                .long("name")
+                            Arg::with_name("title")
+                                .short("t")
+                                .long("title")
                                 .takes_value(true)
                                 .required(true)
-                                .help("Give the name of your Decision Record"),
+                                .help("Give the title of your Decision Record"),
+                        )
+                        .arg(
+                            Arg::with_name("path")
+                                .short("p")
+                                .long("path")
+                                .takes_value(true)
+                                .required(false)
+                                .help("Specify relative path (nested directories)"),
                         ),
                 )
                 .subcommand(
@@ -354,10 +362,11 @@ fn main() {
         }
         ("lf", Some(matches)) => match matches.subcommand() {
             ("new", Some(matches)) => {
-                if matches.is_present("name") {
+                if matches.is_present("title") {
                     adr_core::adr_repo::create_adr(
                         adr_config::config::get_config(),
-                        matches.value_of("name").unwrap(),
+                        matches.value_of("path"),
+                        matches.value_of("title").unwrap(),
                     )
                     .unwrap();
                 }
