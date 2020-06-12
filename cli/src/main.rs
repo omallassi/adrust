@@ -250,6 +250,14 @@ fn main() {
                                 .takes_value(true)
                                 .required(true)
                                 .help("Give the name of your Decision Record"),
+                        )
+                        .arg(
+                            Arg::with_name("path")
+                                .short("p")
+                                .long("path")
+                                .takes_value(true)
+                                .required(false)
+                                .help("Specify relative path (nested directories)"),
                         ),
                 )
                 .subcommand(
@@ -357,6 +365,7 @@ fn main() {
                 if matches.is_present("name") {
                     adr_core::adr_repo::create_adr(
                         adr_config::config::get_config(),
+                        matches.value_of("path"),
                         matches.value_of("name").unwrap(),
                     )
                     .unwrap();

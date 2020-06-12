@@ -40,7 +40,7 @@ fn get_logger() -> slog::Logger {
 /// * `title`- the title of the ADR (specified by the user)
 /// *
 ///
-pub fn create_adr(cfg: AdrToolConfig, title: &str) -> io::Result<bool> {
+pub fn create_adr(cfg: AdrToolConfig, path: Option<&str>, title: &str) -> io::Result<bool> {
     let adr_template_dir = &cfg.adr_template_dir.as_str();
     let adr_template_file = &cfg.adr_template_file.as_str();
 
@@ -55,7 +55,14 @@ pub fn create_adr(cfg: AdrToolConfig, title: &str) -> io::Result<bool> {
         Ok(name) => name,
         Err(_why) => panic!(format!("Problem while formatting name [{}]", title)),
     };
-    let target_path = src_dir.join(format!("{}.adoc", name));
+    let target_path = match path {
+        None => src_dir.join(format!("{}.adoc", name)),
+        Some(val) => {
+            std::fs::create_dir_all(src_dir.join(val)).unwrap();
+            src_dir.join(val).join(format!("{}.adoc", name))
+        }
+    };
+
     let is_target_file = target_path.is_file();
     if !is_target_file {
         if path_to_template.exists() {
@@ -1350,7 +1357,7 @@ mod tests {
         fs::write(to.as_path(), ADOC_TMPL_NOTAG).unwrap();
 
         //test
-        let created = super::create_adr(config, "title of the ADR");
+        let created = super::create_adr(config, None, "title of the ADR");
         //
         assert!(created.unwrap());
         assert_eq!(true, src.path().exists());
@@ -1392,11 +1399,75 @@ mod tests {
         fs::write(to.as_path(), ADOC_TMPL_NOTAG).unwrap();
 
         //test
-        let created = super::create_adr(config, "title of the ADR");
+        let created = super::create_adr(config, None, "title of the ADR");
         //
         assert!(created.unwrap());
         assert_eq!(true, src.path().exists());
         assert_eq!(true, src.path().join("004-title-of-the-adr.adoc").exists());
+    }
+
+    #[test]
+    fn test_create_adr_w_nested_directories() {
+        let src = match TempDir::new("my_src_folder") {
+            Ok(src) => {
+                println!("Working with src dir [{}]", src.path().display());
+                src
+            }
+            Err(why) => {
+                println!("Unable to get src dir [{}]", why);
+                panic!(why);
+            }
+        };
+
+        //set config
+        let config = AdrToolConfig {
+            log_level: 6,
+            //adr_root_dir: format!("{}", src.path().display()),
+            adr_src_dir: format!("{}", src.path().display()),
+            adr_template_dir: format!("{}", src.path().display()),
+            adr_template_file: String::from("template.adoc"),
+            adr_search_index: format!("{}", src.path().display()),
+            use_id_prefix: true,
+            id_prefix_width: 3,
+        };
+
+        let to = PathBuf::from(src.path()).join("template.adoc");
+        fs::write(to.as_path(), ADOC_TMPL_NOTAG).unwrap();
+
+        //set a couple of already present files
+        let to = PathBuf::from(src.path()).join("001-ADR-1.adoc");
+        fs::write(to.as_path(), ADOC_TMPL_NOTAG).unwrap();
+        let to = PathBuf::from(src.path()).join("003-ADR-2.adoc");
+        fs::write(to.as_path(), ADOC_TMPL_NOTAG).unwrap();
+
+        //test
+        {
+            let created = super::create_adr(config.clone(), Some("sub_dir"), "title of the ADR");
+            //
+            assert!(created.unwrap());
+            assert_eq!(true, src.path().exists());
+            assert_eq!(
+                true,
+                src.path()
+                    .join("sub_dir")
+                    .join("004-title-of-the-adr.adoc")
+                    .exists()
+            );
+        }
+
+        {
+            let created = super::create_adr(config.clone(), Some("./sub_dir"), "title of the ADR");
+            //
+            assert!(created.unwrap());
+            assert_eq!(true, src.path().exists());
+            assert_eq!(
+                true,
+                src.path()
+                    .join("sub_dir")
+                    .join("005-title-of-the-adr.adoc")
+                    .exists()
+            );
+        }
     }
 
     #[test]
