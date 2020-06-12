@@ -50,7 +50,7 @@ pub fn create_adr(cfg: AdrToolConfig, title: &str) -> io::Result<bool> {
 
     let src_dir = Path::new(&cfg.adr_src_dir);
 
-    //specify lcargo buildast seq_id , the rest of the config (use_prefix and width can be get from the method)
+    //specify last seq_id , the rest of the config (use_prefix and width can be get from the method)
     let name = match format_decision_name(cfg.clone(), title) {
         Ok(name) => name,
         Err(_why) => panic!(format!("Problem while formatting name [{}]", title)),
