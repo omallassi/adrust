@@ -1229,6 +1229,33 @@ mod tests {
     }
 
     #[test]
+    fn test_extract_seq_id_from_all_with_nested_dir() {
+        let mut paths = Vec::new();
+        paths.push(String::from("mypath/mysubpath/00000064-my-decision.adoc")); //this is should be the last seq id
+        paths.push(String::from("mypath/00000063-my-decision.adoc")); //this is should be the last seq id
+        paths.push(String::from("00000010-my-decision.adoc"));
+        paths.push(String::from("00000001-my-decision-594-full.adoc"));
+        paths.push(String::from(
+            "mypath/00000001/00000002-my-decision-594-full.adoc",
+        ));
+        paths.push(String::from("path/my-decision-full.adoc"));
+        paths.push(String::from("path/my-decision-543-0.adoc"));
+
+        let mut adr_vec = Vec::new();
+        for adr in paths.into_iter() {
+            adr_vec.push(super::Adr::from(
+                String::from("/adr/"),
+                String::from(adr),
+                String::from(ADOC_TMPL_NOTAG),
+            ));
+        }
+
+        adr_vec = super::sort_by_id(adr_vec);
+        let seq = super::get_last_seq_id(adr_vec);
+        assert_eq!(seq, 64);
+    }
+
+    #[test]
     fn test_format_decision_name() {
         let mut cfg: super::AdrToolConfig = adr_config::config::get_config();
         cfg.use_id_prefix = false;
