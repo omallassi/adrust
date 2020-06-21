@@ -54,7 +54,8 @@ mod helper {
                 .unwrap(),
         );
 
-        Ok(adr_core::adr_repo::create_adr(cfg, None, name).unwrap())
+        let options: adr_core::adr_repo::AdrMeta = Default::default();
+        Ok(adr_core::adr_repo::create_adr(cfg, name, options).unwrap())
     }
 }
 
@@ -172,18 +173,22 @@ mod check_transitions_and_lifecycle_of_adr {
         };
 
         when regex r"^the decision is transitioned to (.+) by (.+)$" (String, String) |adr, transition, by, _step| {
+            let mut options: adr_core::adr_repo::AdrMeta = Default::default();
+            options.adr_path = Some(adr.name.as_str());
             match "n/a" == by {
                 true => {
+                    options.by_path = Some("");
                     println!("calling transition_to() with [{}] [{}] [{}]", transition, adr.name, by);
-                    match adr_core::adr_repo::transition_to(TransitionStatus::from_str(transition), Path::new(&adr.base_path), adr.name.as_str(), "") {
+                    match adr_core::adr_repo::transition_to(TransitionStatus::from_str(transition), &adr.base_path, options) {
                         Ok(transitioned) => adr.has_transitioned = transitioned,
                         Err(why) => panic!(why)
                     };
                 },
                 false => {
-                    let by = format!("{}", PathBuf::from(adr.base_path.as_str()).join(by).display());
-                    println!("calling transition_to() with [{}] [{}] [{}]", transition, adr.name, by);
-                    match adr_core::adr_repo::transition_to(TransitionStatus::from_str(transition), Path::new(&adr.base_path), adr.name.as_str(), by.as_str()) {
+                    let by_path = PathBuf::from(adr.base_path.as_str()).join(by);
+                    options.by_path = Some(by_path.to_str().unwrap());
+                    println!("calling transition_to() with [{}] [{}] [{}]", transition, adr.name, options.by_path.unwrap());
+                    match adr_core::adr_repo::transition_to(TransitionStatus::from_str(transition), &adr.base_path, options) {
                         Ok(transitioned) => adr.has_transitioned = transitioned,
                         Err(why) => panic!(why)
                     };
