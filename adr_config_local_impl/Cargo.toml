@@ -19,5 +19,5 @@ slog-term = "2.4.2"
 slog-async = "2.3.0"
 
 [dev-dependencies]
-directories = "2.0.2"
+directories = "3.0.1"
 uuid = { version = "0.8.1", features = ["v4"] }

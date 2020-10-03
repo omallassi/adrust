@@ -18,21 +18,20 @@ os:
   - osx
   - windows
 rust:
-  - 1.41.0
-  - 1.42.0
   - 1.43.0
+  - 1.46.0
 
 script:
   - cargo build --verbose --all
   - cargo test --verbose --all -- --nocapture
 
 after_success: |
-    [ $TRAVIS_BRANCH = master ] &&
-    [ $TRAVIS_PULL_REQUEST = false ] &&
-    [ "$TRAVIS_OS_NAME" = "linux" ] &&
-    wget https://github.com/SimonKagstrom/kcov/archive/master.zip &&
-    unzip master.zip && mv kcov-master kcov && mkdir kcov/build && cd kcov/build &&
-    cmake .. && make && make install DESTDIR=../built && cd ../.. &&
-    for file in target/debug/deps/*adr*; do [ -x "${file}" ] || continue; ./kcov/built/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --exclude-path=`pwd`/adr_core_local_impl/tests/ --verify target/kcov ${file}; done &&
-    ./kcov/built/usr/local/bin/kcov --coveralls-id=${TRAVIS_JOB_ID} --merge ./target/kcov-merge ./target/kcov &&
-    echo "Uploaded code coveralls"
+  [ $TRAVIS_BRANCH = master ] &&
+  [ $TRAVIS_PULL_REQUEST = false ] &&
+  [ "$TRAVIS_OS_NAME" = "linux" ] &&
+  wget https://github.com/SimonKagstrom/kcov/archive/master.zip &&
+  unzip master.zip && mv kcov-master kcov && mkdir kcov/build && cd kcov/build &&
+  cmake .. && make && make install DESTDIR=../built && cd ../.. &&
+  for file in target/debug/deps/*adr*; do [ -x "${file}" ] || continue; ./kcov/built/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --exclude-path=`pwd`/adr_core_local_impl/tests/ --verify target/kcov ${file}; done &&
+  ./kcov/built/usr/local/bin/kcov --coveralls-id=${TRAVIS_JOB_ID} --merge ./target/kcov-merge ./target/kcov &&
+  echo "Uploaded code coveralls"
