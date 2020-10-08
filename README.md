@@ -60,7 +60,7 @@ In more details,
 | `adr list`      | will list all the Decision Record, Title and Tags |
 | `adr config list`     | will list the configuration. Configuration is stored in [config_dir](https://docs.rs/directories/2.0.2/directories/struct.ProjectDirs.html#method.config_dir)`/rs.adrust-tools.adrust-tools/` (so on MacOs `$HOME/Library/Preferences/rs.adrust-tools.adrust-tools/`)
 | `adr config set --name prop --value val`      | will set the configuration property |
-| `adr lf new --name "my decision"`      | will create a new decision  |
+| `adr lf new --title "my decision"`      | will create a new decision  |
 | `adr lf decided --path my-decision.md`      | will transition an ADR to decided |
 | `adr lf superseded-by --path my-decision.md --by my-new-decision.md`      | will supersed an ADR `by` the specified one |
 | `adr tags list`      | List all the tags whatever the Decision Record |
@@ -133,6 +133,6 @@ To set the log level to Debug `adr config set --name log_level --value 6`
 ## Search
 Search is based on [Tantivy Search](https://github.com/tantivy-search/tantivy). You can build your local index via `adr index --build` and search via `adr search --query "word#1 AND word#2"`
 
-## Trouleshoot & Known Issues
+## Troubleshoot & Known Issues
 
 * it may happen that `config`object evolves between commits and create issues. The usual symptoms are to get a `panic`when running `adr config list`or `adr init`, specifying that property `adr_....`cannot be found. In this case, the easiest is to run `rm $HOME/Library/Preferences/rs.adrust-tools.adrust-tools/adrust-tools.toml`. This will yet fallback to default values...
