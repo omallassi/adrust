@@ -5,13 +5,13 @@ authors = ["MALLASSI Olivier <Olivier.MALLASSI@murex.com>"]
 edition = "2018"
 
 [dependencies]
-tantivy = "0.13.2"
-slog = "2.5.2"
-slog-term = "2.4.2"
-slog-async = "2.3.0"
-serde_json = "1.0.44"
-serde = "1.0.104"
-serde_derive = "1.0.104"
+tantivy = "0.14.0"
+slog = "2.7.0"
+slog-term = "2.8.0"
+slog-async = "2.6.0"
+serde_json = "1.0.62"
+serde = "1.0.123"
+serde_derive = "1.0.123"
 
 adr_config = { path = "../adr_config_local_impl" }
 adr_core = {path = "../adr_core_local_impl"}
