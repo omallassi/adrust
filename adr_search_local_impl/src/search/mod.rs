@@ -47,7 +47,7 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> /*
     let schema = schema_builder.build();
 
     let mmap_directory = MmapDirectory::open(index_path)?;
-    let index = Index::create(mmap_directory, schema.clone())?; // should use open_or_create to not overwrite existing index.
+    let index = Index::open_or_create(mmap_directory, schema.clone())?; // should use open_or_create to not overwrite existing index.
     let mut index_writer = index.writer(100_000_000)?;
 
     let title = schema.get_field("title").unwrap();
