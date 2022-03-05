@@ -25,7 +25,7 @@ jobs:
       - name: Generate code coverage
         run: |
           cargo install cargo-tarpaulin
-          cargo tarpaulin --release --out Lcov --output-dir /tmp --coveralls 1fa078wMaKHyxnGDX5NBJ0cXp2CpyQyrd
+          cargo tarpaulin --release --out Lcov --output-dir /tmp --coveralls 1fa078wMaKHyxnGDX5NBJ0cXp2CpyQyrd -- --test-threads 1
           ls -la /tmp
           
       #cargo +nightly tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
