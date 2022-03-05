@@ -145,7 +145,7 @@ fn build_index() -> Result<()> {
     let cfg: AdrToolConfig = adr_config::config::get_config();
     let adrs = match adr_core::adr_repo::list_all_adr(Path::new(&cfg.adr_src_dir)) {
         Ok(e) => e,
-        Err(why) => panic!(format!("{:?}", why)),
+        Err(why) => panic!("{:?}", why),
     };
     adr_search::search::build_index(cfg.adr_search_index, adrs).unwrap();
 
@@ -161,7 +161,7 @@ fn search(query: String) -> Result<()> {
 
     let results = match adr_search::search::search(cfg.adr_search_index, query) {
         Ok(e) => e,
-        Err(why) => panic!(format!("{:?}", why)),
+        Err(why) => panic!("{:?}", why),
     };
 
     for entry in results {

@@ -53,7 +53,7 @@ pub fn create_adr(cfg: AdrToolConfig, path: Option<&str>, title: &str) -> io::Re
     //specify last seq_id , the rest of the config (use_prefix and width can be get from the method)
     let name = match format_decision_name(cfg.clone(), title) {
         Ok(name) => name,
-        Err(_why) => panic!(format!("Problem while formatting name [{}]", title)),
+        Err(_why) => panic!("Problem while formatting name [{}]", title),
     };
     let target_path = match path {
         None => src_dir.join(format!("{}.adoc", name)),

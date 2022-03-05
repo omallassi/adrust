@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 tantivy = "0.16.1"
 slog = "2.7.0"
-slog-term = "2.8.0"
+slog-term = "2.9.0"
 slog-async = "2.6.0"
 serde_json = "1.0.62"
 serde = "1.0.123"
