@@ -177,6 +177,22 @@ fn search(query: String) -> Result<()> {
     Ok(())
 }
 
+fn arg_as_usize(m: &clap::ArgMatches, u: &str) -> Option<usize> {
+    let rtn: Option<usize>;
+    if m.is_present(u) {
+        rtn = Some(
+            m.value_of(u)
+                .unwrap()
+                .to_string()
+                .parse::<usize>()
+                .expect("Value for id should be a number"),
+        )
+    } else {
+        rtn = None
+    }
+    return rtn;
+}
+
 /**
  * init based on config
  */
@@ -258,6 +274,14 @@ fn main() {
                                 .takes_value(true)
                                 .required(false)
                                 .help("Specify relative path (nested directories)"),
+                        )
+                        .arg(
+                            Arg::with_name("id")
+                                .short("i")
+                                .long("id")
+                                .takes_value(true)
+                                .required(false)
+                                .help("Specify relative path (nested directories)"),
                         ),
                 )
                 .subcommand(
@@ -269,8 +293,16 @@ fn main() {
                                 .short("p")
                                 .long("path")
                                 .takes_value(true)
-                                .required(true)
+                                .required_unless("id")
                                 .help("Give the path of your Decision Record"),
+                        )
+                        .arg(
+                            Arg::with_name("id")
+                                .short("i")
+                                .long("id")
+                                .takes_value(true)
+                                .required_unless("path")
+                                .help("Give the id of your Decision Record"),
                         ),
                 )
                 .subcommand(
@@ -282,16 +314,32 @@ fn main() {
                                 .short("p")
                                 .long("path")
                                 .takes_value(true)
-                                .required(true)
+                                .required_unless("id")
                                 .help("Give the path of your Decision Record"),
                         )
                         .arg(
-                            Arg::with_name("by")
-                                .short("b")
-                                .long("by")
+                            Arg::with_name("id")
+                                .short("i")
+                                .long("id")
                                 .takes_value(true)
-                                .required(true)
+                                .required_unless("path")
+                                .help("Give the id of your Decision Record"),
+                        )
+                        .arg(
+                            Arg::with_name("by_path")
+                                .short("b")
+                                .long("by_path")
+                                .takes_value(true)
+                                .required_unless("by_id")
                                 .help("Give the path of your Decision Record"),
+                        )
+                        .arg(
+                            Arg::with_name("by_id")
+                                .short("x")
+                                .long("by_id")
+                                .takes_value(true)
+                                .required_unless("by_path")
+                                .help("Give the id of your Decision Record"),
                         ),
                 )
                 .subcommand(
@@ -303,16 +351,32 @@ fn main() {
                                 .short("p")
                                 .long("path")
                                 .takes_value(true)
-                                .required(true)
-                                .help("Give the path of the DR which is completed by"),
+                                .required_unless("id")
+                                .help("Give the path of your Decision Record"),
                         )
                         .arg(
-                            Arg::with_name("by")
-                                .short("b")
-                                .long("by")
+                            Arg::with_name("id")
+                                .short("i")
+                                .long("id")
                                 .takes_value(true)
-                                .required(true)
-                                .help("Give the path of the DR which completes"),
+                                .required_unless("path")
+                                .help("Give the id of your Decision Record"),
+                        )
+                        .arg(
+                            Arg::with_name("by_path")
+                                .short("b")
+                                .long("by_path")
+                                .takes_value(true)
+                                .required_unless("by_id")
+                                .help("Give the path of your Decision Record"),
+                        )
+                        .arg(
+                            Arg::with_name("by_id")
+                                .short("x")
+                                .long("by_id")
+                                .takes_value(true)
+                                .required_unless("by_path")
+                                .help("Give the id of your Decision Record"),
                         ),
                 )
                 .subcommand(
@@ -324,8 +388,16 @@ fn main() {
                                 .short("p")
                                 .long("path")
                                 .takes_value(true)
-                                .required(true)
+                                .required_unless("id")
                                 .help("Give the path of your Decision Record"),
+                        )
+                        .arg(
+                            Arg::with_name("id")
+                                .short("i")
+                                .long("id")
+                                .takes_value(true)
+                                .required_unless("path")
+                                .help("Give the id of your Decision Record"),
                         ),
                 ),
         )
@@ -363,52 +435,56 @@ fn main() {
         ("lf", Some(matches)) => match matches.subcommand() {
             ("new", Some(matches)) => {
                 if matches.is_present("title") {
+                    let mut meta: adr_core::adr_repo::AdrMeta = Default::default();
+                    meta.id = arg_as_usize(matches, "id");
+                    meta.nested_path = matches.value_of("path");
                     adr_core::adr_repo::create_adr(
                         adr_config::config::get_config(),
-                        matches.value_of("path"),
                         matches.value_of("title").unwrap(),
+                        meta,
                     )
                     .unwrap();
                 }
             }
             ("decided", Some(set_matches)) => {
-                if set_matches.is_present("path") {
-                    let file_path = set_matches.value_of("path").unwrap();
+                if set_matches.is_present("path") || set_matches.is_present("id") {
                     let cfg: AdrToolConfig = adr_config::config::get_config();
-                    let base_path = Path::new(&cfg.adr_src_dir);
-
-                    adr_core::adr_repo::transition_to_decided(base_path, file_path).unwrap();
+                    let mut meta: adr_core::adr_repo::AdrMeta = Default::default();
+                    meta.id = arg_as_usize(matches, "id");
+                    meta.adr_path = matches.value_of("path");
+                    adr_core::adr_repo::transition_to_decided(&cfg.adr_src_dir, meta).unwrap();
                 }
             }
             ("completed-by", Some(set_matches)) => {
                 if set_matches.is_present("path") && set_matches.is_present("by") {
                     let cfg: AdrToolConfig = adr_config::config::get_config();
-                    let base_path = Path::new(&cfg.adr_src_dir);
-                    let file_path = set_matches.value_of("path").unwrap();
-                    let by_path = set_matches.value_of("by").unwrap();
-
-                    adr_core::adr_repo::transition_to_completed_by(base_path, file_path, by_path)
-                        .unwrap();
+                    let mut meta: adr_core::adr_repo::AdrMeta = Default::default();
+                    meta.id = arg_as_usize(matches, "id");
+                    meta.adr_path = matches.value_of("path");
+                    meta.by_id = arg_as_usize(matches, "by_id");
+                    meta.by_path = matches.value_of("by_path");
+                    adr_core::adr_repo::transition_to_completed_by(&cfg.adr_src_dir, meta).unwrap();
                 }
             }
             ("superseded-by", Some(set_matches)) => {
                 if set_matches.is_present("path") && set_matches.is_present("by") {
                     let cfg: AdrToolConfig = adr_config::config::get_config();
-                    let base_path = Path::new(&cfg.adr_src_dir);
-                    let file_path = set_matches.value_of("path").unwrap();
-                    let by_path = set_matches.value_of("by").unwrap();
-
-                    adr_core::adr_repo::transition_to_superseded_by(base_path, file_path, by_path)
+                    let mut meta: adr_core::adr_repo::AdrMeta = Default::default();
+                    meta.id = arg_as_usize(matches, "id");
+                    meta.adr_path = matches.value_of("path");
+                    meta.by_id = arg_as_usize(matches, "by_id");
+                    meta.by_path = matches.value_of("by_path");
+                    adr_core::adr_repo::transition_to_superseded_by(&cfg.adr_src_dir, meta)
                         .unwrap();
                 }
             }
             ("obsoleted", Some(set_matches)) => {
                 if set_matches.is_present("path") {
                     let cfg: AdrToolConfig = adr_config::config::get_config();
-                    let base_path = Path::new(&cfg.adr_src_dir);
-                    let file_path = set_matches.value_of("path").unwrap();
-
-                    adr_core::adr_repo::transition_to_obsoleted(base_path, file_path).unwrap();
+                    let mut meta: adr_core::adr_repo::AdrMeta = Default::default();
+                    meta.id = arg_as_usize(matches, "id");
+                    meta.adr_path = matches.value_of("path");
+                    adr_core::adr_repo::transition_to_obsoleted(&cfg.adr_src_dir, meta).unwrap();
                 }
             }
 
