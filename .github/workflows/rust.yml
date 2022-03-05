@@ -11,10 +11,16 @@ jobs:
     runs-on: ${{matrix.os}}
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build --verbose  
-    - name: Run tests
-      run: cargo test --verbose
-    - name : publish metrics to coveralls
-      run: echo "Uploaded code coveralls for github.job" ${{ github.job }}
+      - uses: actions/checkout@v2
+      - name: Build
+        run: cargo build --verbose  
+      - name: Run tests
+        run: cargo test --verbose
+
+  publish_metrics:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name : publish metrics to coveralls
+        run: echo "Uploaded code coveralls for github.job" - ${{ github.run_id }} - ${{ github.run_number}}
