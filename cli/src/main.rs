@@ -49,15 +49,15 @@ pub fn list_all_adr() -> io::Result<()> {
     for entry in adr_core::adr_repo::list_all_adr(Path::new(&cfg.adr_src_dir))? {
         //table.add_row(row![entry.title, Fg->entry.status, entry.path, entry.tags]);
         let style = match entry.status {
-            Status::WIP => "Fy",
-            Status::DECIDED => "Fg",
+            Status::WIP => "bFy",
+            Status::DECIDED => "FG",
             Status::COMPLETED => "Fg",
             Status::COMPLETES => "Fg",
-            _ => "Fr",
+            _ => "FR",
         };
         table.add_row(Row::new(vec![
-            Cell::new(&entry.file_id.to_string()),
-            Cell::new(&entry.title),
+            Cell::new(&entry.file_id.to_string()).style_spec(style),
+            Cell::new(&entry.title).style_spec(style),
             Cell::new(&entry.date),
             Cell::new(&entry.status.as_str()).style_spec(style),
             Cell::new(&entry.path()),
