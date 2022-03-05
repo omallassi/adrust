@@ -16,3 +16,14 @@ jobs:
       run: cargo build --verbose  
     - name: Run tests
       run: cargo test --verbose
+    - name : publish metrics to coveralls
+      run: |
+        [ $TRAVIS_BRANCH = master ] &&
+            [ $TRAVIS_PULL_REQUEST = false ] &&
+            [ "$TRAVIS_OS_NAME" = "linux" ] &&
+            wget https://github.com/SimonKagstrom/kcov/archive/master.zip &&
+            unzip master.zip && mv kcov-master kcov && mkdir kcov/build && cd kcov/build &&
+            cmake .. && make && make install DESTDIR=../built && cd ../.. &&
+            for file in target/debug/deps/*adr*; do [ -x "${file}" ] || continue; ./kcov/built/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --exclude-path=`pwd`/adr_core_local_impl/tests/ --verify target/kcov ${file}; done &&
+            ./kcov/built/usr/local/bin/kcov --coveralls-id=${TRAVIS_JOB_ID} --merge ./target/kcov-merge ./target/kcov &&
+            echo "Uploaded code coveralls"
