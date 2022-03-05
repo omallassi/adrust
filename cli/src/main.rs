@@ -44,7 +44,7 @@ pub fn list_all_adr() -> io::Result<()> {
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
     table.set_titles(
-        row![b -> "ID", b -> "Title", b -> "Date", b-> "Status", b -> "File", b -> "Tags"],
+        row![b -> "ID", b -> "Title", b-> "Status", b -> "Date", b -> "File", b -> "Tags"],
     );
     for entry in adr_core::adr_repo::list_all_adr(Path::new(&cfg.adr_src_dir))? {
         //table.add_row(row![entry.title, Fg->entry.status, entry.path, entry.tags]);
@@ -56,10 +56,10 @@ pub fn list_all_adr() -> io::Result<()> {
             _ => "FR",
         };
         table.add_row(Row::new(vec![
-            Cell::new(&entry.file_id.to_string()).style_spec(style),
+            Cell::new(&entry.file_id.to_string()),
             Cell::new(&entry.title).style_spec(style),
-            Cell::new(&entry.date),
             Cell::new(&entry.status.as_str()).style_spec(style),
+            Cell::new(&entry.date),
             Cell::new(&entry.path()),
             Cell::new(&entry.tags),
         ]));
