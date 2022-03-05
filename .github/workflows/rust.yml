@@ -26,7 +26,13 @@ jobs:
       - name : publish metrics to coveralls
         run: |
           echo "Uploaded code coveralls for github.job" - ${{ github.run_id }} - ${{ github.run_number}}
-          echo "another message"
+          sudo apt-get install libcurl4-openssl-dev
+          sudo apt-get install libelf-dev
+          sudo apt-get install libdw-dev
+          sudo apt-get install cmake
+          sudo apt-get install gcc
+          sudo apt-get install binutils-dev
+          sudo apt-get install libiberty-dev
           wget https://github.com/SimonKagstrom/kcov/archive/master.zip 
           unzip master.zip && mv kcov-master kcov && mkdir kcov/build && cd kcov/build
           cmake .. && make && make install DESTDIR=../built && cd ../..
@@ -34,3 +40,4 @@ jobs:
           ./kcov/built/usr/local/bin/kcov --coveralls-id=${TRAVIS_JOB_ID} --merge ./target/kcov-merge ./target/kcov
           echo "Uploaded code coveralls"
         
+
