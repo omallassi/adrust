@@ -23,6 +23,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Build
+        run: cargo build
       - name : publish metrics to coveralls
         run: |
           echo "Uploaded code coveralls for github.job" - ${{ github.run_id }} - ${{ github.run_number}}
