@@ -18,6 +18,7 @@ jobs:
         run: cargo test --verbose
 
   publish_metrics:
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
