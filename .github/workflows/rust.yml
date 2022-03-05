@@ -23,12 +23,15 @@ jobs:
         env:
           RUST_BACKTRACE: 1
       - name: Generate code coverage
-        run: cargo tarpaulin
-          #cargo +nightly tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
+        run: |
+          cargo install cargo-tarpaulin
+          cargo tarpaulin -out Lcov
+          
+      #cargo +nightly tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: 1fa078wMaKHyxnGDX5NBJ0cXp2CpyQyrd
 
   # publish_metrics:
   #   #needs: build
