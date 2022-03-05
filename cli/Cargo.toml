@@ -5,7 +5,7 @@ authors = ["MALLASSI Olivier <Olivier.MALLASSI@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-clap = "2.34.0"
+clap = "3.1.5"
 slog = "2.7.0"
 slog-term = "2.9.0"
 slog-async = "2.6.0"
