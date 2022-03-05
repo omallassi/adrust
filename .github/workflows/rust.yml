@@ -4,12 +4,64 @@ on: [push]
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest] #, macos-latest]
+    runs-on: ${{matrix.os}}
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      - uses: actions/checkout@v2
+      - name: clean
+        run: cargo clean
+      # - name: Build
+      #   run: cargo build --verbose  
+      #   env:
+      #     RUST_BACKTRACE: 1
+      # - name: Run tests
+      #   run: cargo test --verbose
+      #   env:
+      #     RUST_BACKTRACE: 1
+      - name: Generate code coverage
+        run: |
+          cargo install cargo-tarpaulin
+          cargo tarpaulin --release --out Lcov --coveralls 1fa078wMaKHyxnGDX5NBJ0cXp2CpyQyrd
+          
+      #cargo +nightly tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  # publish_metrics:
+  #   #needs: build
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Build
+  #       run: cargo build
+  #     - name : publish metrics to coveralls
+  #       run: |
+  #         echo "Uploaded code coveralls for github.job" - ${{ github.run_id }} - ${{ github.run_number}}
+  #         sudo apt-get install libcurl4-openssl-dev
+  #         sudo apt-get install libelf-dev
+  #         sudo apt-get install libdw-dev
+  #         sudo apt-get install cmake
+  #         sudo apt-get install gcc
+  #         sudo apt-get install binutils-dev
+  #         sudo apt-get install libiberty-dev
+  #         wget https://github.com/SimonKagstrom/kcov/archive/master.zip 
+  #         unzip master.zip && mv kcov-master kcov && mkdir kcov/build && cd kcov/build
+  #         cmake .. && make && make install DESTDIR=../built && cd ../..
+  #         echo "env is prepared"
+  #         ls -la .
+  #         ls -la ./target/
+  #         ls -la ./target/debug/
+  #         ls -la ./target/debug/deps
+  #         export RUST_BACKTRACE=1
+  #         for file in target/debug/deps/*adr*; do [ -x "${file}" ] || continue; echo ${file} && ./kcov/built/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --exclude-path=`pwd`/adr_core_local_impl/tests/ --verify target/kcov ${file}; done
+  #         ./kcov/built/usr/local/bin/kcov --coveralls-id=${{ github.run_number}} --merge ./target/kcov-merge ./target/kcov
+  #         echo "Uploaded code coveralls"
+        
+
