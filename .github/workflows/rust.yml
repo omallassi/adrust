@@ -25,13 +25,14 @@ jobs:
       - name: Generate code coverage
         run: |
           cargo install cargo-tarpaulin
-          cargo tarpaulin -out Lcov
+          cargo tarpaulin --out Lcov --output-dir /tmp
+          ls -la /tmp
           
       #cargo +nightly tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
       - name: Coveralls
         uses: coverallsapp/github-action@master
-        with:
-          github-token: 1fa078wMaKHyxnGDX5NBJ0cXp2CpyQyrd
+        #with:
+        #  github-token: 1fa078wMaKHyxnGDX5NBJ0cXp2CpyQyrd
 
   # publish_metrics:
   #   #needs: build
