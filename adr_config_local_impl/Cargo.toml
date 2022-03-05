@@ -10,14 +10,14 @@ edition = "2018"
 # confy = "0.3.1"
 # use git master dep to get the truncate (https://github.com/rust-cli/confy/blob/master/src/lib.rs#L195)
 confy = { git = "https://github.com/rust-cli/confy", rev = "5a58388fa9b8bcd790a62c2a9db5abdcbe9fb467"}
-serde_json = "1.0.44"
-serde_yaml = "0.8.9"
-serde = "1.0.104"
-serde_derive = "1.0.104"
-slog = "2.5.2"
-slog-term = "2.4.2"
-slog-async = "2.3.0"
+serde_json = "1.0.62"
+serde_yaml = "0.8.17"
+serde = "1.0.123"
+serde_derive = "1.0.123"
+slog = "2.7.0"
+slog-term = "2.8.0"
+slog-async = "2.6.0"
 
 [dev-dependencies]
-directories = "2.0.2"
+directories = "3.0.1"
 uuid = { version = "0.8.1", features = ["v4"] }
