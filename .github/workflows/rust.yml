@@ -17,4 +17,4 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
     - name : publish metrics to coveralls
-      run: echo "Uploaded code coveralls"
+      run: echo "Uploaded code coveralls for github.job" ${{ github.job }}
