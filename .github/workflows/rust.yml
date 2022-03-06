@@ -29,7 +29,7 @@ jobs:
       #Also seems like cucumber tests are part of coverage measures (which is nice)
         run: |
           cargo install cargo-tarpaulin
-          la -la `pwd`/adr_config_local_impl/
+          ls -la `pwd`/adr_config_local_impl/
           sed -i 's/harness = false/harness = true/g' `pwd`/adr_config_local_impl/Cargo.toml
           cargo tarpaulin --release --out Lcov --coveralls 1fa078wMaKHyxnGDX5NBJ0cXp2CpyQyrd
           
