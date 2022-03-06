@@ -26,12 +26,12 @@ jobs:
         run: |
           cargo install cargo-tarpaulin
           cargo tarpaulin --release --out Lcov --coveralls 1fa078wMaKHyxnGDX5NBJ0cXp2CpyQyrd
+          echo `pwd`
+
+#sed -i bk 's/harness = false/harness = true/g' /Users/omallassi/code/rust/adrust/adr_core_local_impl/Cargo.toml
+          
           
       #cargo +nightly tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
-      - name: Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   # publish_metrics:
   #   #needs: build
