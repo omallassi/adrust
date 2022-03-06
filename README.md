@@ -1,6 +1,6 @@
 ![screen](docs/logo.png)
 
-[![Build Status](https://github.com/omallassi/adrust/workflows/Rust/badge.svg)](https://github.com/omallassi/adrust/workflows/Rust/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/omallassi/adrust/badge.svg)](https://coveralls.io/github/omallassi/adrust)
+[![Build Status](https://github.com/omallassi/adrust/workflows/Rust/badge.svg)](https://github.com/omallassi/adrust/workflows/Rust/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/omallassi/adrust/badge.svg?branch=master)](https://coveralls.io/github/omallassi/adrust?branch=master)
 
 # ADRust: a CLI in Rust to manage (Architecture) Decision Records
 
