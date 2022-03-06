@@ -446,7 +446,6 @@ fn main() {
             }
         }
 
-        //Some("", None) => println!("No subcommand was used"), // If no subcommand was usd it'll match the tuple ("", None)
-        _ => unreachable!(), // If all subcommands are defined above, anything else is unreachabe!()
+        _ => unreachable!("parser should ensure only valid subcommand names are used"), // If all subcommands are defined above, anything else is unreachabe!()
     }
 }
