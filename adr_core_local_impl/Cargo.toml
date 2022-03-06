@@ -19,7 +19,7 @@ adr_config = {path = "../adr_config_local_impl"}
 
 [[test]]
 name = "create_adr"
-harness = false
+harness = true
 
 
 [dev-dependencies]
