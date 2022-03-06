@@ -23,13 +23,14 @@ jobs:
       #   env:
       #     RUST_BACKTRACE: 1
       - name: Generate code coverage
+      #This is a crappy work around. Got issues as tarpaulin seems to be running `cargo test -- --test-threads 1
+      # which seems to not work w/ the used version of cucumber-rust. 
+      #Changhing harness = true work around the pb...
+      #Also seems like cucumber tests are part of coverage measures (which is nice)
         run: |
           cargo install cargo-tarpaulin
+          sed -i bk 's/harness = false/harness = true/g' `pwd`/adr_config_local_impl/Cargo.toml
           cargo tarpaulin --release --out Lcov --coveralls 1fa078wMaKHyxnGDX5NBJ0cXp2CpyQyrd
-          echo `pwd`
-
-#sed -i bk 's/harness = false/harness = true/g' /Users/omallassi/code/rust/adrust/adr_core_local_impl/Cargo.toml
-          
           
       #cargo +nightly tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
 
