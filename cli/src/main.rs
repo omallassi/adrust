@@ -48,17 +48,11 @@ pub fn list_all_adr() -> io::Result<()> {
     );
     for entry in adr_core::adr_repo::list_all_adr(Path::new(&cfg.adr_src_dir))? {
         //table.add_row(row![entry.title, Fg->entry.status, entry.path, entry.tags]);
-        let style = match entry.status {
-            Status::WIP => "bFy",
-            Status::DECIDED => "FG",
-            Status::COMPLETED => "Fg",
-            Status::COMPLETES => "Fg",
-            _ => "FR",
-        };
+        let style = get_cell_style(entry.status);
         table.add_row(Row::new(vec![
             Cell::new(&entry.file_id.to_string()),
-            Cell::new(&entry.title).style_spec(style),
-            Cell::new(&entry.status.as_str()).style_spec(style),
+            Cell::new(&entry.title).style_spec(style.as_str()),
+            Cell::new(&entry.status.as_str()).style_spec(style.as_str()),
             Cell::new(&entry.date),
             Cell::new(&entry.path()),
             Cell::new(&entry.tags),
@@ -157,7 +151,7 @@ fn search(query: String) -> Result<()> {
 
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
-    table.set_titles(row![b -> "Title", b -> "File", b -> "(Indexed) Tags"]);
+    table.set_titles(row![b -> "Title", b -> "Status", b -> "File", b -> "(Indexed) Tags"]);
 
     let results = match adr_search::search::search(cfg.adr_search_index, query) {
         Ok(e) => e,
@@ -165,8 +159,13 @@ fn search(query: String) -> Result<()> {
     };
 
     for entry in results {
+        let status = &entry.status[0];
+        let status_as_enum = Status::from_str(String::from(status));
+        let style = get_cell_style(status_as_enum);
+
         table.add_row(Row::new(vec![
-            Cell::new(&entry.title[0]),
+            Cell::new(&entry.title[0]).style_spec(style.as_str()),
+            Cell::new(&entry.status[0]).style_spec(style.as_str()),
             Cell::new(&entry.path[0]),
             Cell::new(&entry.tags[0]),
         ]));
@@ -175,6 +174,19 @@ fn search(query: String) -> Result<()> {
     table.printstd();
 
     Ok(())
+}
+
+fn get_cell_style(status: Status) -> String {
+    let style = match status {
+
+        Status::WIP => "bFy",
+        Status::DECIDED => "FG",
+        Status::COMPLETED => "Fg",
+        Status::COMPLETES => "Fg",
+        _ => "FR",
+    };
+
+    style.to_string()
 }
 
 /**

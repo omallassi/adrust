@@ -41,6 +41,7 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> /*
 
     let mut schema_builder = Schema::builder();
     schema_builder.add_text_field("title", TEXT | STORED);
+    schema_builder.add_text_field("status", TEXT | STORED);
     schema_builder.add_text_field("body", TEXT);
     schema_builder.add_text_field("tags", TEXT | STORED);
     schema_builder.add_text_field("path", TEXT | STORED);
@@ -51,6 +52,7 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> /*
     let mut index_writer = index.writer(100_000_000)?;
 
     let title = schema.get_field("title").unwrap();
+    let status = schema.get_field("status").unwrap();
     let body = schema.get_field("body").unwrap();
     let tags = schema.get_field("tags").unwrap();
     let path = schema.get_field("path").unwrap();
@@ -58,6 +60,7 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> /*
     for adr in adrs {
         index_writer.add_document(doc!(
         title => String::from(adr.title.as_str()),
+        status => String::from(adr.status.as_str()),
         body => String::from(adr.content.as_str()),
         tags => String::from(adr.tags.as_str()), //recreate a string from the tags Vec via Debug...
         path => String::from(adr.path().as_str()),
@@ -78,6 +81,7 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> /*
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SearchResult {
     pub title: [String; 1],
+    pub status: [String; 1],
     pub tags: [String; 1],
     pub path: [String; 1],
 }
@@ -97,6 +101,7 @@ pub fn search(index_path: String, query_as_string: String) -> tantivy::Result<Ve
     //
     let mut schema_builder = Schema::builder();
     schema_builder.add_text_field("title", TEXT | STORED);
+    schema_builder.add_text_field("status", TEXT | STORED);
     schema_builder.add_text_field("body", TEXT);
     schema_builder.add_text_field("tags", TEXT | STORED);
     schema_builder.add_text_field("path", TEXT | STORED);
@@ -104,6 +109,7 @@ pub fn search(index_path: String, query_as_string: String) -> tantivy::Result<Ve
 
     let title = schema.get_field("title").unwrap();
     let body = schema.get_field("body").unwrap();
+    let status = schema.get_field("status").unwrap();
     //let tags = schema.get_field("tags").unwrap();
     //let path = schema.get_field("path").unwrap();
 
@@ -115,10 +121,11 @@ pub fn search(index_path: String, query_as_string: String) -> tantivy::Result<Ve
 
     let searcher = reader.searcher();
 
-    let query_parser = QueryParser::for_index(&index, vec![title, body]);
+    let query_parser = QueryParser::for_index(&index, vec![title, body, status]);
     let query = query_parser.parse_query(&query_as_string)?;
 
-    let top_docs = searcher.search(&query, &TopDocs::with_limit(20))?;
+    //TODO limit should be a param
+    let top_docs = searcher.search(&query, &TopDocs::with_limit(2000))?;
 
     let mut results = std::vec::Vec::new();
     for (_score, doc_address) in top_docs {
