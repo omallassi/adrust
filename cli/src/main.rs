@@ -153,7 +153,10 @@ fn search(query: String) -> Result<()> {
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
     table.set_titles(row![b -> "Title", b -> "Status", b -> "File", b -> "(Indexed) Tags"]);
 
-    let results = match adr_search::search::search(cfg.adr_search_index, query) {
+    //TODO get limit value from AdrToolConfig
+    let limit: usize = 100;
+
+    let results = match adr_search::search::search(cfg.adr_search_index, query, limit) {
         Ok(e) => e,
         Err(why) => panic!("{:?}", why),
     };
@@ -172,6 +175,8 @@ fn search(query: String) -> Result<()> {
     }
 
     table.printstd();
+
+    println!("\n Results are limited to {:?} items - run adr config -h to change configuration", &limit);
 
     Ok(())
 }

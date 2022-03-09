@@ -86,7 +86,7 @@ pub struct SearchResult {
     pub path: [String; 1],
 }
 
-pub fn search(index_path: String, query_as_string: String) -> tantivy::Result<Vec<SearchResult>> /*Result<()>*/
+pub fn search(index_path: String, query_as_string: String, limit: usize) -> tantivy::Result<Vec<SearchResult>> /*Result<()>*/
 {
     debug!(
         get_logger(),
@@ -124,8 +124,7 @@ pub fn search(index_path: String, query_as_string: String) -> tantivy::Result<Ve
     let query_parser = QueryParser::for_index(&index, vec![title, body, status]);
     let query = query_parser.parse_query(&query_as_string)?;
 
-    //TODO limit should be a param
-    let top_docs = searcher.search(&query, &TopDocs::with_limit(2000))?;
+    let top_docs = searcher.search(&query, &TopDocs::with_limit(limit))?;
 
     let mut results = std::vec::Vec::new();
     for (_score, doc_address) in top_docs {
