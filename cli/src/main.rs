@@ -160,6 +160,7 @@ fn search(query: String) -> Result<()> {
         Ok(e) => e,
         Err(why) => panic!("{:?}", why),
     };
+    let results_size = &results.len();
 
     for entry in results {
         let status = &entry.status[0];
@@ -176,7 +177,7 @@ fn search(query: String) -> Result<()> {
 
     table.printstd();
 
-    println!("\n Results are limited to {:?} items - run adr config -h to change configuration", &limit);
+    println!("\n Displayed {:?} results - Results are limited to {:?} items - run adr config -h to change configuration", &results_size, &limit);
 
     Ok(())
 }
@@ -357,7 +358,12 @@ fn main() {
                         .takes_value(true)
                         .required(true)
                         .conflicts_with("build-index")
-                        .help("Provide your search query"),
+                        .help("Provide your search query. The following syntax can be used :\n\
+                            \ta AND b OR c will search for documents containing terms (a and b) or c, \n\
+                            \t-b will search documents that do not contain the term b, \n\
+                            \t+c will search documents that must contain the term c, \n\
+                            \ttags:a AND tags:b will search for documents that have the tags a and b, \n\
+                            \tstatus:decided will search for decided documents"),
                     Arg::new("build-index")
                         .short('b')
                         .long("build-index")

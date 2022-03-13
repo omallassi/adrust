@@ -49,7 +49,10 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> /*
 
     let mmap_directory = MmapDirectory::open(index_path)?;
     let index = Index::open_or_create(mmap_directory, schema.clone())?; // should use open_or_create to not overwrite existing index.
-    let mut index_writer = index.writer(100_000_000)?;
+    let mut index_writer = index.writer(100_000_000)?; //multi threaded behind the scene # of thread < 8
+
+    index_writer.delete_all_documents()?;
+    index_writer.commit()?;
 
     let title = schema.get_field("title").unwrap();
     let status = schema.get_field("status").unwrap();
@@ -110,8 +113,8 @@ pub fn search(index_path: String, query_as_string: String, limit: usize) -> tant
     let title = schema.get_field("title").unwrap();
     let body = schema.get_field("body").unwrap();
     let status = schema.get_field("status").unwrap();
-    //let tags = schema.get_field("tags").unwrap();
-    //let path = schema.get_field("path").unwrap();
+    let tags = schema.get_field("tags").unwrap();
+    let path = schema.get_field("path").unwrap();
 
     //
     let reader = index
@@ -121,7 +124,7 @@ pub fn search(index_path: String, query_as_string: String, limit: usize) -> tant
 
     let searcher = reader.searcher();
 
-    let query_parser = QueryParser::for_index(&index, vec![title, body, status]);
+    let query_parser = QueryParser::for_index(&index, vec![title, body, status, tags, path]);
     let query = query_parser.parse_query(&query_as_string)?;
 
     let top_docs = searcher.search(&query, &TopDocs::with_limit(limit))?;
