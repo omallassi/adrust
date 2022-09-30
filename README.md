@@ -17,7 +17,7 @@ Here are the main features:
 * [not started yet] Why not integrate with Microsoft Teams
 
 ## Supported OS and compiler
-The current code line is developped on `MacOs / Rust 1.39` and build with `cargo` but [Travis CI](https://travis-ci.org/omallassi/adrust/builds) will build on `MacOs / Linux / Windows` on `Rust Stable Version` (cf. `.travis.yml` for details).
+The current code line is developped on `MacOs / Rust 1.39` and build with `cargo` but [Github Actions](https://github.com/omallassi/adrust/actions) will build on `MacOs / Linux / Windows` on `Rust Stable Version` (cf. `.travis.yml` for details).
 
 ## Getting Started 
 
