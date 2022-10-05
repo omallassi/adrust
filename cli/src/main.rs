@@ -475,7 +475,7 @@ fn main() {
                 build_index().unwrap();
             }
             if search_matches.is_present("title") {
-                let query = search_matches.value_of("query").unwrap().to_string();
+                let query = search_matches.value_of("title").unwrap().to_string();
                 search("title:".to_string() + &query).unwrap();
             }
         }
