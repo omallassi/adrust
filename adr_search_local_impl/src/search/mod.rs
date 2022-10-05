@@ -67,7 +67,7 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> /*
         body => String::from(adr.content.as_str()),
         tags => String::from(adr.tags.as_str()), //recreate a string from the tags Vec via Debug...
         path => String::from(adr.path().as_str()),
-        ));
+        )).ok();
     }
 
     index_writer.commit()?;

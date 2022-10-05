@@ -357,7 +357,7 @@ fn main() {
                         .long("query")
                         .takes_value(true)
                         .required(true)
-                        .conflicts_with("build-index")
+                        .conflicts_with_all(&["build-index", "title"])
                         .help("Provide your search query. The following syntax can be used :\n\
                             \ta AND b OR c will search for documents containing terms (a and b) or c, \n\
                             \t-b will search documents that do not contain the term b, \n\
@@ -369,8 +369,15 @@ fn main() {
                         .long("build-index")
                         .takes_value(false)
                         .required(true)
-                        .conflicts_with("query")
+                        .conflicts_with_all(&["query", "title"])
                         .help("Build the index based on available ADRs."),
+                    Arg::new("title")
+                        .short('t')
+                        .long("title")
+                        .takes_value(true)
+                        .required(true)
+                        .conflicts_with_all(&["build-index", "query"])
+                        .help("Search on title property of ADR only"),
                 ]),
         );
 
@@ -466,6 +473,10 @@ fn main() {
             }
             if search_matches.is_present("build-index") {
                 build_index().unwrap();
+            }
+            if search_matches.is_present("title") {
+                let query = search_matches.value_of("query").unwrap().to_string();
+                search("title:".to_string() + &query).unwrap();
             }
         }
 
