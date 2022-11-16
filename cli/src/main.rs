@@ -151,7 +151,7 @@ fn search(query: String) -> Result<()> {
 
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
-    table.set_titles(row![b -> "Title", b -> "Status", b -> "File", b -> "(Indexed) Tags"]);
+    table.set_titles(row![b -> "Title", b -> "Status", b -> "Date", b -> "File", b -> "(Indexed) Tags"]);
 
     //TODO get limit value from AdrToolConfig
     let limit: usize = 100;
@@ -170,6 +170,7 @@ fn search(query: String) -> Result<()> {
         table.add_row(Row::new(vec![
             Cell::new(&entry.title[0]).style_spec(style.as_str()),
             Cell::new(&entry.status[0]).style_spec(style.as_str()),
+            Cell::new(&entry.date[0]),
             Cell::new(&entry.path[0]),
             Cell::new(&entry.tags[0]),
         ]));
@@ -363,6 +364,7 @@ fn main() {
                             \t-b will search documents that do not contain the term b, \n\
                             \t+c will search documents that must contain the term c, \n\
                             \ttags:a AND tags:b will search for documents that have the tags a and b, \n\
+                            \ttitle:a will search on title of the document, \n\
                             \tstatus:decided will search for decided documents"),
                     Arg::new("build-index")
                         .short('b')
