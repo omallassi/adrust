@@ -365,6 +365,7 @@ fn main() {
                             \t+c will search documents that must contain the term c, \n\
                             \ttags:a AND tags:b will search for documents that have the tags a and b, \n\
                             \ttitle:a will search on title of the document, \n\
+                            \tdate:[2022-08-01T00:00:00Z TO 2023-10-02T18:00:00Z] AND tags:BPaaS will search between the specified range and date (and specified tag), \n\
                             \tstatus:decided will search for decided documents"),
                     Arg::new("build-index")
                         .short('b')

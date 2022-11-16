@@ -1,3 +1,7 @@
+use chrono::NaiveDateTime;
+use chrono::NaiveTime;
+use chrono::NaiveDate;
+use tantivy::DateTime;
 use tantivy::collector::TopDocs;
 use tantivy::directory::MmapDirectory;
 use tantivy::query::QueryParser;
@@ -42,7 +46,7 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> /*
     let mut schema_builder = Schema::builder();
     schema_builder.add_text_field("title", TEXT | STORED);
     schema_builder.add_text_field("status", TEXT | STORED);
-    schema_builder.add_text_field("date", TEXT | STORED);
+    schema_builder.add_date_field("date", INDEXED | STORED);
     schema_builder.add_text_field("body", TEXT);
     schema_builder.add_text_field("tags", TEXT | STORED);
     schema_builder.add_text_field("path", TEXT | STORED);
@@ -62,11 +66,29 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> /*
     let tags = schema.get_field("tags").unwrap();
     let path = schema.get_field("path").unwrap();
 
+    
+
     for adr in adrs {
+        //as usual, string / date conversions are a mess - All the following is to be able to index a datetime as expected by tantivy
+        let adr_date_as_date = match NaiveDate::parse_from_str(&adr.date, "%Y-%m-%d"){
+            Ok(r) => {
+                r
+            },
+            Err(why) => {
+                debug!(get_logger(), "Pb while parsing date for ADR {:?} - {:?}", adr.path(), why);
+                warn!(get_logger(), "Pb while parsing date for ADR {:?} - will use arbitraty MAX date", adr.path().as_str());
+                NaiveDate::MAX
+            },
+        };
+        let zero_time = NaiveTime::from_hms(0,0,0);
+        let date_time = NaiveDateTime::new(adr_date_as_date, zero_time);
+        let epoc = date_time.timestamp();
+
+
         index_writer.add_document(doc!(
         title => String::from(adr.title.as_str()),
         status => String::from(adr.status.as_str()),
-        date => String::from(adr.date.as_str()),
+        date => DateTime::from_unix_timestamp(epoc),
         body => String::from(adr.content.as_str()),
         tags => String::from(adr.tags.as_str()), //recreate a string from the tags Vec via Debug...
         path => String::from(adr.path().as_str()),
@@ -109,7 +131,7 @@ pub fn search(index_path: String, query_as_string: String, limit: usize) -> tant
     let mut schema_builder = Schema::builder();
     schema_builder.add_text_field("title", TEXT | STORED);
     schema_builder.add_text_field("status", TEXT | STORED);
-    schema_builder.add_text_field("date", TEXT | STORED);
+    schema_builder.add_date_field("date", INDEXED | STORED);
     schema_builder.add_text_field("body", TEXT);
     schema_builder.add_text_field("tags", TEXT | STORED);
     schema_builder.add_text_field("path", TEXT | STORED);
