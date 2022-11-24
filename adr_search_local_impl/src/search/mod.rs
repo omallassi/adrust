@@ -152,8 +152,19 @@ pub fn search(index_path: String, query_as_string: String, limit: usize) -> tant
 
     let searcher = reader.searcher();
 
-    let query_parser = QueryParser::for_index(&index, vec![title, body, status, date, tags, path]);
-    let query = query_parser.parse_query(&query_as_string)?;
+    debug!(
+        get_logger(),
+        "Search with query [{}]",
+        &query_as_string
+    );
+
+    /// default_fields is the set of fields to use if none is specified in the query. date is not part of the default
+    let query_parser = QueryParser::for_index(&index, vec![title, body, status, tags, path]);
+
+    let query = match query_parser.parse_query(&query_as_string){
+        Ok(e) => e,
+        Err(why) => panic!("Search | Error while parsing {:?}", why),
+    };
 
     let top_docs = searcher.search(&query, &TopDocs::with_limit(limit))?;
 
