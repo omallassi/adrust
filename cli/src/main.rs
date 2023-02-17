@@ -46,6 +46,7 @@ pub fn list_all_adr() -> io::Result<()> {
     table.set_titles(
         row![b -> "ID", b -> "Title", b-> "Status", b -> "Date", b -> "File", b -> "Tags"],
     );
+    info!(get_logger(), "list all ADR from [{}]",&cfg.adr_src_dir);
     for entry in adr_core::adr_repo::list_all_adr(Path::new(&cfg.adr_src_dir))? {
         //table.add_row(row![entry.title, Fg->entry.status, entry.path, entry.tags]);
         let style = get_cell_style(entry.status);

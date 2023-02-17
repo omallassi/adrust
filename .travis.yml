@@ -18,8 +18,8 @@ os:
   - osx
   - windows
 rust:
-  - 1.46.0
   - 1.50.0
+  - 1.67.1
 
 script:
   - cargo build --verbose --all

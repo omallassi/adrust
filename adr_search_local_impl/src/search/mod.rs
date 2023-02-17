@@ -76,19 +76,20 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> /*
             },
             Err(why) => {
                 debug!(get_logger(), "Pb while parsing date for ADR {:?} - {:?}", adr.path(), why);
-                warn!(get_logger(), "Pb while parsing date for ADR {:?} - will use arbitraty MAX date", adr.path().as_str());
-                NaiveDate::MAX
+                warn!(get_logger(), "Pb while parsing date for ADR {:?} - will use arbitraty January, 1rst 1970 date", adr.path().as_str());
+                NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
             },
         };
-        let zero_time = NaiveTime::from_hms(0,0,0);
+        let zero_time = NaiveTime::from_hms_opt(0,0,0).unwrap();
         let date_time = NaiveDateTime::new(adr_date_as_date, zero_time);
+        
         let epoc = date_time.timestamp();
 
 
         index_writer.add_document(doc!(
         title => String::from(adr.title.as_str()),
         status => String::from(adr.status.as_str()),
-        date => DateTime::from_unix_timestamp(epoc),
+        date => DateTime::from_timestamp_secs(epoc),
         body => String::from(adr.content.as_str()),
         tags => String::from(adr.tags.as_str()), //recreate a string from the tags Vec via Debug...
         path => String::from(adr.path().as_str()),
@@ -139,7 +140,6 @@ pub fn search(index_path: String, query_as_string: String, limit: usize) -> tant
 
     let title = schema.get_field("title").unwrap();
     let body = schema.get_field("body").unwrap();
-    let date = schema.get_field("date").unwrap();
     let status = schema.get_field("status").unwrap();
     let tags = schema.get_field("tags").unwrap();
     let path = schema.get_field("path").unwrap();
@@ -158,7 +158,7 @@ pub fn search(index_path: String, query_as_string: String, limit: usize) -> tant
         &query_as_string
     );
 
-    /// default_fields is the set of fields to use if none is specified in the query. date is not part of the default
+    // default_fields is the set of fields to use if none is specified in the query. date is not part of the default
     let query_parser = QueryParser::for_index(&index, vec![title, body, status, tags, path]);
 
     let query = match query_parser.parse_query(&query_as_string){
