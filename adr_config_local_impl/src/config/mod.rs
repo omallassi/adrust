@@ -135,34 +135,70 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
     if ADR_SRC_DIR == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.adr_src_dir = String::from(value);
-        confy::store(config, None, cfg).unwrap();
+        match confy::store(config, None, &cfg){
+            Err(_why) => {
+                error!(get_logger(), "Error while updating config file for property [{}]", &name);
+                AdrToolConfig::default()
+            }
+            Ok(e) => cfg,
+        };
     }
     if ADR_TEMPLATE_DIR == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.adr_template_dir = String::from(value);
-        confy::store(config, None, cfg).unwrap();
+        match confy::store(config, None, &cfg){
+            Err(_why) => {
+                error!(get_logger(), "Error while updating config file for property [{}]", &name);
+                AdrToolConfig::default()
+            }
+            Ok(e) => cfg,
+        };
     }
     if ADR_TEMPLATE_FILE == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.adr_template_file = String::from(value);
-        confy::store(config, None, cfg).unwrap();
+        match confy::store(config, None, &cfg){
+            Err(_why) => {
+                error!(get_logger(), "Error while updating config file for property [{}]", &name);
+                AdrToolConfig::default()
+            }
+            Ok(e) => cfg,
+        };
     }
     if LOG_LEVEL == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.log_level = value.parse().unwrap();
-        confy::store(config, None, cfg).unwrap();
+        match confy::store(config, None, &cfg){
+            Err(_why) => {
+                error!(get_logger(), "Error while updating config file for property [{}]", &name);
+                AdrToolConfig::default()
+            }
+            Ok(e) => cfg,
+        };
     }
 
     if USE_ID_PREFIX == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.use_id_prefix = value.parse().unwrap();
-        confy::store(config, None, cfg).unwrap();
+        match confy::store(config, None, &cfg){
+            Err(_why) => {
+                error!(get_logger(), "Error while updating config file for property [{}]", &name);
+                AdrToolConfig::default()
+            }
+            Ok(e) => cfg,
+        };
     }
 
     if ID_PREFIX_WIDTH == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.id_prefix_width = value.parse().unwrap();
-        confy::store(config, None, cfg).unwrap();
+        match confy::store(config, None, &cfg){
+            Err(_why) => {
+                error!(get_logger(), "Error while updating config file for property [{}]", &name);
+                AdrToolConfig::default()
+            }
+            Ok(e) => cfg,
+        };
     }
 
     Ok(())
