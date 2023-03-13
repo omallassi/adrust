@@ -130,46 +130,46 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
             id_prefix_width: cfg.id_prefix_width,
         };
 
-        confy::store(config, new_cfg).unwrap();
+        confy::store(config, None, new_cfg).unwrap();
     }
     if ADR_SRC_DIR == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.adr_src_dir = String::from(value);
-        confy::store(config, cfg).unwrap();
+        confy::store(config, None, cfg).unwrap();
     }
     if ADR_TEMPLATE_DIR == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.adr_template_dir = String::from(value);
-        confy::store(config, cfg).unwrap();
+        confy::store(config, None, cfg).unwrap();
     }
     if ADR_TEMPLATE_FILE == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.adr_template_file = String::from(value);
-        confy::store(config, cfg).unwrap();
+        confy::store(config, None, cfg).unwrap();
     }
     if LOG_LEVEL == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.log_level = value.parse().unwrap();
-        confy::store(config, cfg).unwrap();
+        confy::store(config, None, cfg).unwrap();
     }
 
     if USE_ID_PREFIX == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.use_id_prefix = value.parse().unwrap();
-        confy::store(config, cfg).unwrap();
+        confy::store(config, None, cfg).unwrap();
     }
 
     if ID_PREFIX_WIDTH == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.id_prefix_width = value.parse().unwrap();
-        confy::store(config, cfg).unwrap();
+        confy::store(config, None, cfg).unwrap();
     }
 
     Ok(())
 }
 
 pub fn get_config_from_name(config: &str) -> AdrToolConfig {
-    let cfg: AdrToolConfig = match confy::load(config) {
+    let cfg: AdrToolConfig = match confy::load(config, None) {
         Err(_why) => {
             warn!(get_logger(), "Returning default configuration file");
             AdrToolConfig::default()
