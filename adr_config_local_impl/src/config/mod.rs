@@ -140,7 +140,7 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
                 error!(get_logger(), "Error while updating config file for property [{}]", &name);
                 AdrToolConfig::default()
             }
-            Ok(e) => cfg,
+            Ok(_e) => cfg,
         };
     }
     if ADR_TEMPLATE_DIR == name {
@@ -151,7 +151,7 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
                 error!(get_logger(), "Error while updating config file for property [{}]", &name);
                 AdrToolConfig::default()
             }
-            Ok(e) => cfg,
+            Ok(_e) => cfg,
         };
     }
     if ADR_TEMPLATE_FILE == name {
@@ -162,7 +162,7 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
                 error!(get_logger(), "Error while updating config file for property [{}]", &name);
                 AdrToolConfig::default()
             }
-            Ok(e) => cfg,
+            Ok(_e) => cfg,
         };
     }
     if LOG_LEVEL == name {
@@ -173,7 +173,7 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
                 error!(get_logger(), "Error while updating config file for property [{}]", &name);
                 AdrToolConfig::default()
             }
-            Ok(e) => cfg,
+            Ok(_e) => cfg,
         };
     }
 
@@ -185,7 +185,7 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
                 error!(get_logger(), "Error while updating config file for property [{}]", &name);
                 AdrToolConfig::default()
             }
-            Ok(e) => cfg,
+            Ok(_e) => cfg,
         };
     }
 
@@ -197,7 +197,7 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
                 error!(get_logger(), "Error while updating config file for property [{}]", &name);
                 AdrToolConfig::default()
             }
-            Ok(e) => cfg,
+            Ok(_e) => cfg,
         };
     }
 
