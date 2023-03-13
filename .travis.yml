@@ -20,6 +20,7 @@ os:
 rust:
   - 1.50.0
   - 1.67.1
+  - 1.68.0
 
 script:
   - cargo build --verbose --all
