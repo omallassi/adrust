@@ -131,7 +131,7 @@ It has nothing to do with `adrust` but you can also enrich your `Asciidoctor CSS
 To set the log level to Debug `adr config set --name log_level --value 6`
 
 ## Search
-Search is based on [Tantivy Search](https://github.com/tantivy-search/tantivy). You can build your local index via `adr index --build` and search via `adr search --query "word#1 AND word#2"`. More on the query langage [here](https://docs.rs/tantivy/latest/tantivy/query/struct.QueryParser.html)
+Search is based on [Tantivy Search](https://github.com/tantivy-search/tantivy). You can build your local index via `adr search --build` and search via `adr search --query "word#1 AND word#2"`. More on the query langage [here](https://docs.rs/tantivy/latest/tantivy/query/struct.QueryParser.html)
 
 ## Troubleshoot & Known Issues
 
