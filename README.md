@@ -9,10 +9,10 @@ The idea is to provide a cli to managed ADR. One more? yes...reality is that was
 ![screen](docs/screen.png)
 
 Here are the main features: 
-* [wip] Manage ADR lifecycle (create, obsoletes...). ADR should be written in _asciidoc_ (this is a long story...). Look at `./template` folder for more details. 
+* [done] Manage ADR lifecycle (create, obsoletes...). ADR should be written in _asciidoc_ (this is a long story...). Look at `./template` folder for more details. 
 * [done] an `init` command
 * [done] Support Tags
-* [done] Support search across title, content and tags 
+* [done] Support search across title, content, date and tags 
 * [not started yet] Support different types of templates
 * [not started yet] Why not integrate with Microsoft Teams
 
