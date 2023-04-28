@@ -484,6 +484,6 @@ fn main() {
             }
         }
 
-        _ => unreachable!("parser should ensure only valid subcommand names are used"), // If all subcommands are defined above, anything else is unreachabe!()
+        _ => println!("Please, try adr --help"), // If all subcommands are defined above, anything else is unreachabe!()
     }
 }
