@@ -23,7 +23,10 @@ The current code line is developped on `MacOs / Rust 1.69` and build with `cargo
 
 At this stage, the tool is not published on [crates.io](https://crates.io/). so `git clone` is for now your best friend. 
 
-Once cloned, `cd` at the root of the cloned repo and run `cargo install --path cli` (the executable should be installed `$HOME/.cargo/bin/adr`)
+Once cloned, `cd` at the root of the cloned repo and 
+
+* run `cargo install --path cli` (the executable should be installed `$HOME/.cargo/bin/adr`)
+* _or_ `cargo build` and then `./target/debug/adr` should work
 
 Run `adr config list` to view the default configuration (and why not modify it) and `adr init` : directories specified in `config` should be created and a default template copied in `templates` sub-folder. 
 
