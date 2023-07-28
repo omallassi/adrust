@@ -73,25 +73,39 @@ pub fn init_from_name(config_name: &str) -> Result<()> {
     fs::create_dir_all(&path)?;
     info!(get_logger(), "[{}] created]", &path);
 
-    match fs::copy(
-        "./templates/adr-template-v0.1.adoc",
-        format!("{0}/{1}", &path, cfg.adr_template_file),
-    ) {
-        Err(_why) => {
+    let from  = "./templates/adr-template-v0.1.adoc";
+    //check 'from' and 'to' are not the same to avoid file to be truncated
+    match fs::metadata(&from) {
+        Ok(_) => {
             warn!(
-                get_logger(),
-                "Unable to create [{}]",
-                format!("{0}/{1}", &path, cfg.adr_template_file)
+                get_logger(), 
+                "File [{}] already exists, it will not be copied", 
+                &from
             );
-        }
-        Ok(_val) => {
-            info!(
-                get_logger(),
-                "[{}] created]",
-                format!("{0}/{1}", &path, cfg.adr_template_file)
-            );
-        }
-    };
+        },
+        Err(_) => {
+            match fs::copy(
+                &from,
+                format!("{0}/{1}", &path, cfg.adr_template_file),
+            ) {
+                Err(_why) => {
+                    warn!(
+                        get_logger(),
+                        "Unable to create [{}]",
+                        format!("{0}/{1}", &path, cfg.adr_template_file)
+                    );
+                }
+                Ok(_val) => {
+                    info!(
+                        get_logger(),
+                        "[{}] created]",
+                        format!("{0}/{1}", &path, cfg.adr_template_file)
+                    );
+                }
+            };
+        },
+    }
+    
 
     let path = cfg.adr_search_index;
     fs::create_dir_all(&path)?;
