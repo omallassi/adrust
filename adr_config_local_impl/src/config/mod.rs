@@ -383,7 +383,7 @@ mod tests {
                 let _void = super::init_from_name(config);
             }
             Err(why) => {
-                panic!(why);
+                panic!("{:?}", why);
             }
         }
         //

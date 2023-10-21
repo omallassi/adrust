@@ -161,7 +161,7 @@ mod check_transitions_and_lifecycle_of_adr {
                     println!("[init] Want to copy file [{:?}] to [{:?}]", from, to);
                     match fs::copy(from, to.as_path()) {
                         Ok(_) => (),
-                        Err(why) => panic!(why),
+                        Err(why) => panic!("{:?}", why),
                     };
                 }
             }
@@ -177,7 +177,7 @@ mod check_transitions_and_lifecycle_of_adr {
                     println!("calling transition_to() with [{}] [{}] [{}]", transition, adr.name, by);
                     match adr_core::adr_repo::transition_to(TransitionStatus::from_str(transition), Path::new(&adr.base_path), adr.name.as_str(), "") {
                         Ok(transitioned) => adr.has_transitioned = transitioned,
-                        Err(why) => panic!(why)
+                        Err(why) => panic!("{:?}", why)
                     };
                 },
                 false => {
@@ -185,7 +185,7 @@ mod check_transitions_and_lifecycle_of_adr {
                     println!("calling transition_to() with [{}] [{}] [{}]", transition, adr.name, by);
                     match adr_core::adr_repo::transition_to(TransitionStatus::from_str(transition), Path::new(&adr.base_path), adr.name.as_str(), by.as_str()) {
                         Ok(transitioned) => adr.has_transitioned = transitioned,
-                        Err(why) => panic!(why)
+                        Err(why) => panic!("{:?}", why)
                     };
                 },
             };
@@ -199,7 +199,7 @@ mod check_transitions_and_lifecycle_of_adr {
         then regex r"^the new status is (.+) by (.+)$" (String, String) |adr, new_status, by, _step| {
             let new_adr = match adr_core::adr_repo::build_adr(Path::new(&adr.base_path), Path::new(adr.name.as_str())) {
                 Ok(adr) => adr,
-                Err(why) => panic!(why),
+                Err(why) => panic!("{:?}", why),
             };
 
             assert_eq!(Status::from_str(new_status), new_adr.status);
@@ -212,7 +212,7 @@ mod check_transitions_and_lifecycle_of_adr {
         then regex r"^the date is updated to today if (.+) is true$" (bool) |adr, is_accepted, _step| {
             let adr = match adr_core::adr_repo::build_adr(Path::new(&adr.base_path), Path::new(adr.name.as_str())) {
                 Ok(adr) => adr,
-                Err(why) => panic!(why),
+                Err(why) => panic!("{:?}", why),
             };
 
             if is_accepted {

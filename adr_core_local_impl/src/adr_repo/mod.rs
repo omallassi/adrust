@@ -1311,7 +1311,7 @@ mod tests {
             Ok(src) => src,
             Err(why) => {
                 println!("Unable to get src dir [{}]", why);
-                panic!(why);
+                panic!("{:?}", why);
             }
         };
 
@@ -1338,7 +1338,7 @@ mod tests {
             }
             Err(why) => {
                 println!("Unable to get src dir [{}]", why);
-                panic!(why);
+                panic!("{:?}", why);
             }
         };
         //set config
@@ -1373,7 +1373,7 @@ mod tests {
             }
             Err(why) => {
                 println!("Unable to get src dir [{}]", why);
-                panic!(why);
+                panic!("{:?}", why);
             }
         };
 
@@ -1415,7 +1415,7 @@ mod tests {
             }
             Err(why) => {
                 println!("Unable to get src dir [{}]", why);
-                panic!(why);
+                panic!("{:?}", why);
             }
         };
 
@@ -1479,7 +1479,7 @@ mod tests {
             }
             Err(why) => {
                 println!("Unable to get src dir [{}]", why);
-                panic!(why);
+                panic!("{:?}", why);
             }
         };
 
