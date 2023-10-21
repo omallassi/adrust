@@ -37,7 +37,7 @@ fn get_logger() -> slog::Logger {
     slog::Logger::root(drain, o!())
 }
 
-pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> /*Result<(), ()>*/ {
+pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> {
     info!(get_logger(), "Building Index in folder [{}]", index_path);
 
     let now = Instant::now();
@@ -87,12 +87,12 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> /*
 
 
         index_writer.add_document(doc!(
-        title => String::from(adr.title.as_str()),
-        status => String::from(adr.status.as_str()),
-        date => DateTime::from_timestamp_secs(epoc),
-        body => String::from(adr.content.as_str()),
-        tags => String::from(adr.tags.as_str()), //recreate a string from the tags Vec via Debug...
-        path => String::from(adr.path().as_str()),
+            title => String::from(adr.title.as_str()),
+            status => String::from(adr.status.as_str()),
+            date => DateTime::from_timestamp_secs(epoc),
+            body => String::from(adr.content.as_str()),
+            tags => String::from(adr.tags.as_str()), //recreate a string from the tags Vec via Debug...
+            path => String::from(adr.path().as_str()),
         )).ok();
     }
 
