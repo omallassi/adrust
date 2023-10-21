@@ -9,9 +9,9 @@ edition = "2018"
 [dependencies]
 slog = "2.7.0"
 slog-term = "2.9.0"
-slog-async = "2.6.0"
+slog-async = "2.8.0"
 lazy_static = "1.4.0"
-regex = "1.4.3"
+regex = "1.10.2"
 walkdir = "2.3.1"
 chrono = "0.4.19"
 

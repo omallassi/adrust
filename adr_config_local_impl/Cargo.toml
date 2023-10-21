@@ -16,8 +16,8 @@ serde = "1.0.189"
 serde_derive = "1.0.189"
 slog = "2.7.0"
 slog-term = "2.9.0"
-slog-async = "2.6.0"
+slog-async = "2.8.0"
 
 [dev-dependencies]
-directories = "4.0.1"
+directories = "5.0.1"
 uuid = { version = "0.8.1", features = ["v4"] }
