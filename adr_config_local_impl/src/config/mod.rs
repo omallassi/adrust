@@ -236,12 +236,17 @@ mod tests {
     use std::fs::{self};
     use std::path::Path;
     use uuid::*;
+    extern crate slog;
+    extern crate slog_term;
+    use slog::*;
 
     #[test]
     fn test_set_config_log_level() {
         let uuid = Uuid::new_v4();
         let name = format!("adrust-tools-4-tests-{}", uuid);
         let config = name.as_str();
+
+        info!(super::get_logger(), "test_set_config_log_level will use [{}]", config);
 
         super::set_config_from_name(config, "log_level", "7").unwrap();
         let cfg = super::get_config_from_name(config);
@@ -257,6 +262,8 @@ mod tests {
         let name = format!("adrust-tools-4-tests-{}", uuid);
         let config = name.as_str();
 
+        info!(super::get_logger(), "test_set_config_use_id will use [{}]", config);
+
         super::set_config_from_name(config, "use_id_prefix", "false").unwrap();
         let cfg = super::get_config_from_name(config);
 
@@ -270,6 +277,8 @@ mod tests {
         let uuid = Uuid::new_v4();
         let name = format!("adrust-tools-4-tests-{}", uuid);
         let config = name.as_str();
+
+        info!(super::get_logger(), "test_set_config_id_width will use [{}]", config);
 
         super::set_config_from_name(config, "id_prefix_width", "10").unwrap();
         let cfg = super::get_config_from_name(config);
@@ -305,6 +314,8 @@ mod tests {
         let name = format!("adrust-tools-4-tests-{}", uuid);
         let config = name.as_str();
 
+        info!(super::get_logger(), "test_set_config_adr_root will use [{}]", config);
+
         match super::set_config_from_name(config, "adr_root_dir", "/tmp/adr-samples-4-tests") {
             Ok(e) => e,
             Err(why) => {
@@ -328,6 +339,8 @@ mod tests {
         let name = format!("adrust-tools-4-tests-{}", uuid);
         let config = name.as_str();
 
+        info!(super::get_logger(), "test_set_config_adr_template_file will use [{}]", config);
+
         match super::set_config_from_name(config, "adr_template_file", "new-template.adoc") {
             Ok(e) => e,
             Err(why) => {
@@ -345,6 +358,8 @@ mod tests {
         let uuid = Uuid::new_v4();
         let name = format!("adrust-tools-4-tests-{}", uuid);
         let config = name.as_str();
+
+        info!(super::get_logger(), "test_set_config_adr_src_dir will use [{}]", config);
 
         match super::set_config_from_name(config, "adr_src_dir", "/tmp/does-not-exists/src") {
             Ok(e) => e,
@@ -373,6 +388,8 @@ mod tests {
         };
 
         let config = "adrust-tool-unit";
+
+        info!(super::get_logger(), "test_init will use [{}]", config);
 
         match super::set_config_from_name(
             config,
