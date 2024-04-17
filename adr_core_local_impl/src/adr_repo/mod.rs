@@ -1537,7 +1537,7 @@ mod tests {
 
         assert_eq!(adr_sut.date, "2019-10-28");
 
-        let date = Utc::today();
+        let date = Utc::now().date_naive();
         adr_sut.update_date(date);
 
         let date = date.format("%Y-%m-%d");
