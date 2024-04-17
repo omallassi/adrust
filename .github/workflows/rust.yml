@@ -38,7 +38,7 @@ jobs:
         run: |
           cargo install cargo-tarpaulin
           sed -i 's/harness = false/harness = true/g' `pwd`/adr_core_local_impl/Cargo.toml
-          cargo tarpaulin --release --out Lcov --coveralls 1fa078wMaKHyxnGDX5NBJ0cXp2CpyQyrd
+          RUST_BACKTRACE=1 cargo tarpaulin --release --out Lcov --coveralls 1fa078wMaKHyxnGDX5NBJ0cXp2CpyQyrd
           
       #cargo +nightly tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
         
