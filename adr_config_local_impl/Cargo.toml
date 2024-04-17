@@ -12,10 +12,10 @@ edition = "2018"
 confy = "0.5.1"  #{ git = "https://github.com/rust-cli/confy", rev = "5a58388fa9b8bcd790a62c2a9db5abdcbe9fb467"} 
 serde_json = "1.0.107"
 serde_yaml = "0.9.25"
-serde = "1.0.189"
-serde_derive = "1.0.189"
+serde = "1.0.198"
+serde_derive = "1.0.198"
 slog = "2.7.0"
-slog-term = "2.9.0"
+slog-term = "2.9.1"
 slog-async = "2.8.0"
 
 [dev-dependencies]
