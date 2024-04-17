@@ -382,12 +382,14 @@ mod tests {
 
     #[test]
     fn test_init() {
-        let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool-unit", "") {
+        let uuid = Uuid::new_v4();
+        let name = format!("adrust-tools-4-tests-{}", uuid);
+        let config = name.as_str();
+
+        let project_dirs: ProjectDirs = match ProjectDirs::from("some", config, "") {
             None => panic!("issue while preparing test"),
             Some(project_dirs) => project_dirs,
         };
-
-        let config = "adrust-tool-unit";
 
         info!(super::get_logger(), "test_init will use [{}]", config);
 
