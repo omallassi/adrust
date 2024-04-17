@@ -5,10 +5,10 @@ use slog::*;
 use std::io::{self};
 use std::path::Path;
 
-#[macro_use]
-extern crate prettytable;
-use prettytable::format;
-use prettytable::{Cell, Row, Table};
+use comfy_table::modifiers::UTF8_ROUND_CORNERS;
+use comfy_table::presets::UTF8_FULL;
+use comfy_table::*;
+use comfy_table::{Width::*, CellAlignment, ColumnConstraint::*, Table};
 
 extern crate lazy_static;
 
@@ -42,26 +42,38 @@ pub fn list_all_adr() -> io::Result<()> {
     let cfg: AdrToolConfig = adr_config::config::get_config();
 
     let mut table = Table::new();
-    table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
-    table.set_titles(
-        row![b -> "ID", b -> "Title", b-> "Status", b -> "Date", b -> "File", b -> "Tags"],
+    table.load_preset(UTF8_FULL)
+        .apply_modifier(UTF8_ROUND_CORNERS)
+        .set_content_arrangement(ContentArrangement::Dynamic);
+    //table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+    table.set_header(
+        vec!["ID", "Title", "Status", "Date", "File", "Tags"],
     );
+
+    let mut tags_column = table.column_mut(5).expect("This should be the Tags column");
+    tags_column.set_constraint(UpperBoundary(Fixed(20)));
+
+    let mut title_column = table.column_mut(1).expect("This should be the Title column");
+    title_column.set_constraint(UpperBoundary(Fixed(90)));
+
     info!(get_logger(), "list all ADR from [{}]",&cfg.adr_src_dir);
     for entry in adr_core::adr_repo::list_all_adr(Path::new(&cfg.adr_src_dir))? {
         //table.add_row(row![entry.title, Fg->entry.status, entry.path, entry.tags]);
         let style = get_cell_style(entry.status);
-        table.add_row(Row::new(vec![
-            Cell::new(&entry.file_id.to_string()),
-            Cell::new(&entry.title).style_spec(style.as_str()),
-            Cell::new(&entry.status.as_str()).style_spec(style.as_str()),
-            Cell::new(&entry.date),
-            Cell::new(&entry.path()),
-            Cell::new(&entry.tags),
-        ]));
+        table.add_row(
+            vec![
+                Cell::new(&entry.file_id.to_string()),
+                Cell::new(&entry.title).fg(style),
+                Cell::new(entry.status.as_str()).fg(style),
+                Cell::new(&entry.date),
+                Cell::new(&entry.path()),
+                Cell::new(&entry.tags).add_attributes(vec![Attribute::Italic]),
+            ]
+        );
     }
 
     // Print the table to stdout
-    table.printstd();
+    println!("{table}");
 
     Ok(())
 }
@@ -80,39 +92,42 @@ fn list_all_config() -> Result<()> {
     let cfg: AdrToolConfig = adr_config::config::get_config();
 
     let mut table = Table::new();
-    table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
-    table.set_titles(row![b -> "Property", b -> "Value", b -> "Modifiable"]);
+    table.load_preset(UTF8_FULL)
+        .apply_modifier(UTF8_ROUND_CORNERS)
+        .set_content_arrangement(ContentArrangement::Dynamic);
+    //table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+    table.set_header(vec!["Property", "Value", "Modifiable"]);
     //table.add_row(row![adr_config::config::ADR_ROOT_DIR, cfg.adr_root_dir, "Y"]);
-    table.add_row(row![adr_config::config::ADR_SRC_DIR, cfg.adr_src_dir, "Y"]);
-    table.add_row(row![
+    table.add_row(vec![adr_config::config::ADR_SRC_DIR, cfg.adr_src_dir.as_str(), "Y"]);
+    table.add_row(vec![
         adr_config::config::ADR_TEMPLATE_DIR,
-        cfg.adr_template_dir,
+        cfg.adr_template_dir.as_str(),
         "Y"
     ]);
-    table.add_row(row![
+    table.add_row(vec![
         adr_config::config::ADR_TEMPLATE_FILE,
-        cfg.adr_template_file,
+        cfg.adr_template_file.as_str(),
         "Y"
     ]);
-    table.add_row(row![
+    table.add_row(vec![
         adr_config::config::ADR_SEARCH_INDEX,
-        cfg.adr_search_index,
+        cfg.adr_search_index.as_str(),
         "N"
     ]);
-    table.add_row(row![adr_config::config::LOG_LEVEL, cfg.log_level, "Y"]);
-    table.add_row(row![
+    table.add_row(vec![adr_config::config::LOG_LEVEL, cfg.log_level.to_string().as_str(), "Y"]);
+    table.add_row(vec![
         adr_config::config::USE_ID_PREFIX,
-        cfg.use_id_prefix,
+        cfg.use_id_prefix.to_string().as_str(),
         "Y"
     ]);
-    table.add_row(row![
+    table.add_row(vec![
         adr_config::config::ID_PREFIX_WIDTH,
-        cfg.id_prefix_width,
+        cfg.id_prefix_width.to_string().as_str(),
         "Y"
     ]);
 
     // Print the table to stdout
-    table.printstd();
+    println!("{table}");
 
     Ok(())
 }
@@ -121,17 +136,20 @@ fn list_all_tags() -> Result<()> {
     let cfg: AdrToolConfig = adr_config::config::get_config();
 
     let mut table = Table::new();
-    table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
-    table.set_titles(row![b -> "Tags", b -> "Popularity"]);
+    table.load_preset(UTF8_FULL)
+        .apply_modifier(UTF8_ROUND_CORNERS)
+        .set_content_arrangement(ContentArrangement::Dynamic);
+    //table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+    table.set_header(vec!["Tags", "Popularity"]);
 
     let popularity = adr_core::adr_repo::get_tags_popularity(Path::new(&cfg.adr_src_dir))?;
 
     for (key, val) in popularity.iter() {
-        table.add_row(row![key, val]);
+        table.add_row(vec![Cell::new(key), Cell::new(&val.to_string())]);
     }
 
     // Print the table to stdout
-    table.printstd();
+    println!("{table}");
 
     Ok(())
 }
@@ -151,8 +169,17 @@ fn search(query: String) -> Result<()> {
     let cfg: AdrToolConfig = adr_config::config::get_config();
 
     let mut table = Table::new();
-    table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
-    table.set_titles(row![b -> "Title", b -> "Status", b -> "Date", b -> "File", b -> "(Indexed) Tags"]);
+    table.load_preset(UTF8_FULL)
+        .apply_modifier(UTF8_ROUND_CORNERS)
+        .set_content_arrangement(ContentArrangement::Dynamic);
+    //table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+    table.set_header(vec!["Title", "Status", "Date", "File", "(Indexed) Tags"]);
+
+    let mut tags_column = table.column_mut(4).expect("This should be the Tags column");
+    tags_column.set_constraint(UpperBoundary(Fixed(20)));
+
+    let mut title_column = table.column_mut(0).expect("This should be the Title column");
+    title_column.set_constraint(UpperBoundary(Fixed(90)));
 
     //TODO get limit value from AdrToolConfig
     let limit: usize = 100;
@@ -168,33 +195,35 @@ fn search(query: String) -> Result<()> {
         let status_as_enum = Status::from_str(String::from(status));
         let style = get_cell_style(status_as_enum);
 
-        table.add_row(Row::new(vec![
-            Cell::new(&entry.title[0]).style_spec(style.as_str()),
-            Cell::new(&entry.status[0]).style_spec(style.as_str()),
-            Cell::new(&entry.date[0]),
-            Cell::new(&entry.path[0]),
-            Cell::new(&entry.tags[0]),
-        ]));
+        table.add_row(
+            vec![
+                Cell::new(&entry.title[0]).fg(style),
+                Cell::new(&entry.status[0]).fg(style),
+                Cell::new(&entry.date[0]),
+                Cell::new(&entry.path[0]),
+                Cell::new(&entry.tags[0]).add_attributes(vec![Attribute::Italic]),
+            ]
+        );
     }
 
-    table.printstd();
+    println!("{table}");
 
     println!("\n Displayed {:?} results - Results are limited to {:?} items - run adr config -h to change configuration", &results_size, &limit);
 
     Ok(())
 }
 
-fn get_cell_style(status: Status) -> String {
+fn get_cell_style(status: Status) -> Color {
     let style = match status {
 
-        Status::WIP => "bFy",
-        Status::DECIDED => "FG",
-        Status::COMPLETED => "Fg",
-        Status::COMPLETES => "Fg",
-        _ => "FR",
+        Status::WIP => Color::DarkYellow,
+        Status::DECIDED => Color::DarkGreen,
+        Status::COMPLETED => Color::Green,
+        Status::COMPLETES => Color::Green,
+        _ => Color::DarkRed,
     };
 
-    style.to_string()
+    style
 }
 
 /**
