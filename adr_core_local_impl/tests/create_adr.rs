@@ -216,7 +216,7 @@ mod check_transitions_and_lifecycle_of_adr {
             };
 
             if is_accepted {
-                assert_eq!(adr.date, Utc::today().format("%Y-%m-%d").to_string());
+                assert_eq!(adr.date, Utc::now().date_naive().format("%Y-%m-%d").to_string());
             }
             else {
                 assert_eq!(adr.date, "2019-10-28");
