@@ -83,7 +83,7 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> {
         let zero_time = NaiveTime::from_hms_opt(0,0,0).unwrap();
         let date_time = NaiveDateTime::new(adr_date_as_date, zero_time);
         
-        let epoc = date_time.timestamp();
+        let epoc = date_time.and_utc().timestamp();
 
 
         index_writer.add_document(doc!(

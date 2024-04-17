@@ -8,7 +8,7 @@ use std::path::Path;
 use comfy_table::modifiers::UTF8_ROUND_CORNERS;
 use comfy_table::presets::UTF8_FULL;
 use comfy_table::*;
-use comfy_table::{Width::*, CellAlignment, ColumnConstraint::*, Table};
+use comfy_table::{Width::*, ColumnConstraint::*, Table};
 
 extern crate lazy_static;
 
@@ -50,10 +50,10 @@ pub fn list_all_adr() -> io::Result<()> {
         vec!["ID", "Title", "Status", "Date", "File", "Tags"],
     );
 
-    let mut tags_column = table.column_mut(5).expect("This should be the Tags column");
+    let tags_column = table.column_mut(5).expect("This should be the Tags column");
     tags_column.set_constraint(UpperBoundary(Fixed(20)));
 
-    let mut title_column = table.column_mut(1).expect("This should be the Title column");
+    let title_column = table.column_mut(1).expect("This should be the Title column");
     title_column.set_constraint(UpperBoundary(Fixed(90)));
 
     info!(get_logger(), "list all ADR from [{}]",&cfg.adr_src_dir);
@@ -175,10 +175,10 @@ fn search(query: String) -> Result<()> {
     //table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
     table.set_header(vec!["Title", "Status", "Date", "File", "(Indexed) Tags"]);
 
-    let mut tags_column = table.column_mut(4).expect("This should be the Tags column");
+    let tags_column = table.column_mut(4).expect("This should be the Tags column");
     tags_column.set_constraint(UpperBoundary(Fixed(20)));
 
-    let mut title_column = table.column_mut(0).expect("This should be the Title column");
+    let title_column = table.column_mut(0).expect("This should be the Title column");
     title_column.set_constraint(UpperBoundary(Fixed(90)));
 
     //TODO get limit value from AdrToolConfig

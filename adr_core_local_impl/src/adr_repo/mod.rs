@@ -527,7 +527,7 @@ impl Adr {
                 .replace(current_status.as_str(), new_status.as_str());
             self.status = state.status;
             self.state = state;
-            self.update_date(Utc::today());
+            self.update_date(Utc::now().date_naive());
             has_been_modified
         } else {
             debug!(get_logger(), "Transition has been declined");
@@ -554,7 +554,7 @@ impl Adr {
             .replace(current_status.as_str(), new_status.as_str());
     }
 
-    pub fn update_date(&mut self, today: Date<Utc>) {
+    pub fn update_date(&mut self, today: NaiveDate) {
         let new_date = today.format("%Y-%m-%d").to_string();
         debug!(get_logger(), "Want to update ADR to date [{}]", new_date);
 
