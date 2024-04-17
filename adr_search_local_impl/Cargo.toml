@@ -6,6 +6,10 @@ edition = "2018"
 
 [dependencies]
 tantivy = "0.21.1"
+# related to https://github.com/quickwit-oss/tantivy/issues/2339 and https://github.com/gyscos/zstd-rs/issues/270
+# should be removed when moving to tantivy 0.22
+zstd-sys = "=2.0.9"
+
 slog = "2.7.0"
 slog-term = "2.9.1"
 slog-async = "2.8.0"
