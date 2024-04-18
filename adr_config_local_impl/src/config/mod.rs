@@ -77,30 +77,15 @@ pub fn init_from_name(config_name: &str) -> Result<()> {
     //check 'from' and 'to' are not the same to avoid file to be truncated
     match fs::metadata(&from) {
         Ok(_) => {
-            warn!(
-                get_logger(), 
-                "File [{}] already exists, it will not be copied", 
-                &from
-            );
+            warn!(get_logger(), "File [{}] already exists, it will not be copied", &from);
         },
         Err(_) => {
-            match fs::copy(
-                &from,
-                format!("{0}/{1}", &path, cfg.adr_template_file),
-            ) {
-                Err(_why) => {
-                    warn!(
-                        get_logger(),
-                        "Unable to create [{}]",
-                        format!("{0}/{1}", &path, cfg.adr_template_file)
-                    );
+            match fs::copy(&from, format!("{0}/{1}", &path, cfg.adr_template_file)) {
+                Err(why) => {
+                    warn!(get_logger(), "Unable to create [{}] - [{}]", format!("{0}/{1}", &path, cfg.adr_template_file), why);
                 }
                 Ok(_val) => {
-                    info!(
-                        get_logger(),
-                        "[{}] created]",
-                        format!("{0}/{1}", &path, cfg.adr_template_file)
-                    );
+                    info!(get_logger(), "[{}] created]", format!("{0}/{1}", &path, cfg.adr_template_file));
                 }
             };
         },
@@ -220,11 +205,14 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
 
 pub fn get_config_from_name(config: &str) -> AdrToolConfig {
     let cfg: AdrToolConfig = match confy::load(config, None) {
-        Err(_why) => {
-            warn!(get_logger(), "Returning default configuration file");
+        Err(why) => {
+            warn!(get_logger(), "Returning default configuration file - [{}]", why);
             AdrToolConfig::default()
         }
-        Ok(e) => e,
+        Ok(e) => {
+            info!(get_logger(), "Returning config [{}]", config);
+            e
+        },
     };
 
     cfg

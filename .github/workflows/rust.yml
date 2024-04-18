@@ -15,14 +15,14 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: clean
         run: cargo clean
-      - name: Build
-        run: cargo build --verbose  
-        env:
-          RUST_BACKTRACE: 1
-      - name: Run tests
-        run: cargo test --verbose
-        env:
-          RUST_BACKTRACE: 1
+      # - name: Build
+      #   run: cargo build --verbose  
+      #   env:
+      #     RUST_BACKTRACE: 1
+      # - name: Run tests
+      #   run: cargo test --verbose
+      #   env:
+      #     RUST_BACKTRACE: 1
 
   publish_metrics:
     needs: build
@@ -38,7 +38,7 @@ jobs:
         run: |
           cargo install cargo-tarpaulin
           sed -i 's/harness = false/harness = true/g' `pwd`/adr_core_local_impl/Cargo.toml
-          RUST_BACKTRACE=1 cargo tarpaulin --release --out Lcov --coveralls 1fa078wMaKHyxnGDX5NBJ0cXp2CpyQyrd
+          RUST_BACKTRACE=full cargo tarpaulin --release --out Lcov --coveralls 1fa078wMaKHyxnGDX5NBJ0cXp2CpyQyrd
           
       #cargo +nightly tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
         
