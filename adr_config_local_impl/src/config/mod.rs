@@ -123,10 +123,7 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
         //for now keep it to apply standard murex convention
         let cfg: AdrToolConfig = get_config_from_name(config);
         let adr_src_dir = String::from(value);
-        //adr_src_dir.push_str("/src");
-
         let adr_template_dir = Path::new(value).join("templates");
-
         let adr_search_index = Path::new(value).join(".index");
 
         let new_cfg = AdrToolConfig {
@@ -151,9 +148,8 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
                     get_logger(),
                     "Error while updating config file for property [{}] - [{}]", &name, &why
                 );
-                AdrToolConfig::default()
             }
-            Ok(_e) => cfg,
+            Ok(_e) => {}
         };
     }
     if ADR_TEMPLATE_DIR == name {
@@ -165,9 +161,8 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
                     get_logger(),
                     "Error while updating config file for property [{}] - [{}]", &name, &why
                 );
-                AdrToolConfig::default()
             }
-            Ok(_e) => cfg,
+            Ok(_e) => {}
         };
     }
     if ADR_TEMPLATE_FILE == name {
@@ -179,9 +174,8 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
                     get_logger(),
                     "Error while updating config file for property [{}] - [{}]", &name, &why
                 );
-                AdrToolConfig::default()
             }
-            Ok(_e) => cfg,
+            Ok(_e) => {}
         };
     }
     if LOG_LEVEL == name {
@@ -193,9 +187,8 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
                     get_logger(),
                     "Error while updating config file for property [{}] - [{}]", &name, &why
                 );
-                AdrToolConfig::default()
             }
-            Ok(_e) => cfg,
+            Ok(_e) => {}
         };
     }
 
@@ -208,9 +201,8 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
                     get_logger(),
                     "Error while updating config file for property [{}] - [{}]", &name, &why
                 );
-                AdrToolConfig::default()
             }
-            Ok(_e) => cfg,
+            Ok(_e) => {}
         };
     }
 
@@ -223,9 +215,8 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
                     get_logger(),
                     "Error while updating config file for property [{}] - [{}]", &name, &why
                 );
-                AdrToolConfig::default()
             }
-            Ok(_e) => cfg,
+            Ok(_e) => {}
         };
     }
 
