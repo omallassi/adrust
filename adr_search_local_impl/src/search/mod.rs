@@ -1,11 +1,11 @@
+use chrono::NaiveDate;
 use chrono::NaiveDateTime;
 use chrono::NaiveTime;
-use chrono::NaiveDate;
-use tantivy::DateTime;
 use tantivy::collector::TopDocs;
 use tantivy::directory::MmapDirectory;
 use tantivy::query::QueryParser;
 use tantivy::schema::*;
+use tantivy::DateTime;
 use tantivy::Index;
 use tantivy::ReloadPolicy;
 
@@ -66,34 +66,36 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> {
     let tags = schema.get_field("tags").unwrap();
     let path = schema.get_field("path").unwrap();
 
-    
-
     for adr in adrs {
         //as usual, string / date conversions are a mess - All the following is to be able to index a datetime as expected by tantivy
-        let adr_date_as_date = match NaiveDate::parse_from_str(&adr.date, "%Y-%m-%d"){
-            Ok(r) => {
-                r
-            },
+        let adr_date_as_date = match NaiveDate::parse_from_str(&adr.date, "%Y-%m-%d") {
+            Ok(r) => r,
             Err(why) => {
-                debug!(get_logger(), "Pb while parsing date for ADR {:?} - {:?}", adr.path(), why);
+                debug!(
+                    get_logger(),
+                    "Pb while parsing date for ADR {:?} - {:?}",
+                    adr.path(),
+                    why
+                );
                 warn!(get_logger(), "Pb while parsing date for ADR {:?} - will use arbitraty January, 1rst 1970 date", adr.path().as_str());
                 NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
-            },
+            }
         };
-        let zero_time = NaiveTime::from_hms_opt(0,0,0).unwrap();
+        let zero_time = NaiveTime::from_hms_opt(0, 0, 0).unwrap();
         let date_time = NaiveDateTime::new(adr_date_as_date, zero_time);
-        
+
         let epoc = date_time.and_utc().timestamp();
 
-
-        index_writer.add_document(doc!(
-            title => String::from(adr.title.as_str()),
-            status => String::from(adr.status.as_str()),
-            date => DateTime::from_timestamp_secs(epoc),
-            body => String::from(adr.content.as_str()),
-            tags => String::from(adr.tags.as_str()), //recreate a string from the tags Vec via Debug...
-            path => String::from(adr.path().as_str()),
-        )).ok();
+        index_writer
+            .add_document(doc!(
+                title => String::from(adr.title.as_str()),
+                status => String::from(adr.status.as_str()),
+                date => DateTime::from_timestamp_secs(epoc),
+                body => String::from(adr.content.as_str()),
+                tags => String::from(adr.tags.as_str()), //recreate a string from the tags Vec via Debug...
+                path => String::from(adr.path().as_str()),
+            ))
+            .ok();
     }
 
     index_writer.commit()?;
@@ -116,7 +118,11 @@ pub struct SearchResult {
     pub path: [String; 1],
 }
 
-pub fn search(index_path: String, query_as_string: String, limit: usize) -> tantivy::Result<Vec<SearchResult>> /*Result<()>*/
+pub fn search(
+    index_path: String,
+    query_as_string: String,
+    limit: usize,
+) -> tantivy::Result<Vec<SearchResult>> /*Result<()>*/
 {
     debug!(
         get_logger(),
@@ -152,16 +158,12 @@ pub fn search(index_path: String, query_as_string: String, limit: usize) -> tant
 
     let searcher = reader.searcher();
 
-    debug!(
-        get_logger(),
-        "Search with query [{}]",
-        &query_as_string
-    );
+    debug!(get_logger(), "Search with query [{}]", &query_as_string);
 
     // default_fields is the set of fields to use if none is specified in the query. date is not part of the default
     let query_parser = QueryParser::for_index(&index, vec![title, body, status, tags, path]);
 
-    let query = match query_parser.parse_query(&query_as_string){
+    let query = match query_parser.parse_query(&query_as_string) {
         Ok(e) => e,
         Err(why) => panic!("Search | Error while parsing {:?}", why),
     };

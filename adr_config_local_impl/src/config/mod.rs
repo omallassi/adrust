@@ -73,24 +73,35 @@ pub fn init_from_name(config_name: &str) -> Result<()> {
     fs::create_dir_all(&path)?;
     info!(get_logger(), "[{}] created]", &path);
 
-    let from  = "./templates/adr-template-v0.1.adoc";
+    let from = "./templates/adr-template-v0.1.adoc";
     //check 'from' and 'to' are not the same to avoid file to be truncated
     match fs::metadata(&from) {
         Ok(_) => {
-            warn!(get_logger(), "File [{}] already exists, it will not be copied", &from);
-        },
+            warn!(
+                get_logger(),
+                "File [{}] already exists, it will not be copied", &from
+            );
+        }
         Err(_) => {
             match fs::copy(&from, format!("{0}/{1}", &path, cfg.adr_template_file)) {
                 Err(why) => {
-                    warn!(get_logger(), "Unable to create [{}] - [{}]", format!("{0}/{1}", &path, cfg.adr_template_file), why);
+                    warn!(
+                        get_logger(),
+                        "Unable to create [{}] - [{}]",
+                        format!("{0}/{1}", &path, cfg.adr_template_file),
+                        why
+                    );
                 }
                 Ok(_val) => {
-                    info!(get_logger(), "[{}] created]", format!("{0}/{1}", &path, cfg.adr_template_file));
+                    info!(
+                        get_logger(),
+                        "[{}] created]",
+                        format!("{0}/{1}", &path, cfg.adr_template_file)
+                    );
                 }
             };
-        },
+        }
     }
-    
 
     let path = cfg.adr_search_index;
     fs::create_dir_all(&path)?;
@@ -134,9 +145,12 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
     if ADR_SRC_DIR == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.adr_src_dir = String::from(value);
-        match confy::store(config, None, &cfg){
+        match confy::store(config, None, &cfg) {
             Err(why) => {
-                error!(get_logger(), "Error while updating config file for property [{}] - [{}]", &name, &why);
+                error!(
+                    get_logger(),
+                    "Error while updating config file for property [{}] - [{}]", &name, &why
+                );
                 AdrToolConfig::default()
             }
             Ok(_e) => cfg,
@@ -145,9 +159,12 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
     if ADR_TEMPLATE_DIR == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.adr_template_dir = String::from(value);
-        match confy::store(config, None, &cfg){
+        match confy::store(config, None, &cfg) {
             Err(why) => {
-                error!(get_logger(), "Error while updating config file for property [{}] - [{}]", &name, &why);
+                error!(
+                    get_logger(),
+                    "Error while updating config file for property [{}] - [{}]", &name, &why
+                );
                 AdrToolConfig::default()
             }
             Ok(_e) => cfg,
@@ -156,9 +173,12 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
     if ADR_TEMPLATE_FILE == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.adr_template_file = String::from(value);
-        match confy::store(config, None, &cfg){
+        match confy::store(config, None, &cfg) {
             Err(why) => {
-                error!(get_logger(), "Error while updating config file for property [{}] - [{}]", &name, &why);
+                error!(
+                    get_logger(),
+                    "Error while updating config file for property [{}] - [{}]", &name, &why
+                );
                 AdrToolConfig::default()
             }
             Ok(_e) => cfg,
@@ -167,9 +187,12 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
     if LOG_LEVEL == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.log_level = value.parse().unwrap();
-        match confy::store(config, None, &cfg){
+        match confy::store(config, None, &cfg) {
             Err(why) => {
-                error!(get_logger(), "Error while updating config file for property [{}] - [{}]", &name, &why);
+                error!(
+                    get_logger(),
+                    "Error while updating config file for property [{}] - [{}]", &name, &why
+                );
                 AdrToolConfig::default()
             }
             Ok(_e) => cfg,
@@ -179,9 +202,12 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
     if USE_ID_PREFIX == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.use_id_prefix = value.parse().unwrap();
-        match confy::store(config, None, &cfg){
+        match confy::store(config, None, &cfg) {
             Err(why) => {
-                error!(get_logger(), "Error while updating config file for property [{}] - [{}]", &name, &why);
+                error!(
+                    get_logger(),
+                    "Error while updating config file for property [{}] - [{}]", &name, &why
+                );
                 AdrToolConfig::default()
             }
             Ok(_e) => cfg,
@@ -191,9 +217,12 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
     if ID_PREFIX_WIDTH == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.id_prefix_width = value.parse().unwrap();
-        match confy::store(config, None, &cfg){
+        match confy::store(config, None, &cfg) {
             Err(why) => {
-                error!(get_logger(), "Error while updating config file for property [{}] - [{}]", &name, &why);
+                error!(
+                    get_logger(),
+                    "Error while updating config file for property [{}] - [{}]", &name, &why
+                );
                 AdrToolConfig::default()
             }
             Ok(_e) => cfg,
@@ -205,12 +234,8 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
 
 pub fn get_config_from_name(config: &str) -> AdrToolConfig {
     let cfg: AdrToolConfig = match confy::load(config, None) {
-        Err(_why) => {
-            AdrToolConfig::default()
-        }
-        Ok(e) => {
-            e
-        },
+        Err(_why) => AdrToolConfig::default(),
+        Ok(e) => e,
     };
 
     cfg
@@ -232,7 +257,10 @@ mod tests {
         let name = format!("adrust-tools-4-tests-{}", uuid);
         let config = name.as_str();
 
-        info!(super::get_logger(), "test_set_config_log_level will use [{}]", config);
+        info!(
+            super::get_logger(),
+            "test_set_config_log_level will use [{}]", config
+        );
 
         super::set_config_from_name(config, "log_level", "7").unwrap();
         let cfg = super::get_config_from_name(config);
@@ -248,7 +276,10 @@ mod tests {
         let name = format!("adrust-tools-4-tests-{}", uuid);
         let config = name.as_str();
 
-        info!(super::get_logger(), "test_set_config_use_id will use [{}]", config);
+        info!(
+            super::get_logger(),
+            "test_set_config_use_id will use [{}]", config
+        );
 
         super::set_config_from_name(config, "use_id_prefix", "false").unwrap();
         let cfg = super::get_config_from_name(config);
@@ -264,7 +295,10 @@ mod tests {
         let name = format!("adrust-tools-4-tests-{}", uuid);
         let config = name.as_str();
 
-        info!(super::get_logger(), "test_set_config_id_width will use [{}]", config);
+        info!(
+            super::get_logger(),
+            "test_set_config_id_width will use [{}]", config
+        );
 
         super::set_config_from_name(config, "id_prefix_width", "10").unwrap();
         let cfg = super::get_config_from_name(config);
@@ -300,7 +334,10 @@ mod tests {
         let name = format!("adrust-tools-4-tests-{}", uuid);
         let config = name.as_str();
 
-        info!(super::get_logger(), "test_set_config_adr_root will use [{}]", config);
+        info!(
+            super::get_logger(),
+            "test_set_config_adr_root will use [{}]", config
+        );
 
         match super::set_config_from_name(config, "adr_root_dir", "/tmp/adr-samples-4-tests") {
             Ok(e) => e,
@@ -325,7 +362,10 @@ mod tests {
         let name = format!("adrust-tools-4-tests-{}", uuid);
         let config = name.as_str();
 
-        info!(super::get_logger(), "test_set_config_adr_template_file will use [{}]", config);
+        info!(
+            super::get_logger(),
+            "test_set_config_adr_template_file will use [{}]", config
+        );
 
         match super::set_config_from_name(config, "adr_template_file", "new-template.adoc") {
             Ok(e) => e,
@@ -345,7 +385,10 @@ mod tests {
         let name = format!("adrust-tools-4-tests-{}", uuid);
         let config = name.as_str();
 
-        info!(super::get_logger(), "test_set_config_adr_src_dir will use [{}]", config);
+        info!(
+            super::get_logger(),
+            "test_set_config_adr_src_dir will use [{}]", config
+        );
 
         match super::set_config_from_name(config, "adr_src_dir", "/tmp/does-not-exists/src") {
             Ok(e) => e,
