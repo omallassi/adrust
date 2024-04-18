@@ -206,11 +206,11 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
 pub fn get_config_from_name(config: &str) -> AdrToolConfig {
     let cfg: AdrToolConfig = match confy::load(config, None) {
         Err(why) => {
-            warn!(get_logger(), "Returning default configuration file - [{}]", why);
+            println!("Returning default configuration file - [{}]", why);
             AdrToolConfig::default()
         }
         Ok(e) => {
-            info!(get_logger(), "Returning config [{}]", config);
+            println!("Returning config [{}]", config);
             e
         },
     };
