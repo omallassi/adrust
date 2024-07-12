@@ -137,7 +137,15 @@ fn get_seq_id_from_name(name: &str) -> Result<usize> {
 }
 
 fn get_last_seq_id(adrs: Vec<Adr>) -> usize {
-    get_seq_id_from_name(&adrs[adrs.len() - 1].file_name).unwrap()
+    match get_seq_id_from_name(&adrs[adrs.len() - 1].file_name) {
+        Ok(val) => {
+            val
+        }, 
+        Err(why) => {
+            error!(get_logger(), "got the following issue {:?}", why);
+            0
+        }
+    }
 }
 
 fn sort_by_id(mut adrs: Vec<Adr>) -> Vec<Adr> {
