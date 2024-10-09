@@ -153,7 +153,7 @@ pub fn search(
     //
     let reader = index
         .reader_builder()
-        .reload_policy(ReloadPolicy::OnCommit)
+        .reload_policy(ReloadPolicy::OnCommitWithDelay)
         .try_into()?;
 
     let searcher = reader.searcher();
@@ -172,14 +172,14 @@ pub fn search(
 
     let mut results = std::vec::Vec::new();
     for (_score, doc_address) in top_docs {
-        let retrieved_doc = searcher.doc(doc_address)?;
+        let retrieved_doc: TantivyDocument = searcher.doc(doc_address)?;
         debug!(
             get_logger(),
             "Found doc [{}]",
-            schema.to_json(&retrieved_doc)
+            retrieved_doc.to_json(&schema)
         );
 
-        let doc_as_json = schema.to_json(&retrieved_doc);
+        let doc_as_json = retrieved_doc.to_json(&schema);
         let search_result: SearchResult = serde_json::from_str(&doc_as_json).unwrap();
         results.push(search_result);
     }

@@ -5,7 +5,7 @@ authors = ["MALLASSI Olivier <Olivier.MALLASSI@murex.com>"]
 edition = "2018"
 
 [dependencies]
-tantivy = "0.21.1"
+tantivy = "0.22.0"
 # related to https://github.com/quickwit-oss/tantivy/issues/2339 and https://github.com/gyscos/zstd-rs/issues/270
 # should be removed when moving to tantivy 0.22
 zstd-sys = "=2.0.9"
@@ -13,10 +13,10 @@ zstd-sys = "=2.0.9"
 slog = "2.7.0"
 slog-term = "2.9.1"
 slog-async = "2.8.0"
-serde_json = "1.0.107"
+serde_json = "1.0.128"
 serde = "1.0.198"
-serde_derive = "1.0.198"
-chrono="0.4.31"
+serde_derive = "1.0.210"
+chrono="0.4.38"
 
 adr_config = { path = "../adr_config_local_impl" }
 adr_core = {path = "../adr_core_local_impl"}

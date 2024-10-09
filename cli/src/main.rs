@@ -246,8 +246,9 @@ fn init() -> Result<()> {
 /// The main program - start the CLI ...
 fn main() {
     //
+    const VERSION: &'static str = env!("CARGO_PKG_VERSION");
     let cmd = Command::new("adr")
-        .version("0.1.0")
+        .version(VERSION)
         .about("A CLI to help you manage your ADR in git")
         .subcommand(
             Command::new("list")
