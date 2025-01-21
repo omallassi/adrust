@@ -272,7 +272,7 @@ fn main() {
                                 .short('n')
                                 .long("name")
                                 .required(true)
-                                .takes_value(true)
+                                .action(clap::ArgAction::Set)
                                 .help("the name of the property"),
                         )
                         .arg(
@@ -280,7 +280,7 @@ fn main() {
                                 .short('v')
                                 .long("value")
                                 .required(true)
-                                .takes_value(true)
+                                .action(clap::ArgAction::Set)
                                 .help("the value of the property"),
                         ),
                 )
@@ -306,7 +306,7 @@ fn main() {
                             Arg::new("title")
                                 .short('t')
                                 .long("title")
-                                .takes_value(true)
+                                .action(clap::ArgAction::Set)
                                 .required(true)
                                 .help("Give the title of your Decision Record"),
                         )
@@ -314,7 +314,7 @@ fn main() {
                             Arg::new("path")
                                 .short('p')
                                 .long("path")
-                                .takes_value(true)
+                                .action(clap::ArgAction::Set)
                                 .required(false)
                                 .help("Specify relative path (nested directories)"),
                         ),
@@ -327,7 +327,7 @@ fn main() {
                             Arg::new("path")
                                 .short('p')
                                 .long("path")
-                                .takes_value(true)
+                                .action(clap::ArgAction::Set)
                                 .required(true)
                                 .help("Give the path of your Decision Record"),
                         ),
@@ -340,7 +340,7 @@ fn main() {
                             Arg::new("path")
                                 .short('p')
                                 .long("path")
-                                .takes_value(true)
+                                .action(clap::ArgAction::Set)
                                 .required(true)
                                 .help("Give the path of your Decision Record"),
                         )
@@ -348,7 +348,7 @@ fn main() {
                             Arg::new("by")
                                 .short('b')
                                 .long("by")
-                                .takes_value(true)
+                                .action(clap::ArgAction::Set)
                                 .required(true)
                                 .help("Give the path of your Decision Record"),
                         ),
@@ -361,7 +361,7 @@ fn main() {
                             Arg::new("path")
                                 .short('p')
                                 .long("path")
-                                .takes_value(true)
+                                .action(clap::ArgAction::Set)
                                 .required(true)
                                 .help("Give the path of the DR which is completed by"),
                         )
@@ -369,7 +369,7 @@ fn main() {
                             Arg::new("by")
                                 .short('b')
                                 .long("by")
-                                .takes_value(true)
+                                .action(clap::ArgAction::Set)
                                 .required(true)
                                 .help("Give the path of the DR which completes"),
                         ),
@@ -382,7 +382,7 @@ fn main() {
                             Arg::new("path")
                                 .short('p')
                                 .long("path")
-                                .takes_value(true)
+                                .action(clap::ArgAction::Set)
                                 .required(true)
                                 .help("Give the path of your Decision Record"),
                         ),
@@ -396,7 +396,7 @@ fn main() {
                     Arg::new("query")
                         .short('q')
                         .long("query")
-                        .takes_value(true)
+                        .action(clap::ArgAction::Set)
                         .required(true)
                         .conflicts_with_all(&["build-index", "title"])
                         .help("Provide your search query. The following syntax can be used :\n\
@@ -410,14 +410,14 @@ fn main() {
                     Arg::new("build-index")
                         .short('b')
                         .long("build-index")
-                        .takes_value(false)
+                        .action(clap::ArgAction::SetTrue)
                         .required(true)
                         .conflicts_with_all(&["query", "title"])
                         .help("Build the index based on available ADRs."),
                     Arg::new("title")
                         .short('t')
                         .long("title")
-                        .takes_value(true)
+                        .action(clap::ArgAction::Set)
                         .required(true)
                         .conflicts_with_all(&["build-index", "query"])
                         .help("Search on title property of ADR only"),
@@ -437,18 +437,18 @@ fn main() {
         }
         Some(("lf", matches)) => match matches.subcommand() {
             Some(("new", matches)) => {
-                if matches.is_present("title") {
+                if matches.get_one::<String>("title").is_some() {
                     adr_core::adr_repo::create_adr(
                         adr_config::config::get_config(),
-                        matches.value_of("path"),
-                        matches.value_of("title").unwrap(),
+                        matches.get_one::<String>("path").map(|s| s.as_str()),
+                        matches.get_one::<String>("title").unwrap(),
                     )
                     .unwrap();
                 }
             }
             Some(("decided", set_matches)) => {
-                if set_matches.is_present("path") {
-                    let file_path = set_matches.value_of("path").unwrap();
+                if set_matches.get_one::<String>("path").is_some() {
+                    let file_path = set_matches.get_one::<String>("path").unwrap();
                     let cfg: AdrToolConfig = adr_config::config::get_config();
                     let base_path = Path::new(&cfg.adr_src_dir);
 
@@ -456,32 +456,32 @@ fn main() {
                 }
             }
             Some(("completed-by", set_matches)) => {
-                if set_matches.is_present("path") && set_matches.is_present("by") {
+                if set_matches.get_one::<String>("path").is_some() && set_matches.get_one::<String>("by").is_some() {
                     let cfg: AdrToolConfig = adr_config::config::get_config();
                     let base_path = Path::new(&cfg.adr_src_dir);
-                    let file_path = set_matches.value_of("path").unwrap();
-                    let by_path = set_matches.value_of("by").unwrap();
+                    let file_path = set_matches.get_one::<String>("path").unwrap();
+                    let by_path = set_matches.get_one::<String>("by").unwrap();
 
                     adr_core::adr_repo::transition_to_completed_by(base_path, file_path, by_path)
                         .unwrap();
                 }
             }
             Some(("superseded-by", set_matches)) => {
-                if set_matches.is_present("path") && set_matches.is_present("by") {
+                if set_matches.get_one::<String>("path").is_some() && set_matches.get_one::<String>("by").is_some() {
                     let cfg: AdrToolConfig = adr_config::config::get_config();
                     let base_path = Path::new(&cfg.adr_src_dir);
-                    let file_path = set_matches.value_of("path").unwrap();
-                    let by_path = set_matches.value_of("by").unwrap();
+                    let file_path = set_matches.get_one::<String>("path").unwrap();
+                    let by_path = set_matches.get_one::<String>("by").unwrap();
 
                     adr_core::adr_repo::transition_to_superseded_by(base_path, file_path, by_path)
                         .unwrap();
                 }
             }
             Some(("obsoleted", set_matches)) => {
-                if set_matches.is_present("path") {
+                if set_matches.get_one::<String>("path").is_some() {
                     let cfg: AdrToolConfig = adr_config::config::get_config();
                     let base_path = Path::new(&cfg.adr_src_dir);
-                    let file_path = set_matches.value_of("path").unwrap();
+                    let file_path = set_matches.get_one::<String>("path").unwrap();
 
                     adr_core::adr_repo::transition_to_obsoleted(base_path, file_path).unwrap();
                 }
@@ -495,8 +495,8 @@ fn main() {
             }
             Some(("set", set_matches)) => {
                 set_config(
-                    set_matches.value_of("name").unwrap(),
-                    set_matches.value_of("value").unwrap(),
+                    set_matches.get_one::<String>("name").unwrap(),
+                    set_matches.get_one::<String>("value").unwrap(),
                 )
                 .unwrap();
             }
@@ -509,15 +509,15 @@ fn main() {
             _ => unreachable!(),
         },
         Some(("search", search_matches)) => {
-            if search_matches.is_present("query") {
-                let query = search_matches.value_of("query").unwrap().to_string();
+            if search_matches.get_one::<String>("query").is_some() {
+                let query = search_matches.get_one::<String>("query").unwrap().to_string();
                 search(query).unwrap();
             }
-            if search_matches.is_present("build-index") {
+            if search_matches.get_one::<bool>("build-index").is_some() {
                 build_index().unwrap();
             }
-            if search_matches.is_present("title") {
-                let query = search_matches.value_of("title").unwrap().to_string();
+            if search_matches.get_one::<String>("title").is_some() {
+                let query = search_matches.get_one::<String>("title").unwrap().to_string();
                 search("title:".to_string() + &query).unwrap();
             }
         }
