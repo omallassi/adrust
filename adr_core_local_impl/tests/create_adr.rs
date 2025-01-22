@@ -231,7 +231,8 @@ fn main() {
             })
             .after(|_feature, _rule, scenario, _ev, world| {
                 Box::pin(async move {
-                    let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool", helper::get_workspace(&scenario.name).as_str()) {
+                    let name = format!("{}-{}", scenario.name.clone(), scenario.position.line.clone());
+                    let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool", helper::get_workspace(&name).as_str()) {
                         None => panic!("issue while preparing test"),
                         Some(project_dirs) => project_dirs
                     };
