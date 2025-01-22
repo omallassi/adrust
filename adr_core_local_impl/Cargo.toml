@@ -16,14 +16,21 @@ walkdir = "2.5.0"
 chrono = "0.4.38"
 
 adr_config = {path = "../adr_config_local_impl"}
+futures = "0.3.31"
+
 
 [[test]]
 name = "create_adr"
 harness = false
 
+[[test]]
+name = "tags_with_adr"
+harness = false
+
 
 [dev-dependencies]
-cucumber = {package = "cucumber_rust", version = "^0.6.0" }
+cucumber = "0.21.1"
 directories = "5.0.1"
 uuid = { version = "1.5.0", features = ["v4"] }
 tempdir = "0.3"
+tokio = "1.43.0"
