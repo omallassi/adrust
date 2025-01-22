@@ -4,7 +4,6 @@ extern crate directories;
 use directories::ProjectDirs;
 
 use std::fs;
-use std::future::Future;
 use std::path::{Path, PathBuf};
 use chrono::Utc;
 use walkdir::WalkDir;
@@ -77,7 +76,7 @@ fn for_this_decision(world: &mut AdrNames, decision_name: String) {
 }
 
 #[when("I create a new Decision Record")]
-fn list_all_tags(world: &mut AdrNames) {
+fn list_all_tags(_world: &mut AdrNames) {
     //do nothing
 }
 
@@ -112,7 +111,7 @@ fn new_decision_exists(adr: &mut AdrNames, name: String) {
 }
 
 #[when("I create a new ADR")]
-fn create_new_adr(adr: &mut AdrNames) {
+fn create_new_adr(_adr: &mut AdrNames) {
     //do nothing
 }
 
@@ -229,7 +228,7 @@ fn main() {
                     fs::copy("./tests/adr-template-v0.1.adoc", project_dirs.cache_dir().join("templates/adr-template-v0.1.adoc").as_path()).unwrap();
                 })
             })
-            .after(|_feature, _rule, scenario, _ev, world| {
+            .after(|_feature, _rule, scenario, _ev, _world| {
                 Box::pin(async move {
                     let name = format!("{}-{}", scenario.name.clone(), scenario.position.line.clone());
                     let project_dirs: ProjectDirs = match ProjectDirs::from("murex", "adrust-tool", helper::get_workspace(&name).as_str()) {

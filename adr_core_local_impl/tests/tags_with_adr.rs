@@ -1,29 +1,21 @@
 use cucumber::{World};
 
 extern crate directories;
-use directories::ProjectDirs;
-
-use std::fs;
-use std::future::Future;
 
 #[derive(Debug, World)]
 pub struct AdrNames {
     name: String,
-    has_transitioned: bool,
-    base_path: String,
 }
 
 impl std::default::Default for AdrNames {
     fn default() -> AdrNames {
         AdrNames {
             name: "default-name".to_string(),
-            has_transitioned: false,
-            base_path: String::from(""),
         }
     }
 }
 mod check_tags_management {
-    use cucumber::{given, then, when, World};
+    use cucumber::{given, then, when};
     extern crate adr_core;
     use std::path::Path;
     use crate::AdrNames;
@@ -34,7 +26,7 @@ mod check_tags_management {
     }
 
     #[when("I list all the tags")]
-    fn list_all_tags(world: &mut AdrNames) {
+    fn list_all_tags(_world: &mut AdrNames) {
         //nothign to do
     }
 

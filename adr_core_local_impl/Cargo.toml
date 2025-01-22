@@ -11,9 +11,9 @@ slog = "2.7.0"
 slog-term = "2.9.1"
 slog-async = "2.8.0"
 lazy_static = "1.5.0"
-regex = "1.11.0"
+regex = "1.11.1"
 walkdir = "2.5.0"
-chrono = "0.4.38"
+chrono = "0.4.39"
 
 adr_config = {path = "../adr_config_local_impl"}
 futures = "0.3.31"
@@ -30,7 +30,5 @@ harness = false
 
 [dev-dependencies]
 cucumber = "0.21.1"
-directories = "5.0.1"
-uuid = { version = "1.5.0", features = ["v4"] }
+directories = "6.0.0"
 tempdir = "0.3"
-tokio = "1.43.0"
