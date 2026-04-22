@@ -23,6 +23,11 @@ extern crate adr_config;
 use adr_config::config::AdrToolConfig;
 extern crate adr_search;
 
+use ollama_rs::{
+    generation::chat::{request::ChatMessageRequest, ChatMessage},
+    Ollama,
+};
+
 fn get_logger() -> slog::Logger {
     let cfg: AdrToolConfig = adr_config::config::get_config();
 
@@ -223,6 +228,67 @@ fn search(query: String) -> Result<()> {
     Ok(())
 }
 
+async fn search_from_prompt(query: String) -> Result<()> {
+    let cfg: AdrToolConfig = adr_config::config::get_config();
+    let log = get_logger();
+
+    info!(log, "Sending prompt to Ollama: [{}]", &query);
+
+    let system_context = "\
+You are a search query translator. \
+The user will give you a natural-language question about Architecture Decision Records (ADRs). \
+Your only job is to return a single Tantivy query string that best answers the question. \
+The available fields are: title, status, body, tags. \
+Valid status values are: wip, decided, completed, completes, superseded, obsoleted. \
+Return ONLY the raw query string, no explanation, no markdown, no quotes around it.";
+
+    let messages = vec![
+        ChatMessage::system(system_context.to_string()),
+        ChatMessage::user(query),
+    ];
+
+    let ollama = Ollama::try_new(cfg.ollama_url.as_str())
+        .expect("Invalid ollama_url in config");
+
+    let res = ollama
+        .send_chat_messages(ChatMessageRequest::new(cfg.ollama_model.clone(), messages))
+        .await
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+
+    let tantivy_query = res.message.content.trim().to_string();
+    info!(log, "Tantivy transformed query: {}", &tantivy_query);
+
+
+    let results =
+        adr_search::search::search(cfg.adr_search_index.clone(), tantivy_query.clone(), 10)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+
+    if results.is_empty() {
+        println!("No results found for query: {}", tantivy_query);
+        return Ok(());
+    }
+
+    let mut table = Table::new();
+    table
+        .load_preset(UTF8_FULL)
+        .apply_modifier(UTF8_ROUND_CORNERS)
+        .set_content_arrangement(ContentArrangement::Dynamic)
+        .set_header(vec!["Title", "Status", "Tags", "Path"]);
+
+    for result in results {
+        table.add_row(vec![
+            result.title[0].clone(),
+            result.status[0].clone(),
+            result.tags[0].clone(),
+            result.path[0].clone(),
+        ]);
+    }
+
+    println!("{table}");
+
+    Ok(())
+}
+
 fn get_cell_style(status: Status) -> Color {
     let style = match status {
         Status::WIP => Color::DarkYellow,
@@ -244,7 +310,8 @@ fn init() -> Result<()> {
 
 ///
 /// The main program - start the CLI ...
-fn main() {
+#[tokio::main]
+async fn main() {
     //
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
     let cmd = Command::new("adr")
@@ -398,7 +465,7 @@ fn main() {
                         .long("query")
                         .action(clap::ArgAction::Set)
                         .required(true)
-                        .conflicts_with_all(&["build-index", "title"])
+                        .conflicts_with_all(&["build-index", "title", "prompt"])
                         .help("Provide your search query. The following syntax can be used :\n\
                             \ta AND b OR c will search for documents containing terms (a and b) or c, \n\
                             \t-b will search documents that do not contain the term b, \n\
@@ -407,19 +474,26 @@ fn main() {
                             \ttitle:a will search on title of the document, \n\
                             \tdate:[2022-08-01T00:00:00Z TO 2023-10-02T18:00:00Z] AND tags:BPaaS will search between the specified range and date (and specified tag), \n\
                             \tstatus:decided will search for decided documents"),
+                    Arg::new("prompt")
+                        .short('p')
+                        .long("prompt")
+                        .action(clap::ArgAction::Set)
+                        .required(true)
+                        .conflicts_with_all(&["build-index", "title", "query"])
+                        .help("Provide the integration with LLM - and try to ease search"),
                     Arg::new("build-index")
                         .short('b')
                         .long("build-index")
                         .action(clap::ArgAction::SetTrue)
                         .required(true)
-                        .conflicts_with_all(&["query", "title"])
+                        .conflicts_with_all(&["query", "title", "prompt"])
                         .help("Build the index based on available ADRs."),
                     Arg::new("title")
                         .short('t')
                         .long("title")
                         .action(clap::ArgAction::Set)
                         .required(true)
-                        .conflicts_with_all(&["build-index", "query"])
+                        .conflicts_with_all(&["build-index", "query", "prompt"])
                         .help("Search on title property of ADR only"),
                 ]),
         );
@@ -513,12 +587,16 @@ fn main() {
                 let query = search_matches.get_one::<String>("query").unwrap().to_string();
                 search(query).unwrap();
             }
-            if search_matches.get_one::<bool>("build-index").is_some() {
-                build_index().unwrap();
-            }
             if search_matches.get_one::<String>("title").is_some() {
                 let query = search_matches.get_one::<String>("title").unwrap().to_string();
                 search("title:".to_string() + &query).unwrap();
+            }
+            if search_matches.get_one::<String>("prompt").is_some() {
+                let query = search_matches.get_one::<String>("prompt").unwrap().to_string();
+                search_from_prompt(query).await.unwrap();
+            }
+            if *search_matches.get_one::<bool>("build-index").unwrap_or(&false) {
+                build_index().unwrap();
             }
         }
 

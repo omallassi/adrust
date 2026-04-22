@@ -14,6 +14,8 @@ pub struct AdrToolConfig {
     pub adr_search_index: String,
     pub use_id_prefix: bool,
     pub id_prefix_width: usize,
+    pub ollama_url: String,
+    pub ollama_model: String,
 }
 
 pub const LOG_LEVEL: &str = "log_level";
@@ -24,6 +26,8 @@ pub const ADR_TEMPLATE_FILE: &str = "adr_template_file";
 pub const ADR_SEARCH_INDEX: &str = "adr_search_dir";
 pub const USE_ID_PREFIX: &str = "use_id_prefix";
 pub const ID_PREFIX_WIDTH: &str = "id_prefix_width";
+pub const OLLAMA_URL: &str = "ollama_url";
+pub const OLLAMA_MODEL: &str = "ollama_model";
 
 impl ::std::default::Default for AdrToolConfig {
     fn default() -> Self {
@@ -36,6 +40,8 @@ impl ::std::default::Default for AdrToolConfig {
             log_level: 4, //info
             use_id_prefix: true,
             id_prefix_width: 6,
+            ollama_url: "http://localhost:11434".to_string(),
+            ollama_model: "llama3.2:3b".to_string(),
         }
     }
 }
@@ -135,6 +141,8 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
             log_level: cfg.log_level, //info
             use_id_prefix: cfg.use_id_prefix,
             id_prefix_width: cfg.id_prefix_width,
+            ollama_url: cfg.ollama_url,
+            ollama_model: cfg.ollama_model,
         };
 
         confy::store(config, None, new_cfg).unwrap();
@@ -209,6 +217,34 @@ pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()>
     if ID_PREFIX_WIDTH == name {
         let mut cfg: AdrToolConfig = get_config_from_name(config);
         cfg.id_prefix_width = value.parse().unwrap();
+        match confy::store(config, None, &cfg) {
+            Err(why) => {
+                error!(
+                    get_logger(),
+                    "Error while updating config file for property [{}] - [{}]", &name, &why
+                );
+            }
+            Ok(_e) => {}
+        };
+    }
+
+    if OLLAMA_URL == name {
+        let mut cfg: AdrToolConfig = get_config_from_name(config);
+        cfg.ollama_url = String::from(value);
+        match confy::store(config, None, &cfg) {
+            Err(why) => {
+                error!(
+                    get_logger(),
+                    "Error while updating config file for property [{}] - [{}]", &name, &why
+                );
+            }
+            Ok(_e) => {}
+        };
+    }
+
+    if OLLAMA_MODEL == name {
+        let mut cfg: AdrToolConfig = get_config_from_name(config);
+        cfg.ollama_model = String::from(value);
         match confy::store(config, None, &cfg) {
             Err(why) => {
                 error!(
