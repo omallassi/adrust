@@ -14,7 +14,8 @@ Here are the main features:
 * [done] Support Tags
 * [done] Support search across title, content, date and tags 
 * [not started yet] Support different types of templates. currently the template can be changed and configured but it has to be asciidoc etc...
-* [not started yet] Why not integrate with Microsoft Teams
+* [not started yet] Why not integrate with Microsoft Teams (or others)
+* [done] LLM-assisted search via Ollama (natural language → Tantivy query)
 
 ## Supported OS and compiler
 The current code line is developped on `MacOs / Rust 1.71` and build with `cargo` but [Github Actions](https://github.com/omallassi/adrust/actions) will build on `MacOs / Linux / Windows` on `Rust Stable Version` (cf. `rust.yml` for details).
@@ -69,6 +70,7 @@ In more details,
 | `adr tags list`      | List all the tags whatever the Decision Record |
 | `adr search --build-index`      | Build the index (not incrementally for now) in the folder defined in `adr config list`|
 | `adr search --query "my search"`      | Search across indexed ADRs |
+| `adr search --prompt "my prompt search"`      | Search across indexed ADRs, interacting w/ Ollama. The Ollama URL and model can be configured via `adr config list`. Default values are `localhost:11434` and `llama3.2` |
 
 ## ADR Template & lifecycle
 

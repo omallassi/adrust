@@ -41,7 +41,7 @@ impl ::std::default::Default for AdrToolConfig {
             use_id_prefix: true,
             id_prefix_width: 6,
             ollama_url: "http://localhost:11434".to_string(),
-            ollama_model: "llama3.2:3b".to_string(),
+            ollama_model: "llama3.2".to_string(),
         }
     }
 }

@@ -138,6 +138,16 @@ fn list_all_config() -> Result<()> {
         cfg.id_prefix_width.to_string().as_str(),
         "Y",
     ]);
+        table.add_row(vec![
+        adr_config::config::OLLAMA_URL,
+        cfg.ollama_url.to_string().as_str(),
+        "Y",
+    ]);
+        table.add_row(vec![
+        adr_config::config::OLLAMA_MODEL,
+        cfg.ollama_model.to_string().as_str(),
+        "Y",
+    ]);
 
     // Print the table to stdout
     println!("{table}");
@@ -234,16 +244,45 @@ async fn search_from_prompt(query: String) -> Result<()> {
 
     info!(log, "Sending prompt to Ollama: [{}]", &query);
 
-    let system_context = "\
-You are a search query translator. \
-The user will give you a natural-language question about Architecture Decision Records (ADRs). \
-Your only job is to return a single Tantivy query string that best answers the question. \
-The available fields are: title, status, body, tags. \
-Valid status values are: wip, decided, completed, completes, superseded, obsoleted. \
-Return ONLY the raw query string, no explanation, no markdown, no quotes around it.";
+    let system_prompt = r#"
+SYSTEM: You are a pure text-processing pipe. Your ONLY output is a raw Tantivy query string. SILENCE ALL PROSE.
+
+CRITICAL RULES:
+  1. FORBIDDEN START: Never start your response with "Sure", "I can", "Here is", "Okay", or "Based on".
+  2. NO PREAMBLE: Do not explain the query. Do not use markdown code fences.
+  3. NO PREFIXES: Every concept MUST be a "bare term". NEVER use `title:` unless the user says "named".
+  4. BOOLEAN INTERSECTION: Use `AND` to connect keywords. 
+     - Expand: management -> (management OR mgmt)
+     - Expand: identity -> (identity OR idp)
+  5. PHRASE QUOTING: Only quote stable multi-word terms like "control plane" or "identity federation".
+  6. DISCARD FILLER: Ignore "Can you point me to", "discuss about", "help me", etc.
+
+EXAMPLES:
+  User: "can you point me to documentation that discuss about cloud and identity federation"
+  Output: cloud AND "identity federation"
+  User: "what did we decide about the tenant management"
+  Output: tenant AND (management OR mgmt) AND status:decided
+  User: "ADRs tagged with kafka"
+  Output: tags:kafka
+  User: "I am looking for documents about the Tenant Management Control Plane"
+  Output: tenant AND (management OR mgmt) AND "control plane"
+  User: "show me all decided ADRs about database migrations"
+  Output: database AND migrations AND status:decided
+  User: "decisions about auth or event sourcing"
+  Output: (authentication OR auth OR "event sourcing") AND status:decided
+  User: "ADRs tagged with kafka that are still in progress"
+  Output: tags:kafka AND status:wip
+  User: "what did we decide about the message broker"
+  Output: "message broker" AND status:decided
+  User: "ADRs titled exactly user service"
+  Output: title:"user service"
+
+TASK: Convert the user input to a raw Tantivy query.
+FINAL RULE: Output ONLY the raw string. DO NOT TALK.
+"#;
 
     let messages = vec![
-        ChatMessage::system(system_context.to_string()),
+        ChatMessage::system(system_prompt.to_string()),
         ChatMessage::user(query),
     ];
 
@@ -256,11 +295,10 @@ Return ONLY the raw query string, no explanation, no markdown, no quotes around 
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
 
     let tantivy_query = res.message.content.trim().to_string();
-    info!(log, "Tantivy transformed query: {}", &tantivy_query);
-
+    info!(log, "Tantivy generated query: [{}]", &tantivy_query);
 
     let results =
-        adr_search::search::search(cfg.adr_search_index.clone(), tantivy_query.clone(), 10)
+        adr_search::search::search(cfg.adr_search_index.clone(), tantivy_query.clone(), 5)
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
 
     if results.is_empty() {
