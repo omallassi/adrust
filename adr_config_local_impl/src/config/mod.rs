@@ -124,137 +124,45 @@ pub fn get_config() -> AdrToolConfig {
     get_config_from_name("adrust-tools")
 }
 
+fn store_config(config: &str, name: &str, cfg: &AdrToolConfig) {
+    if let Err(why) = confy::store(config, None, cfg) {
+        error!(
+            get_logger(),
+            "Error while updating config file for property [{}] - [{}]", name, why
+        );
+    }
+}
+
 pub fn set_config_from_name(config: &str, name: &str, value: &str) -> Result<()> {
     if ADR_ROOT_DIR == name {
-        //for now keep it to apply standard murex convention
-        let cfg: AdrToolConfig = get_config_from_name(config);
-        let adr_src_dir = String::from(value);
-        let adr_template_dir = Path::new(value).join("templates");
-        let adr_search_index = Path::new(value).join(".index");
-
+        // Applying standard convention: derive src, templates and index from root
+        let cfg = get_config_from_name(config);
         let new_cfg = AdrToolConfig {
-            //adr_root_dir: String::from(value),
-            adr_src_dir: adr_src_dir,
-            adr_template_dir: format!("{}", adr_template_dir.display()),
-            adr_template_file: cfg.adr_template_file,
-            adr_search_index: format!("{}", adr_search_index.display()),
-            log_level: cfg.log_level, //info
-            use_id_prefix: cfg.use_id_prefix,
-            id_prefix_width: cfg.id_prefix_width,
-            ollama_url: cfg.ollama_url,
-            ollama_model: cfg.ollama_model,
+            adr_src_dir:      String::from(value),
+            adr_template_dir: format!("{}", Path::new(value).join("templates").display()),
+            adr_search_index: format!("{}", Path::new(value).join(".index").display()),
+            ..cfg
         };
-
         confy::store(config, None, new_cfg).unwrap();
-    }
-    if ADR_SRC_DIR == name {
-        let mut cfg: AdrToolConfig = get_config_from_name(config);
-        cfg.adr_src_dir = String::from(value);
-        match confy::store(config, None, &cfg) {
-            Err(why) => {
-                error!(
-                    get_logger(),
-                    "Error while updating config file for property [{}] - [{}]", &name, &why
-                );
-            }
-            Ok(_e) => {}
-        };
-    }
-    if ADR_TEMPLATE_DIR == name {
-        let mut cfg: AdrToolConfig = get_config_from_name(config);
-        cfg.adr_template_dir = String::from(value);
-        match confy::store(config, None, &cfg) {
-            Err(why) => {
-                error!(
-                    get_logger(),
-                    "Error while updating config file for property [{}] - [{}]", &name, &why
-                );
-            }
-            Ok(_e) => {}
-        };
-    }
-    if ADR_TEMPLATE_FILE == name {
-        let mut cfg: AdrToolConfig = get_config_from_name(config);
-        cfg.adr_template_file = String::from(value);
-        match confy::store(config, None, &cfg) {
-            Err(why) => {
-                error!(
-                    get_logger(),
-                    "Error while updating config file for property [{}] - [{}]", &name, &why
-                );
-            }
-            Ok(_e) => {}
-        };
-    }
-    if LOG_LEVEL == name {
-        let mut cfg: AdrToolConfig = get_config_from_name(config);
-        cfg.log_level = value.parse().unwrap();
-        match confy::store(config, None, &cfg) {
-            Err(why) => {
-                error!(
-                    get_logger(),
-                    "Error while updating config file for property [{}] - [{}]", &name, &why
-                );
-            }
-            Ok(_e) => {}
-        };
+        return Ok(());
     }
 
-    if USE_ID_PREFIX == name {
-        let mut cfg: AdrToolConfig = get_config_from_name(config);
-        cfg.use_id_prefix = value.parse().unwrap();
-        match confy::store(config, None, &cfg) {
-            Err(why) => {
-                error!(
-                    get_logger(),
-                    "Error while updating config file for property [{}] - [{}]", &name, &why
-                );
-            }
-            Ok(_e) => {}
-        };
+    let mut cfg = get_config_from_name(config);
+    match name {
+        ADR_SRC_DIR       => cfg.adr_src_dir      = String::from(value),
+        ADR_TEMPLATE_DIR  => cfg.adr_template_dir = String::from(value),
+        ADR_TEMPLATE_FILE => cfg.adr_template_file = String::from(value),
+        OLLAMA_URL        => cfg.ollama_url        = String::from(value),
+        OLLAMA_MODEL      => cfg.ollama_model      = String::from(value),
+        LOG_LEVEL         => cfg.log_level         = value.parse().unwrap(),
+        USE_ID_PREFIX     => cfg.use_id_prefix     = value.parse().unwrap(),
+        ID_PREFIX_WIDTH   => cfg.id_prefix_width   = value.parse().unwrap(),
+        _                 => {
+            error!(get_logger(), "Unknown config property [{}]", name);
+            return Ok(());
+        }
     }
-
-    if ID_PREFIX_WIDTH == name {
-        let mut cfg: AdrToolConfig = get_config_from_name(config);
-        cfg.id_prefix_width = value.parse().unwrap();
-        match confy::store(config, None, &cfg) {
-            Err(why) => {
-                error!(
-                    get_logger(),
-                    "Error while updating config file for property [{}] - [{}]", &name, &why
-                );
-            }
-            Ok(_e) => {}
-        };
-    }
-
-    if OLLAMA_URL == name {
-        let mut cfg: AdrToolConfig = get_config_from_name(config);
-        cfg.ollama_url = String::from(value);
-        match confy::store(config, None, &cfg) {
-            Err(why) => {
-                error!(
-                    get_logger(),
-                    "Error while updating config file for property [{}] - [{}]", &name, &why
-                );
-            }
-            Ok(_e) => {}
-        };
-    }
-
-    if OLLAMA_MODEL == name {
-        let mut cfg: AdrToolConfig = get_config_from_name(config);
-        cfg.ollama_model = String::from(value);
-        match confy::store(config, None, &cfg) {
-            Err(why) => {
-                error!(
-                    get_logger(),
-                    "Error while updating config file for property [{}] - [{}]", &name, &why
-                );
-            }
-            Ok(_e) => {}
-        };
-    }
+    store_config(config, name, &cfg);
 
     Ok(())
 }
