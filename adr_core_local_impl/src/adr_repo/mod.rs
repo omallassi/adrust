@@ -1359,6 +1359,8 @@ mod tests {
             adr_search_index: format!("{}", src.path().display()),
             use_id_prefix: false,
             id_prefix_width: 3,
+            ollama_model: String::from("llama:3"),
+            ollama_url: String::from("http://lodalhost:11434")
         };
 
         let to = PathBuf::from(src.path()).join("template.adoc");
@@ -1395,6 +1397,8 @@ mod tests {
             adr_search_index: format!("{}", src.path().display()),
             use_id_prefix: true,
             id_prefix_width: 3,
+            ollama_model: String::from("llama:3"),
+            ollama_url: String::from("http://lodalhost:11434")
         };
 
         let to = PathBuf::from(src.path()).join("template.adoc");
@@ -1437,6 +1441,8 @@ mod tests {
             adr_search_index: format!("{}", src.path().display()),
             use_id_prefix: true,
             id_prefix_width: 3,
+            ollama_model: String::from("llama:3"),
+            ollama_url: String::from("http://lodalhost:11434")
         };
 
         let to = PathBuf::from(src.path()).join("template.adoc");

@@ -192,22 +192,6 @@ fn build_index() -> Result<()> {
 fn search(query: String) -> Result<()> {
     let cfg: AdrToolConfig = adr_config::config::get_config();
 
-    let mut table = Table::new();
-    table
-        .load_preset(UTF8_FULL)
-        .apply_modifier(UTF8_ROUND_CORNERS)
-        .set_content_arrangement(ContentArrangement::Dynamic);
-    //table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
-    table.set_header(vec!["Title", "Status", "Date", "File", "(Indexed) Tags"]);
-
-    let tags_column = table.column_mut(4).expect("This should be the Tags column");
-    tags_column.set_constraint(UpperBoundary(Fixed(20)));
-
-    let title_column = table
-        .column_mut(0)
-        .expect("This should be the Title column");
-    title_column.set_constraint(UpperBoundary(Fixed(90)));
-
     //TODO get limit value from AdrToolConfig
     let limit: usize = 100;
 
@@ -217,19 +201,21 @@ fn search(query: String) -> Result<()> {
     };
     let results_size = &results.len();
 
-    for entry in results {
-        let status = &entry.status[0];
-        let status_as_enum = Status::from_str(String::from(status));
-        let style = get_cell_style(status_as_enum);
+    // for entry in results {
+    //     let status = &entry.status[0];
+    //     let status_as_enum = Status::from_str(String::from(status));
+    //     let style = get_cell_style(status_as_enum);
 
-        table.add_row(vec![
-            Cell::new(&entry.title[0]).fg(style),
-            Cell::new(&entry.status[0]).fg(style),
-            Cell::new(&entry.date[0]),
-            Cell::new(&entry.path[0]),
-            Cell::new(&entry.tags[0]).add_attributes(vec![Attribute::Italic]),
-        ]);
-    }
+    //     table.add_row(vec![
+    //         Cell::new(&entry.title[0]).fg(style),
+    //         Cell::new(&entry.status[0]).fg(style),
+    //         Cell::new(&entry.date[0]),
+    //         Cell::new(&entry.path[0]),
+    //         Cell::new(&entry.tags[0]).add_attributes(vec![Attribute::Italic]),
+    //     ]);
+    // }
+
+    let table = display_search_results(&results);
 
     println!("{table}");
 
@@ -306,26 +292,47 @@ FINAL RULE: Output ONLY the raw string. DO NOT TALK.
         return Ok(());
     }
 
-    let mut table = Table::new();
-    table
-        .load_preset(UTF8_FULL)
-        .apply_modifier(UTF8_ROUND_CORNERS)
-        .set_content_arrangement(ContentArrangement::Dynamic)
-        .set_header(vec!["Title", "Status", "Tags", "Path"]);
-
-    for result in results {
-        table.add_row(vec![
-            result.title[0].clone(),
-            result.status[0].clone(),
-            result.tags[0].clone(),
-            result.path[0].clone(),
-        ]);
-    }
-
+    let table = display_search_results(&results);
     println!("{table}");
 
     Ok(())
 }
+
+fn display_search_results(results: &Vec<adr_search::search::SearchResult>) -> Table {
+    let mut table = Table::new();
+    table
+        .load_preset(UTF8_FULL)
+        .apply_modifier(UTF8_ROUND_CORNERS)
+        .set_content_arrangement(ContentArrangement::Dynamic);
+    //table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+    table.set_header(vec!["Title", "Status", "Date", "File", "(Indexed) Tags"]);
+
+    let tags_column = table.column_mut(4).expect("This should be the Tags column");
+    tags_column.set_constraint(UpperBoundary(Fixed(20)));
+
+    let title_column = table
+        .column_mut(0)
+        .expect("This should be the Title column");
+    title_column.set_constraint(UpperBoundary(Fixed(90)));
+    
+    for result in results {
+        let status = &result.status[0];
+        let status_as_enum = Status::from_str(String::from(status));
+        let style = get_cell_style(status_as_enum);
+    
+        table.add_row(vec![
+            Cell::new(&result.title[0]).fg(style),
+            Cell::new(&result.status[0]).fg(style),
+            Cell::new(&result.date[0]),
+            Cell::new(&result.path[0]),
+            Cell::new(&result.tags[0]).add_attributes(vec![Attribute::Italic]),
+        ]);
+    }
+
+    table
+}
+
+
 
 fn get_cell_style(status: Status) -> Color {
     let style = match status {
