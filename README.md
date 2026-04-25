@@ -15,10 +15,12 @@ Here are the main features:
 * [done] Support search across title, content, date and tags 
 * [not started yet] Support different types of templates. currently the template can be changed and configured but it has to be asciidoc etc...
 * [not started yet] Why not integrate with Microsoft Teams (or others)
-* [done] LLM-assisted search via Ollama (natural language → Tantivy query)
+* [done] LLM-assisted search via Ollama (`adr search --prompt "..."`) — the prompt is translated into a Tantivy query by the LLM, matching ADRs are retrieved from the index, and a streamed summary is returned for each result. The Ollama URL and model are configurable via `adr config set`. **Note:** the full `.adoc` file is currently sent to the LLM for summarisation, which may exceed the model's context window for large ADRs.
+
 
 ## Supported OS and compiler
-The current code line is developped on `MacOs / Rust 1.71` and build with `cargo` but [Github Actions](https://github.com/omallassi/adrust/actions) will build on `MacOs / Linux / Windows` on `Rust Stable Version` (cf. `rust.yml` for details).
+
+cf. `rust.yml` for details.
 
 ## Getting Started 
 
