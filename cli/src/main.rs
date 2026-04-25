@@ -1,6 +1,7 @@
 extern crate slog;
 extern crate slog_term;
 use slog::*;
+use tokio_stream::StreamExt;
 
 use std::fs::read_to_string;
 use std::io::{self};
@@ -28,6 +29,9 @@ use ollama_rs::{
     generation::chat::{request::ChatMessageRequest, ChatMessage},
     Ollama,
 };
+
+use indicatif::ProgressBar;
+use termimad::MadSkin;
 
 fn get_logger() -> slog::Logger {
     let cfg: AdrToolConfig = adr_config::config::get_config();
@@ -293,12 +297,14 @@ FINAL RULE: Output ONLY the raw string. DO NOT TALK.
         return Ok(());
     }
 
-    // let table = display_search_results(&results);
-    // println!("{table}");
-
+    //
     for result in results {
         let table = display_search_results(&vec![result.clone()]);
         println!("{table}");
+
+        let spinner = ProgressBar::new_spinner();
+        spinner.set_message("Thinking...");
+        spinner.enable_steady_tick(std::time::Duration::from_millis(80));
 
         let content = read_to_string(&result.path[0]).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
 
@@ -310,7 +316,7 @@ FINAL RULE: Output ONLY the raw string. DO NOT TALK.
         2. BE SUPER CONCISE:The Summary must be short, 5 to 10 lines max and should highlight the key parts of the document.
         3. FOCUS ONLY on the context, problem statement and decision made.
         4. DO NOT SUMMARIZE title, status, date, tags, appendices and other metadata.
-        5. USE THE FOLLOWING FORMAT **Context** **Problem Statement** **Decision Made** **Key Implications**
+        5. USE THE FOLLOWING FORMAT ## **Context** ## **Problem Statement** ## **Decision Made** ## **Key Implications** AND USE MARKDOWN
         
         TASK: Summarize the user input.
         "#;
@@ -327,14 +333,17 @@ FINAL RULE: Output ONLY the raw string. DO NOT TALK.
             .await
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
 
-        use tokio_stream::StreamExt;
-        use std::io::Write;
+        //display the summary
+        let mut full_response = String::new();
         while let Some(Ok(chunk)) = stream.next().await {
-            let token = &chunk.message.content;
-            print!("{}", token);
-            std::io::stdout().flush().ok();
+            full_response.push_str(&chunk.message.content);
+            spinner.tick();
         }
 
+        spinner.finish_and_clear();
+
+        MadSkin::default().print_text(&full_response);
+        
         println!(); // final newline
         println!(); // final newline
         println!(); // final newline
