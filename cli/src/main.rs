@@ -2,6 +2,7 @@ extern crate slog;
 extern crate slog_term;
 use slog::*;
 
+use std::fs::read_to_string;
 use std::io::{self};
 use std::path::Path;
 
@@ -269,7 +270,7 @@ FINAL RULE: Output ONLY the raw string. DO NOT TALK.
 
     let messages = vec![
         ChatMessage::system(system_prompt.to_string()),
-        ChatMessage::user(query),
+        ChatMessage::user(query.clone()),
     ];
 
     let ollama = Ollama::try_new(cfg.ollama_url.as_str())
@@ -292,34 +293,66 @@ FINAL RULE: Output ONLY the raw string. DO NOT TALK.
         return Ok(());
     }
 
-    let table = display_search_results(&results);
-    println!("{table}");
+    // let table = display_search_results(&results);
+    // println!("{table}");
+
+    for result in results {
+        let table = display_search_results(&vec![result.clone()]);
+        println!("{table}");
+
+        let content = read_to_string(&result.path[0]).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+
+        let system_prompt = r#"
+        SYSTEM: You are a pure text-processing pipe that aims to summarize content w/o imagining it.
+
+        CRITICAL RULES:
+        1. DO NOT INVENT:Just summarize the text that seems to match INTIAL_PROMPT.
+        2. BE SUPER CONCISE:The Summary must be short, 5 to 10 lines max and should highlight the key parts of the document.
+        3. FOCUS ONLY on the context, problem statement and decision made.
+        4. DO NOT SUMMARIZE title, status, date, tags, appendices and other metadata.
+        5. USE THE FOLLOWING FORMAT **Context** **Problem Statement** **Decision Made** **Key Implications**
+        
+        TASK: Summarize the user input.
+        "#;
+
+        let messages = vec![
+            ChatMessage::system(system_prompt.to_string()),
+            ChatMessage::user(format!("Summarize the following content {} given INITIAL_PROMPT {}", &content, &query)),
+        ];
+        let ollama = Ollama::try_new(cfg.ollama_url.as_str())
+            .expect("Invalid ollama_url in config");
+
+        let mut stream = ollama
+            .send_chat_messages_stream(ChatMessageRequest::new(cfg.ollama_model.clone(), messages))
+            .await
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+
+        use tokio_stream::StreamExt;
+        use std::io::Write;
+        while let Some(Ok(chunk)) = stream.next().await {
+            let token = &chunk.message.content;
+            print!("{}", token);
+            std::io::stdout().flush().ok();
+        }
+
+        println!(); // final newline
+        println!(); // final newline
+        println!(); // final newline
+    }
+
 
     Ok(())
 }
 
+
 fn display_search_results(results: &Vec<adr_search::search::SearchResult>) -> Table {
-    let mut table = Table::new();
-    table
-        .load_preset(UTF8_FULL)
-        .apply_modifier(UTF8_ROUND_CORNERS)
-        .set_content_arrangement(ContentArrangement::Dynamic);
-    //table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
-    table.set_header(vec!["Title", "Status", "Date", "File", "(Indexed) Tags"]);
+    let mut table = get_display_table();
 
-    let tags_column = table.column_mut(4).expect("This should be the Tags column");
-    tags_column.set_constraint(UpperBoundary(Fixed(20)));
-
-    let title_column = table
-        .column_mut(0)
-        .expect("This should be the Title column");
-    title_column.set_constraint(UpperBoundary(Fixed(90)));
-    
     for result in results {
         let status = &result.status[0];
         let status_as_enum = Status::from_str(String::from(status));
         let style = get_cell_style(status_as_enum);
-    
+
         table.add_row(vec![
             Cell::new(&result.title[0]).fg(style),
             Cell::new(&result.status[0]).fg(style),
@@ -328,6 +361,26 @@ fn display_search_results(results: &Vec<adr_search::search::SearchResult>) -> Ta
             Cell::new(&result.tags[0]).add_attributes(vec![Attribute::Italic]),
         ]);
     }
+
+    table
+}
+
+fn get_display_table() -> Table {
+    let mut table = Table::new();
+    table
+        .load_preset(UTF8_FULL)
+        .apply_modifier(UTF8_ROUND_CORNERS)
+        .set_content_arrangement(ContentArrangement::Dynamic);
+    //table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+    table.set_header(vec!["Title", "Status", "Date", "File", "(Indexed) Tags"]);
+    
+    let tags_column = table.column_mut(4).expect("This should be the Tags column");
+    tags_column.set_constraint(UpperBoundary(Fixed(20)));
+    
+    let title_column = table
+        .column_mut(0)
+        .expect("This should be the Title column");
+    title_column.set_constraint(UpperBoundary(Fixed(90)));
 
     table
 }

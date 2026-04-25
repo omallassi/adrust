@@ -109,7 +109,7 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> {
     Ok(())
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SearchResult {
     pub title: [String; 1],
     pub status: [String; 1],
