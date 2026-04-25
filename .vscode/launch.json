@@ -1,21 +1,122 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Debug",
-            "type": "lldb",
-            "sourceLanguages": ["rust"],
-            "request": "launch",
-            "program": "${workspaceFolder}/target/debug/adr",
-            "cwd": "${workspaceRoot}",
-            "terminal": "integrated",
-            "args": [""],
-            "env": {
-                "RUST_BACKTRACE": "1"
-            }
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "adr list",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["build", "--bin", "adr"],
+        "filter": { "name": "adr", "kind": "bin" }
+      },
+      "args": ["list"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": { "RUST_BACKTRACE": "1" }
+    },
+    {
+      "name": "adr lf new",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["build", "--bin", "adr"],
+        "filter": { "name": "adr", "kind": "bin" }
+      },
+      "args": ["lf", "new", "--title", "My new decision"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": { "RUST_BACKTRACE": "1" }
+    },
+    {
+      "name": "adr lf decided",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["build", "--bin", "adr"],
+        "filter": { "name": "adr", "kind": "bin" }
+      },
+      "args": ["lf", "decided", "--path", "some-decision.adoc"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": { "RUST_BACKTRACE": "1" }
+    },
+    {
+      "name": "adr config list",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["build", "--bin", "adr"],
+        "filter": { "name": "adr", "kind": "bin" }
+      },
+      "args": ["config", "list"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": { "RUST_BACKTRACE": "1" }
+    },
+    {
+      "name": "adr config set",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["build", "--bin", "adr"],
+        "filter": { "name": "adr", "kind": "bin" }
+      },
+      "args": ["config", "set", "--name", "adr_src_dir", "--value", "./doc/adr"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": { "RUST_BACKTRACE": "1" }
+    },
+    {
+      "name": "adr tags list",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["build", "--bin", "adr"],
+        "filter": { "name": "adr", "kind": "bin" }
+      },
+      "args": ["tags", "list"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": { "RUST_BACKTRACE": "1" }
+    },
+    {
+      "name": "adr search --query",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["build", "--bin", "adr"],
+        "filter": { "name": "adr", "kind": "bin" }
+      },
+      "args": ["search", "--query", "status:decided"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": { "RUST_BACKTRACE": "1" }
+    },
+    {
+      "name": "adr search --prompt",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["build", "--bin", "adr"],
+        "filter": { "name": "adr", "kind": "bin" }
+      },
+      "args": ["search", "--prompt", "This is llm search"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": { "RUST_BACKTRACE": "1" }
+    },
+    {
+      "name": "adr search --build-index",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["build", "--bin", "adr"],
+        "filter": { "name": "adr", "kind": "bin" }
+      },
+      "args": ["search", "--build-index"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": { "RUST_BACKTRACE": "1" }
+    }
+  ]
 }

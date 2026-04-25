@@ -1,7 +1,9 @@
 extern crate slog;
 extern crate slog_term;
 use slog::*;
+use tokio_stream::StreamExt;
 
+use std::fs::read_to_string;
 use std::io::{self};
 use std::path::Path;
 
@@ -22,6 +24,14 @@ use adr_core::adr_repo::Status;
 extern crate adr_config;
 use adr_config::config::AdrToolConfig;
 extern crate adr_search;
+
+use ollama_rs::{
+    generation::chat::{request::ChatMessageRequest, ChatMessage},
+    Ollama,
+};
+
+use indicatif::ProgressBar;
+use termimad::MadSkin;
 
 fn get_logger() -> slog::Logger {
     let cfg: AdrToolConfig = adr_config::config::get_config();
@@ -133,6 +143,16 @@ fn list_all_config() -> Result<()> {
         cfg.id_prefix_width.to_string().as_str(),
         "Y",
     ]);
+        table.add_row(vec![
+        adr_config::config::OLLAMA_URL,
+        cfg.ollama_url.to_string().as_str(),
+        "Y",
+    ]);
+        table.add_row(vec![
+        adr_config::config::OLLAMA_MODEL,
+        cfg.ollama_model.to_string().as_str(),
+        "Y",
+    ]);
 
     // Print the table to stdout
     println!("{table}");
@@ -177,22 +197,6 @@ fn build_index() -> Result<()> {
 fn search(query: String) -> Result<()> {
     let cfg: AdrToolConfig = adr_config::config::get_config();
 
-    let mut table = Table::new();
-    table
-        .load_preset(UTF8_FULL)
-        .apply_modifier(UTF8_ROUND_CORNERS)
-        .set_content_arrangement(ContentArrangement::Dynamic);
-    //table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
-    table.set_header(vec!["Title", "Status", "Date", "File", "(Indexed) Tags"]);
-
-    let tags_column = table.column_mut(4).expect("This should be the Tags column");
-    tags_column.set_constraint(UpperBoundary(Fixed(20)));
-
-    let title_column = table
-        .column_mut(0)
-        .expect("This should be the Title column");
-    title_column.set_constraint(UpperBoundary(Fixed(90)));
-
     //TODO get limit value from AdrToolConfig
     let limit: usize = 100;
 
@@ -202,19 +206,21 @@ fn search(query: String) -> Result<()> {
     };
     let results_size = &results.len();
 
-    for entry in results {
-        let status = &entry.status[0];
-        let status_as_enum = Status::from_str(String::from(status));
-        let style = get_cell_style(status_as_enum);
+    // for entry in results {
+    //     let status = &entry.status[0];
+    //     let status_as_enum = Status::from_str(String::from(status));
+    //     let style = get_cell_style(status_as_enum);
 
-        table.add_row(vec![
-            Cell::new(&entry.title[0]).fg(style),
-            Cell::new(&entry.status[0]).fg(style),
-            Cell::new(&entry.date[0]),
-            Cell::new(&entry.path[0]),
-            Cell::new(&entry.tags[0]).add_attributes(vec![Attribute::Italic]),
-        ]);
-    }
+    //     table.add_row(vec![
+    //         Cell::new(&entry.title[0]).fg(style),
+    //         Cell::new(&entry.status[0]).fg(style),
+    //         Cell::new(&entry.date[0]),
+    //         Cell::new(&entry.path[0]),
+    //         Cell::new(&entry.tags[0]).add_attributes(vec![Attribute::Italic]),
+    //     ]);
+    // }
+
+    let table = display_search_results(&results);
 
     println!("{table}");
 
@@ -222,6 +228,173 @@ fn search(query: String) -> Result<()> {
 
     Ok(())
 }
+
+async fn search_from_prompt(query: String) -> Result<()> {
+    let cfg: AdrToolConfig = adr_config::config::get_config();
+    let log = get_logger();
+
+    info!(log, "Sending prompt to Ollama: [{}]", &query);
+
+    let system_prompt = r#"
+SYSTEM: You are a pure text-processing pipe. Your ONLY output is a raw Tantivy query string. SILENCE ALL PROSE.
+
+CRITICAL RULES:
+  1. FORBIDDEN START: Never start your response with "Sure", "I can", "Here is", "Okay", or "Based on".
+  2. NO PREAMBLE: Do not explain the query. Do not use markdown code fences.
+  3. NO PREFIXES: Every concept MUST be a "bare term". NEVER use `title:` unless the user says "named".
+  4. BOOLEAN INTERSECTION: Use `AND` to connect keywords. 
+     - Expand: management -> (management OR mgmt)
+     - Expand: identity -> (identity OR idp)
+  5. PHRASE QUOTING: Only quote stable multi-word terms like "control plane" or "identity federation".
+  6. DISCARD FILLER: Ignore "Can you point me to", "discuss about", "help me", etc.
+
+EXAMPLES:
+  User: "can you point me to documentation that discuss about cloud and identity federation"
+  Output: cloud AND "identity federation"
+  User: "what did we decide about the tenant management"
+  Output: tenant AND (management OR mgmt) AND status:decided
+  User: "ADRs tagged with kafka"
+  Output: tags:kafka
+  User: "I am looking for documents about the Tenant Management Control Plane"
+  Output: tenant AND (management OR mgmt) AND "control plane"
+  User: "show me all decided ADRs about database migrations"
+  Output: database AND migrations AND status:decided
+  User: "decisions about auth or event sourcing"
+  Output: (authentication OR auth OR "event sourcing") AND status:decided
+  User: "ADRs tagged with kafka that are still in progress"
+  Output: tags:kafka AND status:wip
+  User: "what did we decide about the message broker"
+  Output: "message broker" AND status:decided
+  User: "ADRs titled exactly user service"
+  Output: title:"user service"
+
+TASK: Convert the user input to a raw Tantivy query.
+FINAL RULE: Output ONLY the raw string. DO NOT TALK.
+"#;
+
+    let messages = vec![
+        ChatMessage::system(system_prompt.to_string()),
+        ChatMessage::user(query.clone()),
+    ];
+
+    let ollama = Ollama::try_new(cfg.ollama_url.as_str())
+        .expect("Invalid ollama_url in config");
+
+    let res = ollama
+        .send_chat_messages(ChatMessageRequest::new(cfg.ollama_model.clone(), messages))
+        .await
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+
+    let tantivy_query = res.message.content.trim().to_string();
+    info!(log, "Tantivy generated query: [{}]", &tantivy_query);
+
+    let results =
+        adr_search::search::search(cfg.adr_search_index.clone(), tantivy_query.clone(), 5)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+
+    if results.is_empty() {
+        println!("No results found for query: {}", tantivy_query);
+        return Ok(());
+    }
+
+    //
+    for result in results {
+        let table = display_search_results(&vec![result.clone()]);
+        println!("{table}");
+
+        let spinner = ProgressBar::new_spinner();
+        spinner.set_message("Thinking...");
+        spinner.enable_steady_tick(std::time::Duration::from_millis(80));
+
+        let content = read_to_string(&result.path[0]).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+
+        let system_prompt = r#"
+        SYSTEM: You are a pure text-processing pipe that aims to summarize content w/o imagining it.
+
+        CRITICAL RULES:
+        1. DO NOT INVENT:Just summarize the text that seems to match INTIAL_PROMPT.
+        2. BE SUPER CONCISE:The Summary must be short, 5 to 10 lines max and should highlight the key parts of the document.
+        3. FOCUS ONLY on the context, problem statement and decision made.
+        4. DO NOT SUMMARIZE title, status, date, tags, appendices and other metadata.
+        5. USE THE FOLLOWING FORMAT ## **Context** ## **Problem Statement** ## **Decision Made** ## **Key Implications** AND USE MARKDOWN
+        
+        TASK: Summarize the user input.
+        "#;
+
+        let messages = vec![
+            ChatMessage::system(system_prompt.to_string()),
+            ChatMessage::user(format!("Summarize the following content {} given INITIAL_PROMPT {}", &content, &query)),
+        ];
+        let ollama = Ollama::try_new(cfg.ollama_url.as_str())
+            .expect("Invalid ollama_url in config");
+
+        let mut stream = ollama
+            .send_chat_messages_stream(ChatMessageRequest::new(cfg.ollama_model.clone(), messages))
+            .await
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+
+        //display the summary
+        let mut full_response = String::new();
+        while let Some(Ok(chunk)) = stream.next().await {
+            full_response.push_str(&chunk.message.content);
+            spinner.tick();
+        }
+
+        spinner.finish_and_clear();
+
+        MadSkin::default().print_text(&full_response);
+        
+        println!(); // final newline
+        println!(); // final newline
+        println!(); // final newline
+    }
+
+
+    Ok(())
+}
+
+
+fn display_search_results(results: &Vec<adr_search::search::SearchResult>) -> Table {
+    let mut table = get_display_table();
+
+    for result in results {
+        let status = &result.status[0];
+        let status_as_enum = Status::from_str(String::from(status));
+        let style = get_cell_style(status_as_enum);
+
+        table.add_row(vec![
+            Cell::new(&result.title[0]).fg(style),
+            Cell::new(&result.status[0]).fg(style),
+            Cell::new(&result.date[0]),
+            Cell::new(&result.path[0]),
+            Cell::new(&result.tags[0]).add_attributes(vec![Attribute::Italic]),
+        ]);
+    }
+
+    table
+}
+
+fn get_display_table() -> Table {
+    let mut table = Table::new();
+    table
+        .load_preset(UTF8_FULL)
+        .apply_modifier(UTF8_ROUND_CORNERS)
+        .set_content_arrangement(ContentArrangement::Dynamic);
+    //table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+    table.set_header(vec!["Title", "Status", "Date", "File", "(Indexed) Tags"]);
+    
+    let tags_column = table.column_mut(4).expect("This should be the Tags column");
+    tags_column.set_constraint(UpperBoundary(Fixed(20)));
+    
+    let title_column = table
+        .column_mut(0)
+        .expect("This should be the Title column");
+    title_column.set_constraint(UpperBoundary(Fixed(90)));
+
+    table
+}
+
+
 
 fn get_cell_style(status: Status) -> Color {
     let style = match status {
@@ -244,7 +417,8 @@ fn init() -> Result<()> {
 
 ///
 /// The main program - start the CLI ...
-fn main() {
+#[tokio::main]
+async fn main() {
     //
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
     let cmd = Command::new("adr")
@@ -398,7 +572,7 @@ fn main() {
                         .long("query")
                         .action(clap::ArgAction::Set)
                         .required(true)
-                        .conflicts_with_all(&["build-index", "title"])
+                        .conflicts_with_all(&["build-index", "title", "prompt"])
                         .help("Provide your search query. The following syntax can be used :\n\
                             \ta AND b OR c will search for documents containing terms (a and b) or c, \n\
                             \t-b will search documents that do not contain the term b, \n\
@@ -407,19 +581,26 @@ fn main() {
                             \ttitle:a will search on title of the document, \n\
                             \tdate:[2022-08-01T00:00:00Z TO 2023-10-02T18:00:00Z] AND tags:BPaaS will search between the specified range and date (and specified tag), \n\
                             \tstatus:decided will search for decided documents"),
+                    Arg::new("prompt")
+                        .short('p')
+                        .long("prompt")
+                        .action(clap::ArgAction::Set)
+                        .required(true)
+                        .conflicts_with_all(&["build-index", "title", "query"])
+                        .help("Provide the integration with LLM - and try to ease search"),
                     Arg::new("build-index")
                         .short('b')
                         .long("build-index")
                         .action(clap::ArgAction::SetTrue)
                         .required(true)
-                        .conflicts_with_all(&["query", "title"])
+                        .conflicts_with_all(&["query", "title", "prompt"])
                         .help("Build the index based on available ADRs."),
                     Arg::new("title")
                         .short('t')
                         .long("title")
                         .action(clap::ArgAction::Set)
                         .required(true)
-                        .conflicts_with_all(&["build-index", "query"])
+                        .conflicts_with_all(&["build-index", "query", "prompt"])
                         .help("Search on title property of ADR only"),
                 ]),
         );
@@ -513,12 +694,16 @@ fn main() {
                 let query = search_matches.get_one::<String>("query").unwrap().to_string();
                 search(query).unwrap();
             }
-            if search_matches.get_one::<bool>("build-index").is_some() {
-                build_index().unwrap();
-            }
             if search_matches.get_one::<String>("title").is_some() {
                 let query = search_matches.get_one::<String>("title").unwrap().to_string();
                 search("title:".to_string() + &query).unwrap();
+            }
+            if search_matches.get_one::<String>("prompt").is_some() {
+                let query = search_matches.get_one::<String>("prompt").unwrap().to_string();
+                search_from_prompt(query).await.unwrap();
+            }
+            if *search_matches.get_one::<bool>("build-index").unwrap_or(&false) {
+                build_index().unwrap();
             }
         }
 

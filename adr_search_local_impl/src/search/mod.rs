@@ -109,7 +109,7 @@ pub fn build_index(index_path: String, adrs: Vec<Adr>) -> tantivy::Result<()> {
     Ok(())
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SearchResult {
     pub title: [String; 1],
     pub status: [String; 1],
@@ -168,7 +168,7 @@ pub fn search(
         Err(why) => panic!("Search | Error while parsing {:?}", why),
     };
 
-    let top_docs = searcher.search(&query, &TopDocs::with_limit(limit))?;
+    let top_docs = searcher.search(&query, &TopDocs::with_limit(limit).order_by_score())?;
 
     let mut results = std::vec::Vec::new();
     for (_score, doc_address) in top_docs {
