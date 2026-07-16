@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 # confy = "0.3.1"
 # use git master dep to get the truncate (https://github.com/rust-cli/confy/blob/master/src/lib.rs#L195)
-confy = "0.6.1"  #{ git = "https://github.com/rust-cli/confy", rev = "5a58388fa9b8bcd790a62c2a9db5abdcbe9fb467"}
+confy = "2.0.0"  #{ git = "https://github.com/rust-cli/confy", rev = "5a58388fa9b8bcd790a62c2a9db5abdcbe9fb467"}
 serde = "1.0.217"
 serde_derive = "1.0.217"
 slog = "2.7.0"
