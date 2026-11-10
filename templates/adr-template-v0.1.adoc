@@ -35,6 +35,52 @@
   margin-top: 0;
   color: #1f3b63;
 }
+
+.label {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-weight: 600;
+  line-height: 1.4;
+  border: 1px solid transparent;
+}
+
+.label.wip {
+  background: #fff4e0;
+  color: #8a5300;
+  border-color: #f0c77a;
+}
+
+.label.decided {
+  background: #e6f6ec;
+  color: #1d6b3a;
+  border-color: #9fd9b3;
+}
+
+.label.updated {
+  background: #e8f0fe;
+  color: #1f4e9c;
+  border-color: #aac4f2;
+}
+
+.label.obsoleted {
+  background: #f2f2f2;
+  color: #555;
+  border-color: #c9c9c9;
+  text-decoration: line-through;
+}
+
+.tags {
+  display: inline-block;
+  padding: 0.05em 0.45em;
+  margin: 0 0.15em;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #2f4a6b;
+  font-size: 0.8em;
+  border: 1px solid #cfd9e6;
+}
 </style>
 ++++
 
