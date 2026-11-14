@@ -7,7 +7,6 @@ use std::fs::read_to_string;
 use std::io::{self};
 use std::path::Path;
 
-use comfy_table::modifiers::UTF8_ROUND_CORNERS;
 use comfy_table::presets::UTF8_FULL;
 use comfy_table::*;
 use comfy_table::{ColumnConstraint::*, Table, Width::*};
@@ -53,8 +52,7 @@ pub fn list_all_adr() -> io::Result<()> {
 
     let mut table = Table::new();
     table
-        .load_preset(UTF8_FULL)
-        .apply_modifier(UTF8_ROUND_CORNERS)
+        .load_style(UTF8_FULL.with_rounded_corners())
         .set_content_arrangement(ContentArrangement::Dynamic);
     //table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
     table.set_header(vec!["ID", "Title", "Status", "Date", "File", "Tags"]);
@@ -102,8 +100,7 @@ fn list_all_config() -> Result<()> {
 
     let mut table = Table::new();
     table
-        .load_preset(UTF8_FULL)
-        .apply_modifier(UTF8_ROUND_CORNERS)
+        .load_style(UTF8_FULL.with_rounded_corners())
         .set_content_arrangement(ContentArrangement::Dynamic);
     //table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
     table.set_header(vec!["Property", "Value", "Modifiable"]);
@@ -165,8 +162,7 @@ fn list_all_tags() -> Result<()> {
 
     let mut table = Table::new();
     table
-        .load_preset(UTF8_FULL)
-        .apply_modifier(UTF8_ROUND_CORNERS)
+        .load_style(UTF8_FULL.with_rounded_corners())
         .set_content_arrangement(ContentArrangement::Dynamic);
     //table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
     table.set_header(vec!["Tags", "Popularity"]);
@@ -377,8 +373,7 @@ fn display_search_results(results: &Vec<adr_search::search::SearchResult>) -> Ta
 fn get_display_table() -> Table {
     let mut table = Table::new();
     table
-        .load_preset(UTF8_FULL)
-        .apply_modifier(UTF8_ROUND_CORNERS)
+        .load_style(UTF8_FULL.with_rounded_corners())
         .set_content_arrangement(ContentArrangement::Dynamic);
     //table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
     table.set_header(vec!["Title", "Status", "Date", "File", "(Indexed) Tags"]);
