@@ -16,7 +16,6 @@ walkdir = "2.5.0"
 chrono = "0.4.45"
 
 adr_config = { path = "../adr_config_local_impl" }
-futures = "0.3.31"
 
 
 [[test]]
